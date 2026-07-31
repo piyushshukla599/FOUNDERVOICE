@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #0f1412;
+  --bg-elevated: #171e1a;
+  --bg-soft: #1e2822;
+  --ink: #e8efe9;
+  --muted: #8fa094;
+  --line: #2a3530;
+  --accent: #c4a35a;
+  --accent-2: #3d8f6e;
+  --danger: #c45c4a;
+  --warn: #d4a017;
+}
+
+@theme inline {
+  --color-background: var(--bg);
+  --color-foreground: var(--ink);
+  --font-sans: "Candara", "Segoe UI", "Trebuchet MS", sans-serif;
+  --font-display: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+  --font-body: "Candara", "Segoe UI", "Trebuchet MS", sans-serif;
+  --font-mono: "Cascadia Mono", "Consolas", monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(61, 143, 110, 0.18), transparent 55%),
+    radial-gradient(900px 500px at 90% 0%, rgba(196, 163, 90, 0.12), transparent 50%),
+    linear-gradient(180deg, #121916 0%, var(--bg) 40%, #0c100e 100%);
+  font-family: var(--font-body);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+::selection {
+  background: rgba(196, 163, 90, 0.35);
+}
+
+/* Accessibility helpers */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}

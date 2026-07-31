@@ -1,0 +1,18 @@
+{
+  "name": "FounderVoice AI",
+  "short_name": "FounderVoice",
+  "description": "Local-first AI executive speech coach. Audio stays on your machine.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f1412",
+  "theme_color": "#0f1412",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

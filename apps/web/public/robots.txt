@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /welcome
+Allow: /privacy
+Allow: /terms
+Disallow: /sessions/
+Disallow: /library
+Disallow: /coach
+Disallow: /trainer
+Disallow: /practice
+Disallow: /listen
+Disallow: /dashboard
+
+Sitemap: /sitemap.xml

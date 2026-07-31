@@ -1,0 +1,28 @@
+---
+description: FounderVoice AI core product and agent constraints
+alwaysApply: true
+---
+
+# FounderVoice AI
+
+Local-first coach for founders/executives. Differentiator: **Voice Memory** (longitudinal patterns), not one-off scores.
+
+## Mandate
+
+Every finding must answer: **what** → **why/cause** → **how to fix** (plus exercise when possible). Cite the user's history when Voice Memory has data.
+
+## Non-negotiables
+
+- Audio + Whisper stay local; coaching uses DeepSeek API (text only)
+- Evidence-linked: findings map to audio timestamps
+- Honest estimates: label emotion/investor/breath scores as estimates
+
+## Stack
+
+Next.js + Tailwind + Framer Motion + Recharts | FastAPI | Whisper (faster-whisper) | DeepSeek API | librosa + webrtcvad + ffmpeg | SQLite
+
+## Agent behavior
+
+1. If phase is unspecified, ask which phase (0–5) to build.
+2. Ship vertical slices, not orphan metrics.
+3. New finding types need: timestamp, severity, cause template, fix template.

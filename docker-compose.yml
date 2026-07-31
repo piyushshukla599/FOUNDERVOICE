@@ -1,0 +1,26 @@
+# Local-first stack: API + persistent data volume.
+# Web UI is typically run with Next.js locally or on Vercel pointing at the API.
+
+services:
+  api:
+    build: ./apps/api
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./apps/api/.env
+    environment:
+      DATA_DIR: /data
+      CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
+      API_DOCS_ENABLED: "false"
+    volumes:
+      - fv_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  fv_data:

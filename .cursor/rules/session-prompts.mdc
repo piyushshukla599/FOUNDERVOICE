@@ -1,0 +1,26 @@
+---
+description: Session starter prompts for FounderVoice phased builds
+alwaysApply: false
+---
+
+# How to prompt Cursor for this repo
+
+Paste one of these after pointing at `AGENTS.md`. Do not paste the entire product vision.
+
+## Phase 0
+
+```
+Read AGENTS.md. Implement Phase 0 only: web+api skeleton, SQLite schema for sessions/metrics/events/patterns, local data dirs, shell UI routes (Record, Library, Dashboard, Coach). No Whisper yet.
+```
+
+## Phase 1
+
+```
+Read AGENTS.md. Implement Phase 1 only: mic record (pause/resume + waveform), drag-drop audio (WAV/MP3/M4A/FLAC), local Whisper Large V3 with word/sentence timestamps, Smart Transcript click-to-play, basic WPM + fillers + silent pauses. Persist session + metrics to SQLite. Coach copy must be observation → cause → fix.
+```
+
+## Phase 3 (Voice Memory)
+
+```
+Read AGENTS.md. Implement Phase 3 only: rolling 7/30/60d dashboard, recurring pattern detection from events, personalized coach that cites history, daily exercises from top weaknesses. Do not add Practice Mode yet.
+```
