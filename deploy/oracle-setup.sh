@@ -26,20 +26,29 @@ say "System packages"
 # but librosa needs it to decode the .webm the browser records. Without it
 # every single upload fails at the decode step.
 if command -v apt-get >/dev/null 2>&1; then
-  sudo apt-get update -qq
-  sudo apt-get install -y -qq python3-venv python3-dev build-essential ffmpeg git curl
+  sudo apt-get update
+  sudo apt-get install -y python3-venv python3-dev build-essential ffmpeg git curl
 elif command -v dnf >/dev/null 2>&1; then
-  sudo dnf install -y -q oracle-epel-release-el9 2>/dev/null || sudo dnf install -y -q epel-release 2>/dev/null || true
-  # ffmpeg is not in Oracle Linux's own repos; RPM Fusion carries it.
-  sudo dnf install -y -q --nogpgcheck "https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-$(rpm -E %rhel).noarch.rpm" 2>/dev/null || true
-  # EL9 ships Python 3.9, but numpy 2.2 requires 3.10+. Pull a newer
-  # interpreter alongside it rather than fighting pip resolution later.
-  sudo dnf install -y -q python3.12 python3.12-devel 2>/dev/null || sudo dnf install -y -q python3.11 python3.11-devel 2>/dev/null || true
-  sudo dnf install -y -q python3 python3-devel gcc gcc-c++ make git curl
-  sudo dnf install -y -q ffmpeg-free || sudo dnf install -y -q ffmpeg || {
-    echo "!! ffmpeg could not be installed. Uploads will fail to decode."
-    echo "   Install it by hand before taking traffic."
-  }
+  # Fail fast on a dead mirror instead of hanging on the default long retries.
+  DNF="sudo dnf -y --setopt=timeout=20 --setopt=retries=2"
+
+  echo "-- base packages (first dnf run rebuilds its cache; ~1-2 min)"
+  $DNF install gcc gcc-c++ make git curl python3 python3-devel
+
+  # EL9 ships Python 3.9, but numpy 2.2 requires 3.10+.
+  echo "-- newer interpreter"
+  $DNF install python3.12 python3.12-devel || $DNF install python3.11 python3.11-devel || true
+
+  # ffmpeg is not in Oracle's own repos. EPEL's ffmpeg-free is enough for
+  # decoding and is far more reliable to fetch than RPM Fusion; only fall
+  # back to RPM Fusion if EPEL does not have it.
+  echo "-- EPEL + ffmpeg"
+  $DNF install oracle-epel-release-el9 || $DNF install epel-release || true
+  if ! $DNF install ffmpeg-free; then
+    echo "-- ffmpeg-free unavailable, trying RPM Fusion"
+    timeout 120 sudo dnf -y --nogpgcheck install       "https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-$(rpm -E %rhel).noarch.rpm" || true
+    $DNF install ffmpeg || true
+  fi
 else
   echo "Unsupported distro: need apt-get or dnf." >&2; exit 1
 fi
@@ -68,8 +77,8 @@ fi
 echo "   using $PY_BIN ($($PY_BIN -V 2>&1))"
 
 [ -d "$API_DIR/.venv" ] || "$PY_BIN" -m venv "$API_DIR/.venv"
-"$API_DIR/.venv/bin/pip" install -q --upgrade pip
-"$API_DIR/.venv/bin/pip" install -q -r "$API_DIR/requirements.txt"
+"$API_DIR/.venv/bin/pip" install --upgrade pip
+"$API_DIR/.venv/bin/pip" install -r "$API_DIR/requirements.txt"
 
 say "Configuration"
 if [ ! -f "$API_DIR/.env" ]; then
