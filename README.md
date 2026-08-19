@@ -37,7 +37,7 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000 — or http://localhost:3000/welcome for the public landing.
+Open the URL Next prints (`http://localhost:3000`, or **3001/3002** if 3000 is busy). Landing: `/welcome`.
 
 ### Docker (API only)
 
@@ -53,13 +53,14 @@ Data persists in the `fv_data` volume. Point the web app at `http://127.0.0.1:80
 
 | Area | Included |
 |------|----------|
-| Record | Mic + upload, Live Coach, full evaluation |
-| Smart Session | Auto-split conversations (browser VAD) |
-| Session report | Transcript click-to-play, professional voice, findings, PDF |
-| Dashboard | 7d / 30d / 60d Voice Memory trends |
-| Coach | Goals, mission, profile, custom fillers, fresh start |
-| Labs | Timed drills → same analysis engine as Record |
-| Practice | Investor Q&A + full pitch eval |
+| Today | 60s check, score, recommended labs in plain words |
+| Listen | Real talk (earbuds/mic); verdict after a Labs drill |
+| Labs | Speak this / how / what it means; similar labs next |
+| Practice | Standup → hard Q → investor; voice report + lab recs |
+| Record | Long pitch, Live Coach, full evaluation |
+| Session report | Transcript click-to-play, findings, lab recs, PDF |
+| Progress | 7d / 30d / 60d Voice Memory |
+| Coach | Goals, mission, profile, fillers, fresh start |
 
 Deep walkthroughs: [`docs/10-FEATURES-AND-WORKFLOWS.md`](./docs/10-FEATURES-AND-WORKFLOWS.md)
 

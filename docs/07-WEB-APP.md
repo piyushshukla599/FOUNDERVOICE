@@ -16,72 +16,81 @@ Stack: Next.js 15 (Turbopack), React 19, Tailwind 4, Framer Motion, Recharts.
 
 | Label | Href |
 |-------|------|
-| Record | `/` |
-| Smart Session | `/listen` |
-| Library | `/library` |
-| Dashboard | `/dashboard` |
-| Coach | `/coach` |
+| Today | `/` |
+| Listen | `/listen` |
 | Labs | `/trainer` |
 | Practice | `/practice` |
+| Record | `/record` |
+| Library | `/library` |
+| Progress | `/dashboard` |
+| Coach | `/coach` |
 
-Footer copy in shell: “Audio local · Coach via DeepSeek”.
+Also: `/welcome`, `/privacy`, `/terms` (no chrome). Contact modal from shell.
+
+Footer: local audio · optional cloud coach.
 
 ## Pages
 
-### `/` Record (`page.tsx`)
+### `/` Today (`page.tsx`)
+
+- 60s check recorder, Founder Voice score, streak
+- Shortcuts to Listen / Labs / Practice
+- `RecommendedLabs` from `api.exercises().recommended` (plain “sound” + speak line)
+- Upload uses `mode=exercise` with daily prompt meta
+
+### `/record` Long record
 
 - Record: start, pause/resume, stop & analyze, restart, discard
-- Push-to-talk
-- Optional silence auto-stop (~6s silence; not in first ~8s) — **off by default** in current code path (verify `page.tsx` if changing)
+- Push-to-talk; silence auto-stop **off by default**
 - Live Coach toggle (`useLiveCoach`)
 - Title + mode: `pitch` | `practice` | `exercise` | `free`
-- Mic picker; drag/drop or file picker
-- Calls `api.health`, `api.memory`, `api.upload` → navigates to `/sessions/{id}`
-- Shows DeepSeek ready vs “Key needed” from health (analysis still works without key)
+- Mic picker; drag/drop
+- `api.health`, `api.memory`, `api.exercises`, `api.upload` → `/sessions/{id}`
+- Recommended labs from Voice Memory
 
 ### `/listen` Smart Session
 
-- Explicit start/end session
-- Browser VAD segments conversations → upload as listening children
-- Mic prefs / backup / hot-swap (`micPrefs.ts`, `useSmartSession`)
-- Lists past listening sessions
+- Start/end; browser VAD; mic prefs / backup / hot-swap
+- Summary + pending **Founder Voice Verdict** until a Labs drill
+- `RecommendedLabs` from summary `lab_recs`
+- Unlock: Labs upload or `api.unlockVerdict`
 
 ### `/listen/[id]`
 
-- Polls listening detail (~4s)
-- Summary + links to conversation session pages
+- Polls ~4s; summary, verdict, lab recs, conversation links
 
 ### `/library`
 
 - Filters: All / Record (`free`) / Labs (`exercise`) / Practice / Smart (`listening`) / Pitch
-- Polls sessions (~4s); shows raw `status`
+- Polls ~4s
 
-### `/dashboard`
+### `/dashboard` (nav: Progress)
 
 - Windows 7d / 30d / 60d from `api.dashboard`
-- Charts + patterns
 
 ### `/coach`
 
-- Daily mission, goal picker, voice profile, plan, hard words, memory, fresh start
-- APIs: `memory`, `voiceProgram`, `setVoiceGoal`, `completeMission`, `freshStart`
+- Mission, goal, profile, plan, hard words, fillers, memory, fresh start
 
 ### `/trainer` (Labs)
 
-- Drills from `api.exercises`
-- Record with `PracticeRecorderBar` → upload `mode=exercise` + meta → `completeExercise` → session page
+- Tabs: For you / Lv1–3
+- Each drill: **Speak this**, **How to speak it**, **What this means** (`speak` / `how` / `sense` from API)
+- `?lab=` auto-opens a drill
+- Upload `mode=exercise` → `completeExercise` → may unlock Listen verdict → session page
+- After report: similar labs (`source: similar`)
 
 ### `/practice`
 
-- Full solo eval recorder (`mode=practice`)
-- Investor Q&A via `practiceStart` / `practiceTurn` (voice or typed)
+- Rounds: Standup / Hard question / Investor (levels 1–3)
+- `practiceStart` / `practiceTurn`; voice or type
+- Voice upload `mode=practice`; recommended labs refresh after last eval
 
 ### `/sessions/[id]`
 
 - Poll while `pending` | `analyzing`
-- Audio player, metrics, `ProfessionalVoiceReport`, smart transcript click-to-seek, `CoachSummary`, root-cause findings, PDF link
-- Shows `session.error` if analysis failed
-- Shows `transcript.warning` if present (e.g. demo Whisper)
+- `lab_recs` panel; Labs hide full professional dump
+- Audio, transcript click-to-seek, coach, findings, PDF
 
 **Defined but unused in UI:** `api.deleteSession`.
 
@@ -106,7 +115,8 @@ Methods mirror backend: health, sessions, session, deleteSession, dashboard, mem
 | `ProfessionalVoiceReport` | Renders `payload.professional`; placeholder if missing |
 | `RootCauseFinding` | Finding card; click seeks audio |
 | `CoachSummary` | Renders coach text (lightweight markdown-ish) |
-| `PracticeRecorderBar` | Shared record UI for Labs/Practice |
+| `RecommendedLabs` | Plain-language voice problem + speak line + link to `/trainer?lab=` |
+| `PracticeRecorderBar` | Shared record UI for Labs / Practice / Today |
 | `LiveCoachPanel` | Live Coach chrome |
 | `Waveform` / `LiveWaveform` | Mic visuals |
 

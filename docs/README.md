@@ -1,6 +1,6 @@
 # FounderVoice AI — Documentation
 
-**Source of truth:** this folder describes what the codebase **actually implements** as of the last doc pass.  
+**Source of truth:** this folder describes what the codebase **actually implements** as of **2026-08-19**.  
 If something is not listed here, do not assume it exists — check the code.
 
 | Doc | Contents |
@@ -15,6 +15,7 @@ If something is not listed here, do not assume it exists — check the code.
 | [08-LOCAL-VS-DEEPSEEK.md](./08-LOCAL-VS-DEEPSEEK.md) | What works without a DeepSeek key |
 | [09-KNOWN-GAPS.md](./09-KNOWN-GAPS.md) | Incomplete / unused / placeholder items found in code |
 | [10-FEATURES-AND-WORKFLOWS.md](./10-FEATURES-AND-WORKFLOWS.md) | Accurate feature list + what’s inside + user walkthroughs |
+| [11-PRODUCTION.md](./11-PRODUCTION.md) | Free production stack (Vercel + Oracle), quotas, SEO, operating it |
 | [FAQ.md](./FAQ.md) | Common questions for users & press |
 | [LAUNCH.md](./LAUNCH.md) | v1.0 public launch checklist |
 | [DEPLOY.md](./DEPLOY.md) | Step-by-step internet deploy (tunnel / VPS / Vercel) |

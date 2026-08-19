@@ -92,7 +92,7 @@ def get_memory_snapshot() -> dict[str, Any]:
         sessions = conn.execute(
             """
             SELECT s.id, s.created_at, s.duration, s.mode, m.wpm, m.filler_count, m.clarity,
-                   m.confidence_est, m.pause_quality, m.executive_presence, m.fundraising_readiness
+                   m.confidence_est, m.pause_quality, m.executive_presence, m.fundraising_readiness, m.filler_rate
             FROM sessions s
             LEFT JOIN metrics m ON m.session_id = s.id
             WHERE s.status = 'ready'
@@ -125,6 +125,7 @@ def get_memory_snapshot() -> dict[str, Any]:
             "sessions": len(w),
             "wpm": avg(w, "wpm"),
             "filler_count": avg(w, "filler_count"),
+            "filler_rate": avg(w, "filler_rate"),
             "clarity": avg(w, "clarity"),
             "confidence_est": avg(w, "confidence_est"),
             "pause_quality": avg(w, "pause_quality"),

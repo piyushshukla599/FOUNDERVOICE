@@ -22,7 +22,7 @@ export class ErrorBoundary extends Component<Props, State> {
           </p>
           <button
             type="button"
-            className="rounded-xl bg-[var(--accent-2)] px-4 py-2 text-sm font-semibold text-white"
+            className="rounded-xl bg-[var(--emerald)] px-4 py-2 text-sm font-semibold text-white"
             onClick={() => this.setState({ error: null })}
           >
             Try again

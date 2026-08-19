@@ -6,7 +6,7 @@ from typing import Any
 
 from ..config import get_settings
 from ..db import connect, dumps, loads, utc_now
-from . import advanced_voice, analysis, audio, deepseek, filler_lexicon, training_program, voice_memory, voice_profile, whisper_asr
+from . import advanced_voice, analysis, audio, coach_templates, deepseek, filler_lexicon, lab_coach, training_program, voice_memory, voice_profile, whisper_asr
 
 
 async def run_pipeline(session_id: str, mode: str = "free") -> dict[str, Any]:
@@ -52,14 +52,42 @@ async def run_pipeline(session_id: str, mode: str = "free") -> dict[str, Any]:
             duration=duration,
         )
 
-        lang = await deepseek.language_insights(transcript.get("text") or "")
-        base_metrics = {
-            "wpm": pace["wpm"],
-            "clarity": clarity["clarity"],
-            "confidence_est": acoustics["confidence_est"],
-            "filler_count": fillers["filler_count"],
-        }
-        pitch = await deepseek.analyze_pitch_with_llm(transcript.get("text") or "", base_metrics)
+        settings = get_settings()
+        light_listening = session_mode == "listening" and settings.listening_light_analysis
+        use_enhanced = (
+            settings.coach_mode == "enhanced"
+            and settings.deepseek_api_key
+            and not settings.deepseek_api_key.startswith("sk-your")
+        )
+
+        if light_listening or not use_enhanced:
+            lang = coach_templates.build_language_insights(transcript.get("text") or "")
+            base_metrics = {
+                "wpm": pace["wpm"],
+                "clarity": clarity["clarity"],
+                "confidence_est": acoustics["confidence_est"],
+                "filler_count": fillers["filler_count"],
+                "executive_presence": (professional.get("executive_presence") or {}).get("score"),
+            }
+            pitch = coach_templates.build_pitch_scores(
+                base_metrics, transcript.get("text") or ""
+            )
+        else:
+            lang = await deepseek.language_insights(transcript.get("text") or "")
+            base_metrics = {
+                "wpm": pace["wpm"],
+                "clarity": clarity["clarity"],
+                "confidence_est": acoustics["confidence_est"],
+                "filler_count": fillers["filler_count"],
+            }
+            pitch = await deepseek.analyze_pitch_with_llm(
+                transcript.get("text") or "", base_metrics
+            )
+            if session_mode != "pitch":
+                pitch = coach_templates.build_pitch_scores(
+                    {**base_metrics, "executive_presence": (professional.get("executive_presence") or {}).get("score")},
+                    transcript.get("text") or "",
+                )
 
         events: list[dict[str, Any]] = []
         events.extend(pace.get("speed_events") or [])
@@ -181,15 +209,46 @@ async def run_pipeline(session_id: str, mode: str = "free") -> dict[str, Any]:
                 "executive_presence": professional.get("executive_presence"),
             },
         }
-        coach = await deepseek.generate_coach_summary(
-            transcript.get("text") or "",
-            {k: v for k, v in metrics.items() if k != "payload_json"},
-            events,
-            memory,
-            profile=profile,
-            goal=goal,
-            session_context=coach_ctx,
-        )
+        metric_slice = {k: v for k, v in metrics.items() if k != "payload_json"}
+        if light_listening:
+            coach = coach_templates.build_listening_collection_note(metric_slice, events)
+        elif session_mode == "exercise":
+            coach = lab_coach.build_lab_review(
+                exercise_key=str(exercise_key or focus.get("exercise_key") or ""),
+                title=str(focus.get("exercise_title") or "Labs drill"),
+                description=str(focus.get("exercise_description") or ""),
+                metrics=metric_slice,
+                events=events,
+                memory=memory,
+            )
+        elif use_enhanced:
+            coach = await deepseek.generate_coach_summary(
+                transcript.get("text") or "",
+                metric_slice,
+                events,
+                memory,
+                profile=profile,
+                goal=goal,
+                session_context=coach_ctx,
+            )
+            if not coach:
+                coach = coach_templates.build_coach_summary(
+                    metric_slice,
+                    events,
+                    memory,
+                    profile,
+                    session_context=coach_ctx,
+                    transcript=transcript.get("text") or "",
+                )
+        else:
+            coach = coach_templates.build_coach_summary(
+                metric_slice,
+                events,
+                memory,
+                profile,
+                session_context=coach_ctx,
+                transcript=transcript.get("text") or "",
+            )
 
         transcript_path = settings.transcripts_dir / f"{session_id}.json"
         transcript_path.write_text(dumps(transcript), encoding="utf-8")

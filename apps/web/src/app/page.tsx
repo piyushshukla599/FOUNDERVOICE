@@ -1,560 +1,365 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { Pause, Play, Square, Upload, Mic, Hand, RotateCcw, Trash2 } from "lucide-react";
-import { Waveform } from "@/components/Waveform";
-import { LiveCoachPanel } from "@/components/LiveCoachPanel";
-import { Panel, Stat } from "@/components/ui";
-import { api } from "@/lib/api";
-import { useLiveCoach } from "@/hooks/useLiveCoach";
-import { listMics, openMicrophone, type MicDevice } from "@/lib/mic";
-import { MAX_UPLOAD_LABEL, assertUploadSize, formatBytes } from "@/lib/upload";
+import { ArrowRight, Flame } from "lucide-react";
+import { Divider, ErrorBanner, HeroLink, LoadingState } from "@/components/ui";
+import { DiscoveryNudge } from "@/components/FeatureIntro";
+import { ImmersiveRecorder } from "@/components/ImmersiveRecorder";
+import { ScoreRing } from "@/components/ScoreRing";
+import { VoiceViz } from "@/components/VoiceViz";
+import { usePracticeRecorder } from "@/hooks/usePracticeRecorder";
+import { useJourney } from "@/hooks/useJourney";
+import { api, QuotaError, type QuotaState } from "@/lib/api";
+import { QuotaMeter, UpgradeGate } from "@/components/UpgradeGate";
+import { DAILY_PROMPTS, founderVoiceScore } from "@/lib/founderScore";
+import { memoryDigest, todayFocus } from "@/lib/insight";
+import { goalLabel, usePrefs } from "@/lib/prefs";
 
-export default function RecordPage() {
+function greeting(hour: number) {
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
+}
+
+export default function TodayPage() {
   const router = useRouter();
-  const [stream, setStream] = useState<MediaStream | null>(null);
-  const [recording, setRecording] = useState(false);
-  const [paused, setPaused] = useState(false);
-  const [pushToTalk, setPushToTalk] = useState(false);
-  const [autoStop, setAutoStop] = useState(false); // off by default — was stopping pitches during natural pauses
-  const [liveCoach, setLiveCoach] = useState(true);
-  const [coachReady, setCoachReady] = useState(false);
-  const [starting, setStarting] = useState(false);
-  const [title, setTitle] = useState("Pitch practice");
-  const [mode, setMode] = useState("pitch");
-  const [status, setStatus] = useState("");
-  const [elapsed, setElapsed] = useState(0);
-  const [health, setHealth] = useState<{ deepseek_configured: boolean; whisper_model: string } | null>(null);
-  const [patterns, setPatterns] = useState<{ key: string; label: string; frequency: number }[]>([]);
-  const [mics, setMics] = useState<MicDevice[]>([]);
-  const [micId, setMicId] = useState("");
-
-  const mediaRecorder = useRef<MediaRecorder | null>(null);
-  const chunks = useRef<Blob[]>([]);
-  const silenceTimer = useRef<number | null>(null);
-  const silenceWatch = useRef<number | null>(null);
-  const startedAt = useRef<number>(0);
-  const elapsedTimer = useRef<number | null>(null);
-  const audioCtx = useRef<AudioContext | null>(null);
-  const analyser = useRef<AnalyserNode | null>(null);
-  const recordingRef = useRef(false);
-  const pausedRef = useRef(false);
-  const coachDelay = useRef<number | null>(null);
-  const startingRef = useRef(false);
-  const streamRef = useRef<MediaStream | null>(null);
-  const micIdRef = useRef("");
-  const autoStopRef = useRef(false);
-  const pushToTalkRef = useRef(false);
-
-  const live = useLiveCoach({
-    stream,
-    active: recording && liveCoach && coachReady,
-    paused,
-    patterns,
-    elapsedSec: elapsed,
-  });
+  const rec = usePracticeRecorder();
+  const journey = useJourney();
+  const { prefs, ready: prefsReady } = usePrefs();
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [promptIdx, setPromptIdx] = useState(0);
+  const [hour, setHour] = useState(9);
+  const [showCheck, setShowCheck] = useState(false);
+  const [uploadQuota, setUploadQuota] = useState<QuotaState | undefined>(undefined);
 
   useEffect(() => {
-    recordingRef.current = recording;
-  }, [recording]);
-  useEffect(() => {
-    pausedRef.current = paused;
-  }, [paused]);
-  useEffect(() => {
-    streamRef.current = stream;
-  }, [stream]);
-  useEffect(() => {
-    micIdRef.current = micId;
-  }, [micId]);
-  useEffect(() => {
-    autoStopRef.current = autoStop;
-    if (!autoStop) clearSilenceWatch();
-  }, [autoStop]);
-  useEffect(() => {
-    pushToTalkRef.current = pushToTalk;
-  }, [pushToTalk]);
-
-  useEffect(() => {
-    api.health().then((h) => setHealth(h)).catch(() => setHealth(null));
     api
-      .memory()
-      .then((m) => setPatterns(m.top_patterns || []))
-      .catch(() => setPatterns([]));
-
-    // Enumerate only — do NOT open the mic on load (that caused hangs on Windows).
-    void listMics()
-      .then((list) => {
-        setMics(list);
-        if (list[0]?.deviceId) setMicId(list[0].deviceId);
-        setStatus(
-          list.length
-            ? `Found ${list.length} mic(s). Click Start to record.`
-            : "No mic listed yet — click Start (browser may ask once).",
-        );
-      })
-      .catch(() => setStatus("Click Start to open the microphone."));
+      .quota()
+      .then((q) => setUploadQuota(q.features?.upload))
+      .catch(() => undefined);
   }, []);
 
-  const clearSilenceWatch = () => {
-    if (silenceTimer.current) window.clearTimeout(silenceTimer.current);
-    silenceTimer.current = null;
-    if (silenceWatch.current) window.clearInterval(silenceWatch.current);
-    silenceWatch.current = null;
-  };
-
-  const stopTracks = useCallback(() => {
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    streamRef.current = null;
-    setStream(null);
-    if (audioCtx.current) {
-      void audioCtx.current.close().catch(() => undefined);
-    }
-    audioCtx.current = null;
-    analyser.current = null;
+  useEffect(() => {
+    const now = new Date();
+    setPromptIdx(now.getDate() % DAILY_PROMPTS.length);
+    setHour(now.getHours());
   }, []);
 
-  const finalize = useCallback(async () => {
-    clearSilenceWatch();
-    if (elapsedTimer.current) window.clearInterval(elapsedTimer.current);
-    const mr = mediaRecorder.current;
-    if (!mr || mr.state === "inactive") {
-      stopTracks();
-      setRecording(false);
-      setPaused(false);
-      pushToTalkRef.current = false;
-      setPushToTalk(false);
-      setStarting(false);
-      startingRef.current = false;
-      return;
-    }
-    await new Promise<void>((resolve) => {
-      mr.onstop = () => resolve();
+  /* Anyone who has not been walked through the product gets the guided intro
+     first — including someone who already has recordings from before the
+     onboarding existed. Finishing or skipping it stamps onboardedAt. */
+  useEffect(() => {
+    if (!prefsReady || journey.loading) return;
+    if (!prefs.onboardedAt && !journey.error) router.replace("/onboarding");
+  }, [journey.error, journey.loading, prefs.onboardedAt, prefsReady, router]);
+
+  const memory = journey.memory;
+  const labs = journey.labs;
+  const mission = labs?.mission;
+  const prompt = DAILY_PROMPTS[promptIdx];
+
+  /* This week against the 30-day average — both derived in one pass so the
+     hook has a single, honest dependency. */
+  const { score, delta } = useMemo(() => {
+    const at = (key: string) => {
+      const w = memory?.windows?.[key] || {};
+      if (w.clarity == null && w.wpm == null) return null;
+      return founderVoiceScore({
+        clarity: w.clarity,
+        executive_presence: w.executive_presence,
+        confidence_est: w.confidence_est,
+        pause_quality: w.pause_quality,
+        filler_rate: w.filler_rate,
+        wpm: w.wpm,
+      });
+    };
+    const now = at("7d");
+    const before = at("30d");
+    return { score: now, delta: now != null && before != null ? now - before : null };
+  }, [memory]);
+
+  const focus = useMemo(
+    () => todayFocus(memory, mission, labs?.recommended, prefs),
+    [labs?.recommended, memory, mission, prefs],
+  );
+  const digest = useMemo(() => memoryDigest(memory), [memory]);
+  const wpm7 = memory?.windows?.["7d"]?.wpm ?? null;
+
+  const finishCheck = async () => {
+    if (busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      const result = await rec.stop();
+      if (!result || result.blob.size < 800) {
+        setError("Too short — speak the full prompt, then stop.");
+        setBusy(false);
+        return;
+      }
+      const uploaded = await api.upload(result.blob, `Today · ${prompt.label}`, "exercise", {
+        exercise_key: "one_liner",
+        exercise_title: prompt.label,
+        exercise_category: "daily",
+        exercise_description: prompt.text,
+        focus_note: prompt.text,
+      });
       try {
-        mr.stop();
+        await api.completeExercise("one_liner");
+        if (mission?.exercise_key === "one_liner" && !mission.completed) await api.completeMission();
       } catch {
-        resolve();
+        /* streak bookkeeping is not worth blocking the report on */
       }
-    });
-    const blob = new Blob(chunks.current, { type: mr.mimeType || "audio/webm" });
-    chunks.current = [];
-    setRecording(false);
-    setPaused(false);
-    pushToTalkRef.current = false;
-    setPushToTalk(false);
-    stopTracks();
-    if (coachDelay.current) window.clearTimeout(coachDelay.current);
-    setCoachReady(false);
-    setStarting(false);
-    startingRef.current = false;
-    try {
-      assertUploadSize(blob);
+      router.push(`/sessions/${uploaded.session_id}`);
     } catch (e) {
-      setStatus(e instanceof Error ? e.message : "Recording too large");
-      return;
-    }
-    setStatus("Uploading & analyzing…");
-    try {
-      const res = await api.upload(blob, title || "Untitled session", mode);
-      setStatus("Queued. Opening session…");
-      router.push(`/sessions/${res.session_id}`);
-    } catch (e) {
-      setStatus(e instanceof Error ? e.message : "Upload failed");
-    }
-  }, [mode, title, stopTracks, router]);
-
-  const watchSilence = useCallback(() => {
-    if (!autoStopRef.current || pushToTalkRef.current || !analyser.current) return;
-    clearSilenceWatch();
-    const data = new Uint8Array(analyser.current.fftSize);
-    const MIN_RECORD_MS = 8000; // don't auto-stop in the first 8s
-    const SILENCE_MS = 6000; // 6s of quiet (not 2.5s)
-    const RMS_THRESHOLD = 0.012; // quieter = more tolerant of soft speech
-
-    silenceWatch.current = window.setInterval(() => {
-      if (!analyser.current || !recordingRef.current || pausedRef.current) return;
-      if (!autoStopRef.current || pushToTalkRef.current) return;
-      if (Date.now() - startedAt.current < MIN_RECORD_MS) return;
-
-      analyser.current.getByteTimeDomainData(data);
-      let sum = 0;
-      for (let i = 0; i < data.length; i += 4) {
-        const v = (data[i] - 128) / 128;
-        sum += v * v;
+      // Running out of free recordings is a gate, not a failure to report in red.
+      if (e instanceof QuotaError) {
+        if (e.quota) setUploadQuota(e.quota);
+        setShowCheck(false);
+      } else {
+        setError(e instanceof Error ? e.message : "Upload failed.");
       }
-      const rms = Math.sqrt(sum / (data.length / 4));
-      if (rms < RMS_THRESHOLD) {
-        if (!silenceTimer.current) {
-          silenceTimer.current = window.setTimeout(() => {
-            if (recordingRef.current && autoStopRef.current && !pushToTalkRef.current) {
-              setStatus("Auto-stopped after silence — uploading…");
-              void finalize();
-            }
-          }, SILENCE_MS);
-        }
-      } else if (silenceTimer.current) {
-        window.clearTimeout(silenceTimer.current);
-        silenceTimer.current = null;
-      }
-    }, 500);
-  }, [finalize]);
-
-  const startRecording = async (opts?: { pushToTalk?: boolean }) => {
-    if (startingRef.current || recordingRef.current) return;
-    const isPtt = opts?.pushToTalk ?? false;
-    if (isPtt) {
-      pushToTalkRef.current = true;
-      setPushToTalk(true);
-      clearSilenceWatch();
-    }
-    startingRef.current = true;
-    setStarting(true);
-    chunks.current = [];
-    setCoachReady(false);
-    setStatus("Opening microphone…");
-    try {
-      stopTracks();
-
-      const media = await openMicrophone(micIdRef.current || undefined);
-      // Refresh device list now that permission is live
-      void listMics().then((list) => {
-        setMics(list);
-        if (!micIdRef.current && list[0]?.deviceId) setMicId(list[0].deviceId);
-      });
-
-      streamRef.current = media;
-      setStream(media);
-
-      const ctx = new AudioContext();
-      if (ctx.state === "suspended") await ctx.resume();
-      const source = ctx.createMediaStreamSource(media);
-      const a = ctx.createAnalyser();
-      a.fftSize = 256;
-      source.connect(a);
-      audioCtx.current = ctx;
-      analyser.current = a;
-
-      const mime = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-        ? "audio/webm;codecs=opus"
-        : MediaRecorder.isTypeSupported("audio/webm")
-          ? "audio/webm"
-          : undefined;
-      const mr = new MediaRecorder(media, mime ? { mimeType: mime } : undefined);
-      mr.ondataavailable = (e) => {
-        if (e.data.size) chunks.current.push(e.data);
-      };
-      mediaRecorder.current = mr;
-      mr.start(1000);
-
-      recordingRef.current = true;
-      setRecording(true);
-      setPaused(false);
-      startedAt.current = Date.now();
-      setElapsed(0);
-      setStatus("Recording…");
-      if (elapsedTimer.current) window.clearInterval(elapsedTimer.current);
-      elapsedTimer.current = window.setInterval(() => {
-        setElapsed(Math.floor((Date.now() - startedAt.current) / 1000));
-      }, 1000);
-      if (autoStopRef.current && !isPtt) {
-        window.setTimeout(() => watchSilence(), 500);
-      }
-      if (coachDelay.current) window.clearTimeout(coachDelay.current);
-      coachDelay.current = window.setTimeout(() => setCoachReady(true), 300);
-    } catch (e) {
-      recordingRef.current = false;
-      setRecording(false);
-      pushToTalkRef.current = false;
-      setPushToTalk(false);
-      stopTracks();
-      setStatus(e instanceof Error ? e.message : "Mic permission denied");
-    } finally {
-      startingRef.current = false;
-      setStarting(false);
+      setBusy(false);
     }
   };
 
-  const pauseResume = () => {
-    const mr = mediaRecorder.current;
-    if (!mr) return;
-    if (mr.state === "recording") {
-      mr.pause();
-      setPaused(true);
-      clearSilenceWatch();
-    } else if (mr.state === "paused") {
-      mr.resume();
-      setPaused(false);
-      if (autoStopRef.current && !pushToTalkRef.current) watchSilence();
-    }
-  };
+  if (journey.loading) return <LoadingState label="Reading your Voice Memory…" />;
 
-  const discardRecording = useCallback(async () => {
-    clearSilenceWatch();
-    if (coachDelay.current) window.clearTimeout(coachDelay.current);
-    setCoachReady(false);
-    if (elapsedTimer.current) window.clearInterval(elapsedTimer.current);
-    const mr = mediaRecorder.current;
-    if (mr && mr.state !== "inactive") {
-      await new Promise<void>((resolve) => {
-        mr.onstop = () => resolve();
-        try {
-          mr.stop();
-        } catch {
-          resolve();
-        }
-      });
-    }
-    chunks.current = [];
-    mediaRecorder.current = null;
-    stopTracks();
-    recordingRef.current = false;
-    startingRef.current = false;
-    setStarting(false);
-    setRecording(false);
-    setPaused(false);
-    pushToTalkRef.current = false;
-    setPushToTalk(false);
-    setElapsed(0);
-    setStatus("Recording discarded.");
-  }, [stopTracks]);
+  const firstRun = journey.stage === "new";
+  const hello = prefs.name ? `${greeting(hour)}, ${prefs.name}.` : `${greeting(hour)}.`;
 
-  const onFile = async (file: File | null) => {
-    if (!file) return;
-    try {
-      assertUploadSize(file);
-    } catch (e) {
-      setStatus(e instanceof Error ? e.message : "File too large");
-      return;
-    }
-    setStatus(`Uploading ${formatBytes(file.size)}…`);
-    try {
-      const res = await api.upload(file, title || file.name, mode);
-      router.push(`/sessions/${res.session_id}`);
-    } catch (e) {
-      setStatus(e instanceof Error ? e.message : "Upload failed");
-    }
-  };
+  /* While recording, everything else disappears. */
+  if (rec.recording || busy) {
+    return (
+      <div className="mx-auto max-w-2xl">
+        <ImmersiveRecorder
+          title={prompt.label}
+          targetSec={60}
+          recording={rec.recording}
+          starting={rec.starting}
+          elapsed={rec.elapsed}
+          stream={rec.stream}
+          liveTranscript={rec.liveTranscript}
+          busy={busy}
+          onStart={() => void rec.start()}
+          onStop={() => void finishCheck()}
+        />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <header className="space-y-2">
-        <p className="text-xs uppercase tracking-[0.25em] text-[var(--accent)]">FounderVoice AI</p>
-        <h2 className="font-[family-name:var(--font-display)] text-4xl md:text-5xl">Record with intention</h2>
-        <p className="max-w-2xl text-[var(--muted)]">
-          Not a passive recorder — an active driving instructor for your voice. Live Coach adapts while you speak.
-          For all-day auto-detection, use{" "}
-          <a href="/listen" className="text-[var(--accent)] underline-offset-2 hover:underline">
-            Smart Session
-          </a>
-          .
-        </p>
-      </header>
+    <div className="mx-auto max-w-2xl pt-2 md:pt-8">
+      {journey.error && (
+        <ErrorBanner
+          message={journey.error}
+          hint="Start the local API on port 8000, then reload this page."
+        />
+      )}
+      {error && <ErrorBanner message={error} />}
+      {rec.error && <ErrorBanner message={rec.error} />}
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Stat label="Whisper" value={health?.whisper_model || "…"} hint="Local ASR" />
-        <Stat label="AI Executive Coach" value="Ready" hint="Local analysis + coaching" />
-        <Stat label="Elapsed" value={`${elapsed}s`} hint={recording ? (paused ? "Paused" : "Live") : "Idle"} />
+      <div className="fv-enter flex items-center justify-between gap-4">
+        <p className="text-[13px] text-[var(--muted)]">{hello}</p>
+        <span className="flex items-center gap-2.5">
+          <QuotaMeter quota={uploadQuota} />
+          {labs?.streak ? (
+            <span className="inline-flex items-center gap-1.5 text-[12.5px] fv-gold">
+              <Flame size={13} /> {labs.streak} day streak
+            </span>
+          ) : null}
+        </span>
       </div>
 
-      <Panel>
-        <div className="mb-4 flex flex-wrap gap-3">
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="min-w-[220px] flex-1 rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-sm outline-none focus:border-[var(--accent)]"
-            placeholder="Session title"
-          />
-          <select
-            value={mode}
-            onChange={(e) => setMode(e.target.value)}
-            className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-sm"
-          >
-            <option value="pitch">Pitch</option>
-            <option value="practice">Practice</option>
-            <option value="exercise">Exercise</option>
-            <option value="free">Free</option>
-          </select>
-          <label className="inline-flex items-center gap-2 rounded-xl border border-[var(--accent)]/40 bg-[rgba(196,163,90,0.08)] px-3 py-2 text-sm text-[var(--accent)]">
-            <input
-              type="checkbox"
-              checked={liveCoach}
-              onChange={(e) => setLiveCoach(e.target.checked)}
-            />
-            Live Coach Mode
-          </label>
-          <select
-            value={micId}
-            onChange={(e) => setMicId(e.target.value)}
-            className="min-w-[180px] max-w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-sm"
-            title="Microphone"
-          >
-            {mics.length === 0 ? (
-              <option value="">Default microphone</option>
-            ) : (
-              mics.map((m) => (
-                <option key={m.deviceId || m.label} value={m.deviceId}>
-                  {m.label}
-                </option>
-              ))
-            )}
-          </select>
-          <button
-            type="button"
-            disabled={starting || recording}
-            onClick={() => {
-              void listMics()
-                .then((list) => {
-                  setMics(list);
-                  if (list[0]?.deviceId && !list.find((x) => x.deviceId === micId)) {
-                    setMicId(list[0].deviceId);
-                  }
-                  setStatus(list.length ? `Found ${list.length} mic(s).` : "No microphones found.");
-                })
-                .catch((e) => setStatus(e instanceof Error ? e.message : "Could not list mics"));
-            }}
-            className="rounded-xl border border-[var(--line)] px-3 py-2 text-sm text-[var(--muted)] disabled:opacity-50"
-          >
-            Refresh mics
-          </button>
+      {/* ------------------------------------------------- 1. The score, big */}
+      {!firstRun && (
+        <div className="fv-enter flex justify-center pt-8 pb-2">
+          <ScoreRing value={score} delta={delta} label="Founder presence" />
         </div>
+      )}
 
-        {recording && liveCoach && coachReady ? (
-          <LiveCoachPanel
-            stream={stream}
-            active={recording && !paused}
-            metrics={live.metrics}
-            sentenceTip={live.sentenceTip}
-            coachHint={live.coachHint}
-            ghostHint={live.ghostHint}
-            speechSupported={live.speechSupported}
+      {/* ----------------------------------------- 2. The opportunity + action */}
+      <section className="fv-enter fv-halo pt-8 text-center">
+        <p className="fv-eyebrow">
+          {firstRun ? "Start here" : "What your voice is doing"}
+        </p>
+        <h1 className="fv-lede mx-auto mt-3">
+          {firstRun
+            ? "Let us hear how you speak."
+            : focus
+              ? focus.headline
+              : "Sound like someone they trust."}
+        </h1>
+        <p className="mx-auto mt-4 max-w-md text-[14px] leading-relaxed text-[var(--muted)]">
+          {firstRun
+            ? "Sixty seconds of natural speech is enough to name the one habit costing you the most."
+            : focus?.why || `Training for ${goalLabel(prefs.goal).toLowerCase()}.`}
+        </p>
+
+        {/* The instruction sits under the observation, and its number sits
+            beside it — a heading should never carry its own spec in brackets. */}
+        {!firstRun && focus?.action && (
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
+            <span className="fv-eyebrow-quiet">Today</span>
+            <span className="text-[15px] leading-snug text-[var(--ink-dim)]">{focus.action}</span>
+            {focus.target && <span className="fv-pill fv-pill-accent">{focus.target}</span>}
+          </div>
+        )}
+
+        {!firstRun && (
+          <div className="mt-7">
+            <VoiceViz active={false} height={72} />
+            {wpm7 != null && (
+              <p className="mt-3 flex flex-wrap items-center justify-center gap-2 text-[12px]">
+                <span className="fv-pill">
+                  <span className="fv-num fv-grad-text text-[14px] font-semibold">
+                    {Math.round(wpm7)}
+                  </span>
+                  <span className="text-[var(--muted)]">WPM, your pace</span>
+                </span>
+                <span className="fv-pill text-[var(--muted)]">130–140 is the room</span>
+              </p>
+            )}
+          </div>
+        )}
+      </section>
+
+      <div className="pt-9">
+        {uploadQuota?.exhausted ? (
+          <UpgradeGate
+            quota={uploadQuota}
+            title="You have used your free recordings"
+            body="Every recording runs a full local transcription and analysis. The free tier covers five — Pro removes the cap."
+          />
+        ) : firstRun || showCheck ? (
+          <ImmersiveRecorder
+            title={prompt.label}
+            subtitle={prompt.text}
+            meta={`60 seconds · ${prompt.label}`}
+            targetSec={60}
+            startLabel="Start speaking"
+            recording={rec.recording}
+            starting={rec.starting}
+            elapsed={rec.elapsed}
+            stream={rec.stream}
+            liveTranscript={rec.liveTranscript}
+            disabled={busy}
+            onStart={() => void rec.start()}
+            onStop={() => void finishCheck()}
+            footer={
+              <button
+                type="button"
+                onClick={() => setPromptIdx((i) => (i + 1) % DAILY_PROMPTS.length)}
+                className="mt-4 text-[12.5px] text-[var(--faint)] transition-colors hover:text-[var(--muted)]"
+              >
+                Try a different prompt
+              </button>
+            }
           />
         ) : (
-          <Waveform stream={stream} active={recording && !paused} />
-        )}
-
-        <div className="mt-5 flex flex-wrap items-center gap-3">
-          {!recording ? (
+          <div className="fv-enter flex flex-col items-center">
+            <HeroLink href={focus?.labKey ? `/trainer?lab=${encodeURIComponent(focus.labKey)}` : "/trainer"}>
+              Practice now
+            </HeroLink>
+            <p className="mt-3.5 text-[12.5px] text-[var(--faint)]">
+              {prefs.sessionLength} min · {goalLabel(prefs.goal)}
+            </p>
             <button
-              onClick={() => void startRecording()}
-              disabled={starting}
-              className="inline-flex items-center gap-2 rounded-xl bg-[var(--accent-2)] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+              type="button"
+              onClick={() => setShowCheck(true)}
+              className="mt-5 text-[13px] text-[var(--muted)] transition-colors hover:text-[var(--ink)]"
             >
-              <Mic size={16} /> {starting ? "Starting…" : "Start"}
+              or record a 60-second check
             </button>
-          ) : (
-            <>
-              <button
-                onClick={pauseResume}
-                className="inline-flex items-center gap-2 rounded-xl border border-[var(--line)] px-4 py-2.5 text-sm"
-              >
-                {paused ? <Play size={16} /> : <Pause size={16} />} {paused ? "Resume" : "Pause"}
-              </button>
-              <button
-                onClick={() => void finalize()}
-                className="inline-flex items-center gap-2 rounded-xl bg-[var(--danger)] px-4 py-2.5 text-sm font-semibold text-white"
-              >
-                <Square size={16} /> Stop & analyze
-              </button>
-              <button
-                onClick={() => {
-                  void (async () => {
-                    await discardRecording();
-                    setStatus("");
-                    await startRecording();
-                  })();
-                }}
-                className="inline-flex items-center gap-2 rounded-xl border border-[var(--accent)] px-4 py-2.5 text-sm text-[var(--accent)]"
-              >
-                <RotateCcw size={16} /> Restart
-              </button>
-              <button
-                onClick={() => void discardRecording()}
-                className="inline-flex items-center gap-2 rounded-xl border border-[var(--line)] px-4 py-2.5 text-sm text-[var(--muted)]"
-              >
-                <Trash2 size={16} /> Discard
-              </button>
-            </>
-          )}
-
-          <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-[var(--line)] px-4 py-2.5 text-sm">
-            <Upload size={16} /> Drop / upload
-            <input
-              type="file"
-              accept="audio/*,.wav,.mp3,.m4a,.flac"
-              className="hidden"
-              onChange={(e) => void onFile(e.target.files?.[0] || null)}
-            />
-          </label>
-
-          <label className="inline-flex items-center gap-2 text-sm text-[var(--muted)]" title="Only when checked: stops and uploads after ~6s of silence (never in first 8s)">
-            <input
-              type="checkbox"
-              checked={autoStop}
-              onChange={(e) => {
-                setAutoStop(e.target.checked);
-                if (!e.target.checked) clearSilenceWatch();
-                else if (recordingRef.current && !pushToTalkRef.current) watchSilence();
-              }}
-            />
-            Auto-stop after long silence
-          </label>
-
-          <button
-            type="button"
-            disabled={starting}
-            onPointerDown={(e) => {
-              e.preventDefault();
-              if (!recordingRef.current) void startRecording({ pushToTalk: true });
-            }}
-            onPointerUp={(e) => {
-              e.preventDefault();
-              if (pushToTalkRef.current && recordingRef.current) {
-                pushToTalkRef.current = false;
-                setPushToTalk(false);
-                void finalize();
-              }
-            }}
-            onPointerCancel={() => {
-              if (pushToTalkRef.current && recordingRef.current) {
-                pushToTalkRef.current = false;
-                setPushToTalk(false);
-                void finalize();
-              }
-            }}
-            className="inline-flex items-center gap-2 rounded-xl border border-[var(--accent)] px-4 py-2.5 text-sm text-[var(--accent)] disabled:opacity-60 touch-none select-none"
-          >
-            <Hand size={16} /> {pushToTalk || starting ? "Hold to talk…" : "Push to talk"}
-          </button>
-        </div>
-
-        <div
-          className="mt-5 rounded-xl border border-dashed border-[var(--line)] p-6 text-center text-sm text-[var(--muted)]"
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={(e) => {
-            e.preventDefault();
-            const f = e.dataTransfer.files?.[0];
-            if (f) void onFile(f);
-          }}
-        >
-          Drag & drop WAV / MP3 / M4A / FLAC here
-          <span className="mt-2 block text-xs">Max file size {MAX_UPLOAD_LABEL}</span>
-        </div>
-
-        {status && (
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className={`mt-4 text-sm ${
-              /too large|timed out|denied|no mic|could not|error|fail/i.test(status)
-                ? "text-[var(--danger)]"
-                : "text-[var(--accent)]"
-            }`}
-          >
-            {status}
-          </motion.p>
+          </div>
         )}
-      </Panel>
+      </div>
+
+      {/* --------------------------------------------- 3. Progress, quietly */}
+      {!firstRun && (digest.improving.length > 0 || digest.attention.length > 0 || journey.hasTrend) && (
+        <>
+          <Divider />
+          <section className="fv-enter">
+            <div className="flex items-center justify-between gap-4">
+              <p className="fv-eyebrow-quiet">Moving</p>
+              {journey.hasTrend && (
+                <Link
+                  href="/dashboard"
+                  className="inline-flex items-center gap-1.5 text-[12.5px] text-[var(--muted)] transition-colors hover:text-[var(--violet-bright)]"
+                >
+                  Full progress <ArrowRight size={12} />
+                </Link>
+              )}
+            </div>
+            <ul className="mt-3 space-y-1.5 text-[13.5px] leading-relaxed text-[var(--ink-dim)]">
+              {digest.improving.slice(0, 1).map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+              {digest.attention.slice(0, 1).map((line) => (
+                <li key={line} className="text-[var(--muted)]">
+                  {line}
+                </li>
+              ))}
+              {!digest.improving.length && !digest.attention.length && (
+                <li className="text-[var(--muted)]">
+                  {Math.max(0, 3 - journey.readyCount)} more session
+                  {3 - journey.readyCount === 1 ? "" : "s"} and your trend opens up.
+                </li>
+              )}
+            </ul>
+          </section>
+        </>
+      )}
+
+      {(labs?.recommended || []).length > 0 && (
+        <>
+          <Divider />
+          <section className="fv-enter space-y-3">
+            <p className="fv-eyebrow-quiet">Also worth your time</p>
+            <div className="fv-stagger grid gap-2.5 sm:grid-cols-2">
+              {(labs?.recommended || []).slice(0, 2).map((lab) => (
+                <Link
+                  key={lab.key}
+                  href={`/trainer?lab=${encodeURIComponent(lab.key)}`}
+                  className="fv-tile group"
+                >
+                  <p className="text-[14px] leading-relaxed text-[var(--ink-dim)] transition-colors group-hover:text-[var(--ink)]">
+                    {lab.sound || lab.why || lab.description}
+                  </p>
+                  <span className="mt-2.5 inline-flex items-center gap-1.5 text-[12.5px] text-[var(--violet-bright)]">
+                    {lab.title}
+                    <ArrowRight size={13} className="transition-transform group-hover:translate-x-1" />
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
+        </>
+      )}
+
+      <div className="space-y-2 pt-10">
+        {journey.hasRecorded && !journey.hasLab && (
+          <DiscoveryNudge id="nudge-labs" question="Want to fix the habit we found?" cta="Open Labs" href="/trainer" />
+        )}
+        {journey.hasLab && !journey.hasListen && (
+          <DiscoveryNudge
+            id="nudge-listen"
+            question="Want to see whether this happens in real conversations?"
+            cta="Try Listen"
+            href="/listen"
+          />
+        )}
+        {journey.readyCount >= 3 && !journey.hasPractice && (
+          <DiscoveryNudge
+            id="nudge-practice"
+            question="Ready to test yourself under pressure?"
+            cta="Try Practice"
+            href="/practice"
+          />
+        )}
+      </div>
     </div>
   );
 }

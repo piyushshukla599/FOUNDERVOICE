@@ -59,7 +59,7 @@ npm install
 npm run dev
 ```
 
-Open the URL Next prints (usually `http://localhost:3000`; may use **3001** if 3000 is busy).
+Open the URL Next prints (usually `http://localhost:3000`; **3001 or 3002** if 3000 is busy). Use the printed Local URL. CORS allows localhost on those ports after API restart.
 
 Root: `npm run dev:web`.
 
@@ -88,7 +88,7 @@ From `config.py` + `.env.example`:
 | `WHISPER_DEVICE` | `cpu` | |
 | `WHISPER_COMPUTE_TYPE` | `int8` | |
 | `DATA_DIR` | repo `data/` absolute default | `.env.example` uses `../../data` when cwd is `apps/api` |
-| `CORS_ORIGINS` | localhost + `192.168.1.7:3000` | Comma-separated |
+| `CORS_ORIGINS` | localhost 3000–3002 + LAN examples | Comma-separated; `main.py` also allows localhost/127.0.0.1 any port via regex |
 | `MAX_UPLOAD_BYTES` | `104857600` (100 MB) | Not in `.env.example`; overridable via env |
 
 ## First-run data
@@ -98,14 +98,14 @@ On API import, `init_db()`:
 1. Creates `data/`, `audio/`, `transcripts/`, `reports/`, `models/`
 2. Creates SQLite tables
 3. Runs light migrations (extra `sessions` columns)
-4. Seeds **22** exercises (`INSERT OR IGNORE`)
+4. Seeds **25** exercises (`INSERT OR IGNORE`) plus levels
 
 ## Common failures (observed in ops)
 
 | Symptom | Likely cause |
 |---------|----------------|
-| Web “Failed to fetch” | API not running, or wrong `NEXT_PUBLIC_API_BASE` / CORS |
-| Port 8000 in use (Windows 10048) | Old uvicorn still bound — kill process, restart |
+| Web “Failed to fetch” / blank data | API down, **or CORS** (web on 3002 while API only allowed 3000) — restart API |
+| Port 8000 in use (Windows 10048) | Old uvicorn still bound — keep it, or `taskkill` that PID then restart |
 | Analysis error NameError | Bug in analysis code; check API traceback |
 | Transcript warning / demo text | Whisper failed → `demo-fallback` transcript |
 | DeepSeek “Key needed” on Record | Health shows `deepseek_configured: false` — app still analyzes; coach uses rule fallback |

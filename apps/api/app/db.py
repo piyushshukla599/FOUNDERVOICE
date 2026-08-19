@@ -106,7 +106,8 @@ CREATE TABLE IF NOT EXISTS exercises (
     category TEXT NOT NULL,
     description TEXT,
     duration_sec INTEGER DEFAULT 120,
-    target_pattern TEXT
+    target_pattern TEXT,
+    level INTEGER DEFAULT 1
 );
 
 CREATE TABLE IF NOT EXISTS exercise_completions (
@@ -196,6 +197,15 @@ CREATE TABLE IF NOT EXISTS contact_leads (
     interest TEXT
 );
 
+CREATE TABLE IF NOT EXISTS usage_quota (
+    bucket TEXT NOT NULL,
+    feature TEXT NOT NULL,
+    used INTEGER NOT NULL DEFAULT 0,
+    first_seen TEXT NOT NULL,
+    last_seen TEXT NOT NULL,
+    PRIMARY KEY (bucket, feature)
+);
+
 CREATE INDEX IF NOT EXISTS idx_sessions_created ON sessions(created_at);
 CREATE INDEX IF NOT EXISTS idx_events_session ON events(session_id);
 CREATE INDEX IF NOT EXISTS idx_events_kind ON events(kind);
@@ -230,6 +240,9 @@ def _migrate(conn: sqlite3.Connection) -> None:
         )
         """
     )
+    ex_cols = {r[1] for r in conn.execute("PRAGMA table_info(exercises)").fetchall()}
+    if "level" not in ex_cols:
+        conn.execute("ALTER TABLE exercises ADD COLUMN level INTEGER DEFAULT 1")
     conn.execute(
         """
         CREATE TABLE IF NOT EXISTS contact_leads (
@@ -268,7 +281,39 @@ SEED_EXERCISES = [
     ("open_vowels", "Open Vowel Practice", "projection", "Read sentences exaggerating open vowels (ah/oh/ay), then normalize while keeping space.", 120, "weak_projection"),
     ("tech_explain", "Technical Explanation", "executive", "Explain a technical concept to a non-expert in 90s at 130 WPM with finished word endings.", 120, "drop_technical_endings"),
     ("investor_ask", "Investor Ask Practice", "executive", "Deliver your ask in 45s: calm, clear, one pause before the number, finished consonants.", 90, "rush_on_intro"),
+    ("one_liner", "45s One-Liner", "executive", "Company in one breath. Pause after the hook. 130 WPM.", 60, "rush_on_intro"),
+    ("hard_question", "Hard Question Hold", "confidence", "Answer a tough question. Exhale. Pause 1s. Lead with the headline.", 90, "confidence_drop_qa"),
+    ("board_update", "Board Update", "storytelling", "What shipped, what slipped, what's next — 90s with one pause per beat.", 90, "weak_transitions"),
 ]
+
+# Level 1 = warm / easy  ·  2 = control  ·  3 = under pressure
+EXERCISE_LEVELS: dict[str, int] = {
+    "breath_box": 1,
+    "warmup_hum": 1,
+    "lip_trills": 1,
+    "filler_fast": 1,
+    "pause_drill_3": 1,
+    "confidence_stance": 1,
+    "one_liner": 1,
+    "breath_diaphragm": 2,
+    "consonant_finish": 2,
+    "strategic_pause": 2,
+    "pitch_variation": 2,
+    "emphasis_keywords": 2,
+    "chest_resonance": 2,
+    "open_vowels": 2,
+    "hard_word_ladder": 2,
+    "articulation_twisters": 2,
+    "board_update": 2,
+    "executive_open": 3,
+    "executive_presence": 3,
+    "story_arc": 3,
+    "tech_explain": 3,
+    "investor_ask": 3,
+    "projection_support": 3,
+    "pronunciation_tech": 3,
+    "hard_question": 3,
+}
 
 
 def utc_now() -> str:
@@ -294,6 +339,9 @@ def init_db() -> None:
                 """,
                 row,
             )
+        for key, level in EXERCISE_LEVELS.items():
+            conn.execute("UPDATE exercises SET level=? WHERE key=?", (level, key))
+        conn.execute("UPDATE exercises SET level=1 WHERE level IS NULL OR level < 1")
         conn.commit()
 
 

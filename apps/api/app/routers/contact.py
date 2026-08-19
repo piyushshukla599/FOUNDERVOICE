@@ -80,7 +80,9 @@ def submit_contact(request: Request, body: ContactBody) -> dict[str, Any]:
         raise HTTPException(400, "Please enter a valid email.")
 
     interest = (body.interest or "general").strip().lower()
-    if interest not in {"feedback", "general", "upgrade", "pro"}:
+    # Must stay in step with INTERESTS in apps/web/src/app/contact/ContactForm.tsx —
+    # an unlisted value is silently relabelled "general" and the lead loses its reason.
+    if interest not in {"feedback", "general", "upgrade", "pro", "support", "partnership"}:
         interest = "general"
 
     with connect() as conn:

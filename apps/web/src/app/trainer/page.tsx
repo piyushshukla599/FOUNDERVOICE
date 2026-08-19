@@ -1,50 +1,71 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Panel, Stat } from "@/components/ui";
-import { PracticeRecorderBar } from "@/components/PracticeRecorderBar";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ArrowLeft, ArrowRight, Flame } from "lucide-react";
+import { Divider, ErrorBanner, EmptyState, HeroLink, LoadingState } from "@/components/ui";
+import { FeatureIntro } from "@/components/FeatureIntro";
+import { TrainingPath } from "@/components/TrainingPath";
+import { ImmersiveRecorder } from "@/components/ImmersiveRecorder";
 import { usePracticeRecorder } from "@/hooks/usePracticeRecorder";
-import { api, type ExercisesData } from "@/lib/api";
+import { api, type ExerciseItem, type ExercisesData } from "@/lib/api";
+import { splitTarget } from "@/lib/insight";
 import { fmtTime } from "@/lib/utils";
 
-type Exercise = ExercisesData["exercises"][number];
+const LEVELS = [
+  { n: 0, name: "For you", blurb: "From your voice history" },
+  { n: 1, name: "Warm", blurb: "Breath, fillers, pause" },
+  { n: 2, name: "Control", blurb: "Clarity and pace" },
+  { n: 3, name: "Pressure", blurb: "The ask, and presence" },
+];
 
-export default function TrainerPage() {
+export default function TrainerRoute() {
+  return (
+    <Suspense fallback={<LoadingState label="Loading Labs…" />}>
+      <TrainerPage />
+    </Suspense>
+  );
+}
+
+function TrainerPage() {
   const router = useRouter();
+  const search = useSearchParams();
   const rec = usePracticeRecorder();
   const [data, setData] = useState<ExercisesData | null>(null);
-  const [active, setActive] = useState<Exercise | null>(null);
+  const [active, setActive] = useState<ExerciseItem | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [lastSessionId, setLastSessionId] = useState<string | null>(null);
+  const [tab, setTab] = useState(0);
+  const openedLab = useRef(false);
 
-  const load = () =>
+  useEffect(() => {
     api
       .exercises()
       .then(setData)
-      .catch((e) => setError(e.message));
-
-  useEffect(() => {
-    load();
+      .catch((e) => setError(e instanceof Error ? e.message : "Could not load Labs"));
   }, []);
 
-  // Auto-stop when drill timer hits target
-  useEffect(() => {
-    if (!active || !rec.recording) return;
-    if (rec.elapsed >= active.duration_sec) {
-      void finishDrill();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rec.elapsed, rec.recording, active]);
+  const beginDrill = useCallback(
+    (ex: ExerciseItem) => {
+      setActive(ex);
+      setError("");
+      void rec.discard();
+    },
+    [rec],
+  );
 
-  const beginDrill = (ex: Exercise) => {
-    setActive(ex);
-    setLastSessionId(null);
-    setError("");
-    void rec.discard();
-  };
+  /* Deep link from a session report / Today: /trainer?lab=<key> */
+  useEffect(() => {
+    if (!data || openedLab.current) return;
+    const key = search.get("lab");
+    if (!key) return;
+    const ex = data.exercises.find((e) => e.key === key);
+    if (ex) {
+      openedLab.current = true;
+      beginDrill(ex);
+    }
+  }, [beginDrill, data, search]);
 
   const finishDrill = useCallback(async () => {
     if (!active || busy) return;
@@ -53,17 +74,16 @@ export default function TrainerPage() {
     try {
       const result = await rec.stop();
       if (!result || result.blob.size < 1000) {
-        setError("Recording too short — try again and speak for the full drill.");
+        setError("Too short — speak the line, then stop.");
         setBusy(false);
         return;
       }
-      const title = `Labs · ${active.title} · ${new Date().toLocaleString()}`;
-      const uploaded = await api.upload(result.blob, title, "exercise", {
+      const uploaded = await api.upload(result.blob, `Labs · ${active.title}`, "exercise", {
         exercise_key: active.key,
         exercise_title: active.title,
         exercise_category: active.category,
         exercise_description: active.description,
-        focus_note: `Full Record-equivalent evaluation for Labs drill: ${active.title}`,
+        focus_note: `Lab specialty only. Coach this drill: ${active.title}. Speak: ${active.speak || ""}. How: ${active.how || ""}. Sense: ${active.sense || ""}`,
       });
       await api.completeExercise(active.key);
       if (data?.mission?.exercise_key === active.key && !data.mission.completed) {
@@ -73,192 +93,258 @@ export default function TrainerPage() {
           /* non-fatal */
         }
       }
-      setLastSessionId(uploaded.session_id);
-      await load();
+      /* A finished drill is what unlocks a pending real-world verdict. */
+      try {
+        const sessions = await api.listListening();
+        const pending = sessions.find(
+          (row) =>
+            row.status === "ended" &&
+            (row.summary?.verdict_status === "pending" || row.summary?.verdict?.status === "pending"),
+        );
+        if (pending) await api.unlockVerdict(pending.id, uploaded.session_id);
+      } catch {
+        /* non-fatal */
+      }
       setActive(null);
       router.push(`/sessions/${uploaded.session_id}`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Upload failed — is the API running?");
+      setError(e instanceof Error ? e.message : "Upload failed — is the local API running?");
     } finally {
       setBusy(false);
     }
   }, [active, busy, data?.mission, rec, router]);
 
-  const cancelDrill = async () => {
-    await rec.discard();
-    setActive(null);
-    setBusy(false);
-  };
+  /* Drills are timed — stop automatically when the clock runs out. */
+  useEffect(() => {
+    if (!active || !rec.recording) return;
+    if (rec.elapsed >= active.duration_sec) void finishDrill();
+  }, [active, finishDrill, rec.elapsed, rec.recording]);
 
-  if (!data && !error) return <p className="text-[var(--muted)]">Loading Labs…</p>;
+  if (!data && !error) return <LoadingState label="Loading Labs…" />;
 
-  const byCategory = (data?.exercises || []).reduce<Record<string, Exercise[]>>((acc, ex) => {
-    const cat = ex.category || "other";
-    (acc[cat] ||= []).push(ex);
-    return acc;
-  }, {});
+  const list = tab === 0 ? data?.recommended || [] : (data?.exercises || []).filter((e) => (e.level || 1) === tab);
+  const topPick = (data?.recommended || [])[0];
+  const mission = data?.mission;
+  const missionTitle = splitTarget(mission?.title);
+  const missionTarget = mission?.target || missionTitle.target;
 
-  return (
-    <div className="space-y-6">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h2 className="font-[family-name:var(--font-display)] text-4xl">Voice Labs</h2>
-          <p className="mt-2 text-[var(--muted)]">
-            2–15 min vocal training. Every drill gets the <strong>same full evaluation as Record</strong>
-            {" "}(WPM, clarity, presence, coach) — saved as its own Labs session report.
-          </p>
-        </div>
-        {data && <Stat label="Streak" value={`${data.streak}d`} />}
-      </header>
+  /* ------------------------------------------------------------ drill view */
+  if (active) {
+    return (
+      <div className="mx-auto max-w-2xl pt-2 md:pt-8">
+        <button
+          type="button"
+          onClick={() => {
+            void rec.discard();
+            setActive(null);
+          }}
+          className="fv-enter inline-flex items-center gap-1.5 text-[13px] text-[var(--muted)] transition-colors hover:text-[var(--ink)]"
+        >
+          <ArrowLeft size={14} /> All labs
+        </button>
 
-      {error && <p className="text-sm text-[var(--danger)]">{error}</p>}
-      {rec.error && <p className="text-sm text-[var(--danger)]">{rec.error}</p>}
-
-      {data?.mission && !active && (
-        <Panel className="border-[var(--accent)]/30">
-          <div className="text-xs uppercase tracking-[0.2em] text-[var(--accent)]">Today&apos;s Mission</div>
-          <h3 className="mt-1 font-[family-name:var(--font-display)] text-xl">{data.mission.title}</h3>
-          {data.mission.why && <p className="mt-1 text-sm text-[var(--muted)]">{data.mission.why}</p>}
-          {data.mission.exercise_key && (
-            <button
-              type="button"
-              className="mt-3 rounded-xl bg-[var(--accent-2)] px-4 py-2 text-sm font-semibold text-white"
-              onClick={() => {
-                const ex = data.exercises.find((e) => e.key === data.mission?.exercise_key);
-                if (ex) beginDrill(ex);
-              }}
-            >
-              Start mission drill
-            </button>
-          )}
-        </Panel>
-      )}
-
-      {(data?.hard_words?.length || 0) > 0 && !active && (
-        <Panel>
-          <h3 className="font-[family-name:var(--font-display)] text-xl">Your hard words</h3>
-          <p className="mt-1 text-sm text-[var(--muted)]">
-            Practice at slow → normal → presentation speed. Finish every consonant.
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {data!.hard_words!.map((w) => (
-              <span key={w.word} className="rounded-lg border border-[var(--line)] px-3 py-1 text-sm">
-                {w.word}
-              </span>
-            ))}
+        {error && (
+          <div className="pt-4">
+            <ErrorBanner message={error} />
           </div>
-          <button
-            type="button"
-            className="mt-3 text-sm text-[var(--accent)] hover:underline"
-            onClick={() => {
-              const ex = data!.exercises.find((e) => e.key === "hard_word_ladder");
-              if (ex) beginDrill(ex);
-            }}
-          >
-            Open Hard Word Ladder →
-          </button>
-        </Panel>
-      )}
-
-      {active ? (
-        <Panel className="space-y-4">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <div className="text-xs uppercase tracking-wider text-[var(--accent)]">{active.category}</div>
-              <h3 className="font-[family-name:var(--font-display)] text-2xl">{active.title}</h3>
-              <p className="mt-2 max-w-2xl text-sm text-[var(--muted)]">{active.description}</p>
-              {(data?.hard_words?.length || 0) > 0 && active.key.includes("hard_word") && (
-                <p className="mt-2 text-sm">
-                  Words: {data!.hard_words!.map((w) => w.word).join(" · ")}
-                </p>
-              )}
-              <p className="mt-2 text-xs text-[var(--muted)]">Target {fmtTime(active.duration_sec)}</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => void cancelDrill()}
-              className="text-sm text-[var(--muted)] hover:text-[var(--ink)]"
-            >
-              Cancel
-            </button>
+        )}
+        {rec.error && (
+          <div className="pt-4">
+            <ErrorBanner message={rec.error} />
           </div>
+        )}
 
-          <PracticeRecorderBar
+        {/* One continuous surface: the line, then the microphone. */}
+        <section className="fv-enter fv-halo pt-8 text-center">
+          <p className="fv-eyebrow">
+            {active.category} · {fmtTime(active.duration_sec)}
+          </p>
+          <p className="mx-auto mt-5 max-w-xl text-[11px] uppercase tracking-[0.2em] text-[var(--faint)]">
+            Speak this
+          </p>
+          <blockquote className="fv-display mx-auto mt-3 max-w-xl text-[1.5rem] leading-snug md:text-[1.75rem]">
+            “{active.speak || active.description}”
+          </blockquote>
+        </section>
+
+        <div className="pt-8">
+          <ImmersiveRecorder
+            title={active.title}
+            meta={`${fmtTime(active.duration_sec)} · we review this drill only`}
+            targetSec={active.duration_sec}
+            startLabel="Start practice"
             recording={rec.recording}
             starting={rec.starting}
             elapsed={rec.elapsed}
             stream={rec.stream}
             liveTranscript={rec.liveTranscript}
-            targetSec={active.duration_sec}
-            startLabel="Start drill"
             disabled={busy}
+            busy={busy}
+            busyLabel="Reviewing this drill…"
             onStart={() => void rec.start()}
             onStop={() => void finishDrill()}
           />
+        </div>
 
-          {busy && <p className="text-sm text-[var(--muted)]">Uploading & analyzing…</p>}
-        </Panel>
-      ) : (
-        <>
-          {lastSessionId && (
-            <Panel>
-              <p className="text-sm">
-                Last drill saved.{" "}
-                <Link href={`/sessions/${lastSessionId}`} className="text-[var(--accent)] hover:underline">
-                  Open analysis
-                </Link>
-              </p>
-            </Panel>
+        {!rec.recording && !busy && (
+          <>
+            <Divider />
+            <div className="fv-enter grid gap-7 sm:grid-cols-2">
+              <div>
+                <p className="fv-eyebrow-quiet mb-2">How to speak it</p>
+                <p className="text-[13.5px] leading-relaxed text-[var(--ink-dim)]">
+                  {active.how || active.description}
+                </p>
+              </div>
+              <div>
+                <p className="fv-eyebrow-quiet mb-2">What this trains</p>
+                <p className="text-[13.5px] leading-relaxed text-[var(--ink-dim)]">
+                  {active.sense || active.why || "One habit at a time. Stay on this skill only."}
+                </p>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
+
+  /* ------------------------------------------------------------- list view */
+  return (
+    <div className="mx-auto max-w-2xl pt-2 md:pt-8">
+      <div className="fv-enter flex items-center justify-between gap-4">
+        <p className="fv-eyebrow">Train one skill</p>
+        {data?.streak ? (
+          <span className="inline-flex items-center gap-1.5 text-[12.5px] fv-gold">
+            <Flame size={13} /> {data.streak} day streak
+          </span>
+        ) : null}
+      </div>
+
+      {error && (
+        <div className="pt-4">
+          <ErrorBanner message={error} />
+        </div>
+      )}
+      {rec.error && (
+        <div className="pt-4">
+          <ErrorBanner message={rec.error} />
+        </div>
+      )}
+
+      <FeatureIntro
+        id="intro-labs"
+        title="Labs turn your weaknesses into exercises."
+        body="One habit, one line to say, a couple of minutes. We review only that skill — not everything about your voice."
+      />
+
+      {/* The recommended drill is the page, not a card on it. */}
+      {(mission || topPick) && (
+        <section className="fv-enter fv-halo pt-6 text-center">
+          <h1 className="fv-lede mx-auto">{missionTitle.text || topPick?.title}</h1>
+          {(mission?.why || topPick?.sound || topPick?.why) && (
+            <p className="mx-auto mt-4 max-w-md text-[14px] leading-relaxed text-[var(--muted)]">
+              {mission?.why || topPick?.sound || topPick?.why}
+            </p>
           )}
 
-          <Panel>
-            <h3 className="mb-3 font-[family-name:var(--font-display)] text-xl">Recommended for you</h3>
-            <div className="grid gap-3 md:grid-cols-2">
-              {(data?.recommended || []).map((ex) => (
-                <div
-                  key={ex.key}
-                  className="rounded-xl border border-[var(--accent)]/40 bg-[rgba(196,163,90,0.06)] p-4"
-                >
-                  <div className="text-xs uppercase tracking-wider text-[var(--accent)]">{ex.category}</div>
-                  <div className="mt-1 text-lg font-semibold">{ex.title}</div>
-                  <p className="mt-2 text-sm text-[var(--muted)]">{ex.description}</p>
-                  <div className="mt-3 flex items-center justify-between">
-                    <span className="text-xs text-[var(--muted)]">{fmtTime(ex.duration_sec)}</span>
-                    <button
-                      type="button"
-                      onClick={() => beginDrill(ex)}
-                      className="rounded-lg bg-[var(--accent-2)] px-3 py-1.5 text-sm font-medium text-white"
-                    >
-                      Practice now
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Panel>
+          {/* Target and length as pills — measurable detail a heading should
+              never have to carry. */}
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+            {missionTarget && <span className="fv-pill fv-pill-accent">{missionTarget}</span>}
+            {topPick && (
+              <span className="fv-pill">
+                {fmtTime(topPick.duration_sec)} · {topPick.category}
+              </span>
+            )}
+            {mission?.completed && <span className="fv-pill fv-pill-done">Done today</span>}
+          </div>
 
-          {Object.entries(byCategory).map(([cat, list]) => (
-            <Panel key={cat}>
-              <h3 className="mb-3 font-[family-name:var(--font-display)] text-xl capitalize">{cat}</h3>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {list.map((ex) => (
-                  <div key={ex.key} className="rounded-xl border border-[var(--line)] p-4">
-                    <div className="mt-1 font-semibold">{ex.title}</div>
-                    <p className="mt-2 text-sm text-[var(--muted)]">{ex.description}</p>
-                    <button
-                      type="button"
-                      onClick={() => beginDrill(ex)}
-                      className="mt-3 text-sm text-[var(--accent)] hover:underline"
-                    >
-                      Practice now · {fmtTime(ex.duration_sec)}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </Panel>
-          ))}
-        </>
+          <div className="mt-8 flex flex-col items-center">
+            <button
+              type="button"
+              onClick={() => {
+                const ex =
+                  data?.exercises.find((e) => e.key === mission?.exercise_key) || topPick || null;
+                if (ex) beginDrill(ex);
+              }}
+              className="fv-hero"
+            >
+              Start practice
+              <ArrowRight size={17} className="fv-arrow" aria-hidden />
+            </button>
+            {mission?.completed && (
+              <p className="mt-3.5 text-[12.5px] text-[var(--muted)]">Go again if you want.</p>
+            )}
+          </div>
+        </section>
       )}
+
+      <Divider />
+
+      <section className="fv-enter pt-2">
+        <TrainingPath
+          steps={LEVELS.map((lv) => ({
+            ...lv,
+            done:
+              lv.n > 0 &&
+              (data?.exercises || []).some((e) => (e.level || 1) === lv.n && e.completed),
+          }))}
+          active={tab}
+          onSelect={setTab}
+        />
+
+        <p className="mb-6 mt-2 text-center text-[11.5px] text-[var(--faint)]">
+          Every level is open — the path shows where you have been working.
+        </p>
+
+        <div className="space-y-1">
+          {list.map((ex) => (
+            <button
+              key={ex.key}
+              type="button"
+              onClick={() => beginDrill(ex)}
+              className="fv-lift group -mx-3 flex w-[calc(100%+1.5rem)] items-baseline justify-between gap-5 rounded-[var(--r-md)] px-3 py-3.5 text-left"
+            >
+              <span className="min-w-0 flex-1">
+                <span className="flex flex-wrap items-baseline gap-2.5">
+                  <span className="text-[15px] font-medium">{ex.title}</span>
+                  {ex.completed && (
+                    <span className="text-[10px] uppercase tracking-[0.14em] text-[var(--emerald)]">
+                      done{ex.times_completed ? ` ×${ex.times_completed}` : ""}
+                    </span>
+                  )}
+                </span>
+                <span className="mt-1 block text-[13px] leading-relaxed text-[var(--muted)]">
+                  {ex.sense || ex.sound || ex.why || (ex.speak ? `“${ex.speak}”` : ex.description)}
+                </span>
+              </span>
+              <span className="fv-num shrink-0 text-[12px] text-[var(--faint)]">
+                {fmtTime(ex.duration_sec)}
+              </span>
+            </button>
+          ))}
+
+          {!list.length && (
+            <EmptyState
+              title={tab === 0 ? "No personal picks yet" : "Nothing at this level yet"}
+              body={
+                tab === 0
+                  ? "Record once and we will choose the drills that match what your voice is actually doing."
+                  : "Try another level — every lab is available."
+              }
+              action={tab === 0 ? <HeroLink href="/">Record 60 seconds</HeroLink> : undefined}
+            />
+          )}
+        </div>
+      </section>
+
+      <p className="pt-8 text-[12.5px] text-[var(--faint)]">
+        After a drill you get a review of that skill only.{" "}
+        <Link href="/" className="text-[var(--violet-bright)]">
+          Back to Today
+        </Link>
+      </p>
     </div>
   );
 }

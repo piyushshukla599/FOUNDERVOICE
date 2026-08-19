@@ -11,33 +11,10 @@ import {
 
 type Pattern = { key: string; label: string; frequency: number };
 
-type SpeechRec = {
-  continuous: boolean;
-  interimResults: boolean;
-  lang: string;
-  start: () => void;
-  stop: () => void;
-  abort?: () => void;
-  onresult: ((ev: SpeechRecEvent) => void) | null;
-  onerror: ((ev: { error: string }) => void) | null;
-  onend: (() => void) | null;
-};
+// Web Speech API types live in src/types/speech-recognition.d.ts so both
+// recorder hooks share one declaration.
+type SpeechRec = SpeechRecognition;
 
-type SpeechRecEvent = {
-  resultIndex: number;
-  results: ArrayLike<{
-    isFinal: boolean;
-    length: number;
-    0: { transcript: string; confidence: number };
-  }>;
-};
-
-declare global {
-  interface Window {
-    SpeechRecognition?: new () => SpeechRec;
-    webkitSpeechRecognition?: new () => SpeechRec;
-  }
-}
 
 const EMPTY: LiveMetrics = {
   wpm: 0,
@@ -152,7 +129,7 @@ export function useLiveCoach(opts: {
     };
 
     // Defer speech recognition so Start / PTT stays snappy
-    let speechTimer = window.setTimeout(() => {
+    const speechTimer = window.setTimeout(() => {
       if (!activeRef.current || pausedRef.current) return;
       const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!Ctor) {

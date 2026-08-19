@@ -76,12 +76,12 @@ export function ContactModal({ open, onClose, interest = "general" }: Props) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="fv-contact-title"
-        className="relative w-full max-w-lg rounded-2xl border border-[var(--line)] bg-[var(--bg-elevated)] p-5 shadow-xl"
+        className="fv-enter relative w-full max-w-lg rounded-[var(--r-lg)] bg-[var(--surface)] p-6 shadow-[0_40px_90px_-30px_rgba(0,0,0,0.8)] ring-1 ring-[var(--line-strong)]"
       >
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-3 top-3 rounded-lg p-1 text-[var(--muted)] hover:text-[var(--ink)]"
+          className="absolute right-3 top-3 rounded-[var(--r-full)] p-1.5 text-[var(--muted)] transition-colors hover:bg-[rgba(244,243,251,0.06)] hover:text-[var(--ink)]"
           aria-label="Close"
         >
           <X size={18} />
@@ -96,17 +96,17 @@ export function ContactModal({ open, onClose, interest = "general" }: Props) {
         </p>
 
         <form onSubmit={(e) => void submit(e)} className="mt-4 space-y-3">
-          <label className="block text-xs text-[var(--muted)]">
+          <label className="fv-label block">
             Full name *
             <input
               required
               autoComplete="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-sm text-[var(--ink)] outline-none focus:border-[var(--accent)]"
+              className="fv-input mt-1"
             />
           </label>
-          <label className="block text-xs text-[var(--muted)]">
+          <label className="fv-label block">
             Email *
             <input
               required
@@ -114,55 +114,55 @@ export function ContactModal({ open, onClose, interest = "general" }: Props) {
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-sm text-[var(--ink)] outline-none focus:border-[var(--accent)]"
+              className="fv-input mt-1"
             />
           </label>
-          <label className="block text-xs text-[var(--muted)]">
+          <label className="fv-label block">
             Phone / WhatsApp
             <input
               type="tel"
               autoComplete="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-sm text-[var(--ink)] outline-none focus:border-[var(--accent)]"
+              className="fv-input mt-1"
             />
           </label>
-          <label className="block text-xs text-[var(--muted)]">
+          <label className="fv-label block">
             Company (optional)
             <input
               autoComplete="organization"
               value={company}
               onChange={(e) => setCompany(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-sm text-[var(--ink)] outline-none focus:border-[var(--accent)]"
+              className="fv-input mt-1"
             />
           </label>
-          <label className="block text-xs text-[var(--muted)]">
+          <label className="fv-label block">
             Message
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               rows={3}
-              className="mt-1 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-sm text-[var(--ink)] outline-none focus:border-[var(--accent)]"
+              className="fv-input mt-1"
             />
           </label>
           <div className="flex flex-wrap gap-2 pt-1">
             <button
               type="submit"
               disabled={busy}
-              className="rounded-xl bg-[var(--accent-2)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+              className="fv-hero !h-11 !px-5 !text-[14px] disabled:opacity-50"
             >
               {busy ? "Sending…" : "Send"}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl border border-[var(--line)] px-4 py-2 text-sm"
+              className="fv-ghost !h-11 !text-[14px]"
             >
               Cancel
             </button>
           </div>
           {done && (
-            <p className="text-sm text-[var(--accent-2)]" role="status">
+            <p className="text-sm text-[var(--emerald)]" role="status">
               {done}
             </p>
           )}

@@ -10,7 +10,7 @@ from fastapi.responses import FileResponse
 from ..config import get_settings
 from ..db import connect, dumps, loads, row_to_dict, utc_now
 from ..rate_limit import allow
-from ..services import pipeline, report_pdf
+from ..services import jobs, lab_coach, pipeline, quota, report_pdf, voice_memory
 
 router = APIRouter(prefix="/sessions", tags=["sessions"])
 
@@ -70,7 +70,21 @@ def get_session(session_id: str) -> dict[str, Any]:
             if key in meta and key not in e:
                 e[key] = meta[key]
         parsed_events.append(e)
-    return {"session": session, "metrics": metrics, "events": parsed_events}
+    catalog = lab_coach.exercise_catalog()
+    lab_recs = lab_coach.recommend_labs_from_events(
+        parsed_events,
+        metrics,
+        skip_key=session.get("exercise_key") if session.get("mode") == "exercise" else None,
+        catalog=catalog,
+    )
+    if session.get("mode") == "exercise" and session.get("exercise_key"):
+        similar = lab_coach.similar_lab_recs(str(session.get("exercise_key")), catalog)
+        seen = {r["key"] for r in similar}
+        lab_recs = similar + [r for r in lab_recs if r.get("key") not in seen]
+    if not lab_recs:
+        memory = voice_memory.get_memory_snapshot()
+        lab_recs = lab_coach.recommend_labs_from_memory(memory.get("top_patterns") or [], catalog)
+    return {"session": session, "metrics": metrics, "events": parsed_events, "lab_recs": lab_recs}
 
 
 @router.post("/upload")
@@ -89,6 +103,11 @@ async def upload_session(
     client = request.client.host if request.client else "unknown"
     if not allow(f"upload:{client}", limit=40, window_sec=3600):
         raise HTTPException(429, "Upload rate limit reached. Try again later.")
+
+    # The free tier's hard ceiling. Charged before a byte is written, so a
+    # rejected visitor never costs us disk or a Whisper slot; refunded below if
+    # the upload itself turns out to be unusable.
+    quota_state = quota.consume(request, "upload")
 
     settings = get_settings()
     suffix = Path(file.filename or "audio.wav").suffix.lower() or ".wav"
@@ -113,6 +132,7 @@ async def upload_session(
                 if size > settings.max_upload_bytes:
                     out.close()
                     dest.unlink(missing_ok=True)
+                    quota.refund(request, "upload")
                     mb = settings.max_upload_bytes / (1024 * 1024)
                     raise HTTPException(
                         413,
@@ -123,10 +143,12 @@ async def upload_session(
         raise
     except Exception as exc:  # noqa: BLE001
         dest.unlink(missing_ok=True)
+        quota.refund(request, "upload")
         raise HTTPException(400, f"Upload failed: {exc}") from exc
 
     if size == 0:
         dest.unlink(missing_ok=True)
+        quota.refund(request, "upload")
         raise HTTPException(400, "Empty file")
 
     focus = {
@@ -164,7 +186,7 @@ async def upload_session(
 
 async def _run_safe(session_id: str, mode: str) -> None:
     try:
-        await pipeline.run_pipeline(session_id, mode)
+        await jobs.run_analysis(lambda: pipeline.run_pipeline(session_id, mode))
     except Exception as exc:  # noqa: BLE001 — never crash the server from background work
         with connect() as conn:
             conn.execute(

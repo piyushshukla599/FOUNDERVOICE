@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.join(__dirname),
   },
+  // Lets a production build run without fighting a live `next dev` over .next:
+  //   NEXT_DIST_DIR=.next-build npm run build
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   poweredByHeader: false,
   experimental: {
     middlewareClientMaxBodySize: "100mb",

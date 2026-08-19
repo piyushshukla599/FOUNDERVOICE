@@ -155,21 +155,42 @@ WEAKNESS_CATALOG: dict[str, dict[str, Any]] = {
     },
 }
 
+# A mission is a headline, not a spec. Keep it short, human and speakable — the
+# measurable half lives in MISSION_TARGETS so the UI can show it as a small pill
+# instead of cramming "(target ~130-140 WPM)" into a display heading.
 MISSIONS_BY_FOCUS = {
-    "drop_technical_endings": "Finish every technical word clearly — especially the last syllable.",
-    "missing_pauses": "Pause one second after each major idea.",
-    "rush": "Reduce speaking speed during technical explanations (target ~130–140 WPM).",
-    "weak_projection": "Project using breath support — never shout.",
-    "monotone": "Emphasize one keyword per sentence with a slight, natural pitch rise.",
-    "poor_breathing": "Plan one breath before each claim; never speak on empty breath.",
-    "filler_overuse": "Replace every filler with a silent beat.",
-    "poor_articulation": "Finish every consonant today — especially t, d, k, s.",
-    "nervous_delivery": "Plant your feet; deliver the ask 10% slower than feels natural.",
-    "story_rhythm": "Use a clear beat between problem → solution → traction.",
-    "low_resonance": "Hum for 30s before speaking; keep that ease in the first sentence.",
-    "low_energy": "Keep energy through the end of every sentence — no fade-outs.",
-    "weak_endings": "Hold volume and finish consonants at the end of each sentence.",
-    "soft_delivery": "Speak to the far wall with support, same volume start to finish.",
+    "drop_technical_endings": "Land the last syllable.",
+    "missing_pauses": "Leave a beat after each big idea.",
+    "rush": "Slow down when it gets technical.",
+    "weak_projection": "Project from breath, not volume.",
+    "monotone": "Lift one word in every sentence.",
+    "poor_breathing": "Breathe before the claim, not during it.",
+    "filler_overuse": "Trade every filler for silence.",
+    "poor_articulation": "Finish every consonant.",
+    "nervous_delivery": "Deliver the ask slower than feels natural.",
+    "story_rhythm": "Put a beat between problem, solution and traction.",
+    "low_resonance": "Hum first, then keep that ease.",
+    "low_energy": "Carry the energy to the last word.",
+    "weak_endings": "Hold the volume to the end of the line.",
+    "soft_delivery": "Speak to the far wall.",
+}
+
+# The measurable half of the mission. Shown beside the headline, never inside it.
+MISSION_TARGETS = {
+    "drop_technical_endings": "every technical word",
+    "missing_pauses": "~1s after each idea",
+    "rush": "~135 WPM",
+    "weak_projection": "steady, never shouted",
+    "monotone": "one keyword per sentence",
+    "poor_breathing": "one planned breath per claim",
+    "filler_overuse": "under 3 per minute",
+    "poor_articulation": "t, d, k, s",
+    "nervous_delivery": "10% slower",
+    "story_rhythm": "3 beats, 3 pauses",
+    "low_resonance": "30s hum first",
+    "low_energy": "no fade-outs",
+    "weak_endings": "same volume start to finish",
+    "soft_delivery": "same volume start to finish",
 }
 
 
@@ -300,19 +321,31 @@ def rebuild_training_plan() -> list[dict[str, Any]]:
     return top
 
 
+def _mission_payload(row) -> dict[str, Any]:
+    """Shape a stored mission for the client.
+
+    The title is re-read from MISSIONS_BY_FOCUS rather than trusted from the
+    row, so a copy change lands immediately instead of waiting for tomorrow's
+    mission — rows written by an older build carry the old wording.
+    """
+    focus = row["focus_key"] or ""
+    return {
+        "date": row["mission_date"],
+        "title": MISSIONS_BY_FOCUS.get(focus) or row["title"],
+        "target": MISSION_TARGETS.get(focus),
+        "focus_key": focus,
+        "exercise_key": row["exercise_key"],
+        "why": row["why"],
+        "completed": bool(row["completed"]),
+    }
+
+
 def ensure_daily_mission(force: bool = False) -> dict[str, Any]:
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     with connect() as conn:
         row = conn.execute("SELECT * FROM daily_missions WHERE mission_date=?", (today,)).fetchone()
         if row and not force:
-            return {
-                "date": row["mission_date"],
-                "title": row["title"],
-                "focus_key": row["focus_key"],
-                "exercise_key": row["exercise_key"],
-                "why": row["why"],
-                "completed": bool(row["completed"]),
-            }
+            return _mission_payload(row)
 
         plan = conn.execute(
             "SELECT * FROM training_plan WHERE status='active' ORDER BY priority DESC LIMIT 1"
@@ -329,8 +362,8 @@ def ensure_daily_mission(force: bool = False) -> dict[str, Any]:
             exercise_key = plan["exercise_key"]
             why = plan["why"]
         else:
-            focus = "pause_control"
-            title = "Pause one second after each major idea."
+            focus = "missing_pauses"
+            title = MISSIONS_BY_FOCUS["missing_pauses"]
             exercise_key = "strategic_pause"
             why = "One habit at a time builds automatic executive delivery."
 
@@ -347,14 +380,7 @@ def ensure_daily_mission(force: bool = False) -> dict[str, Any]:
         conn.commit()
         row = conn.execute("SELECT * FROM daily_missions WHERE mission_date=?", (today,)).fetchone()
 
-    return {
-        "date": row["mission_date"],
-        "title": row["title"],
-        "focus_key": row["focus_key"],
-        "exercise_key": row["exercise_key"],
-        "why": row["why"],
-        "completed": bool(row["completed"]),
-    }
+    return _mission_payload(row)
 
 
 def complete_mission() -> dict[str, Any]:

@@ -8,15 +8,17 @@ export type ZoneColor =
   | "pink"
   | "white";
 
+/* The live zone colours are the design tokens from globals.css, resolved to hex
+   so canvas and inline styles can use them. Keep the two in step. */
 export const ZONE_HEX: Record<ZoneColor, string> = {
-  green: "#3d8f6e",
-  blue: "#3b82c4",
-  yellow: "#d4a017",
-  orange: "#d97706",
-  red: "#c45c4a",
-  purple: "#8b6bb5",
-  pink: "#d46a9a",
-  white: "#e8efe9",
+  green: "#3fd69a",
+  blue: "#5b7cfa",
+  yellow: "#f0b849",
+  orange: "#f59e6b",
+  red: "#f2617a",
+  purple: "#a78bfa",
+  pink: "#e056a0",
+  white: "#f4f3fb",
 };
 
 export function wpmZone(wpm: number): { color: ZoneColor; label: string } {

@@ -2,8 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Panel, EmptyState, ErrorBanner } from "@/components/ui";
+import { ArrowRight } from "lucide-react";
+import { Chip, EmptyState, ErrorBanner, HeroLink, LoadingState, PageHeader } from "@/components/ui";
 import { api, type SessionRow } from "@/lib/api";
+import { modeLabel, relativeDay, sessionHeadline } from "@/lib/insight";
 import { fmtTime } from "@/lib/utils";
 
 const FILTERS = [
@@ -11,109 +13,109 @@ const FILTERS = [
   { id: "free", label: "Record" },
   { id: "exercise", label: "Labs" },
   { id: "practice", label: "Practice" },
-  { id: "listening", label: "Smart" },
+  { id: "listening", label: "Listen" },
   { id: "pitch", label: "Pitch" },
 ] as const;
 
-function modeLabel(mode: string) {
-  if (mode === "listening") return "Smart conversation";
-  if (mode === "exercise") return "Labs drill";
-  if (mode === "practice") return "Practice";
-  if (mode === "free") return "Record";
-  return mode;
-}
-
 export default function LibraryPage() {
-  const [sessions, setSessions] = useState<SessionRow[]>([]);
+  const [sessions, setSessions] = useState<SessionRow[] | null>(null);
   const [error, setError] = useState("");
   const [filter, setFilter] = useState<(typeof FILTERS)[number]["id"]>("all");
 
-  const load = () =>
-    api
-      .sessions()
-      .then(setSessions)
-      .catch((e) => setError(e.message));
-
   useEffect(() => {
+    const load = () =>
+      api
+        .sessions()
+        .then(setSessions)
+        .catch((e) => setError(e instanceof Error ? e.message : "Could not load sessions"));
     load();
-    const t = setInterval(load, 4000);
+    const t = setInterval(load, 8000);
     return () => clearInterval(t);
   }, []);
 
   const visible = useMemo(() => {
-    if (filter === "all") return sessions;
-    if (filter === "free") return sessions.filter((s) => s.mode === "free" || !s.mode);
-    return sessions.filter((s) => s.mode === filter);
+    const all = sessions || [];
+    if (filter === "all") return all;
+    if (filter === "free") return all.filter((s) => s.mode === "free" || !s.mode);
+    return all.filter((s) => s.mode === filter);
   }, [sessions, filter]);
 
-  return (
-    <div className="space-y-6">
-      <header>
-        <h2 className="font-[family-name:var(--font-display)] text-4xl">Library</h2>
-        <p className="mt-2 text-[var(--muted)]">
-          Every Record, Labs, and Practice take gets the same full evaluation — each as its own
-          session.
-        </p>
-      </header>
+  /* Group by day so the list reads as a history, not a table. */
+  const groups = useMemo(() => {
+    const map = new Map<string, SessionRow[]>();
+    for (const s of visible) {
+      const key = relativeDay(s.created_at) || "Earlier";
+      map.set(key, [...(map.get(key) || []), s]);
+    }
+    return [...map.entries()];
+  }, [visible]);
 
-      <div className="flex flex-wrap gap-2">
-        {FILTERS.map((f) => (
-          <button
-            key={f.id}
-            type="button"
-            onClick={() => setFilter(f.id)}
-            className={`rounded-lg px-3 py-1.5 text-sm ${
-              filter === f.id
-                ? "bg-[var(--accent)] text-[#1a1510]"
-                : "border border-[var(--line)] text-[var(--muted)]"
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
+  if (!sessions && !error) return <LoadingState label="Opening your sessions…" />;
+
+  return (
+    <div className="mx-auto max-w-3xl space-y-8 pt-4 md:pt-8">
+      <PageHeader
+        eyebrow="Sessions"
+        title="Everything you have recorded"
+        sub="Each take kept its own analysis. Open one to hear the moment again."
+      />
 
       {error && <ErrorBanner message={error} />}
-      <div className="grid gap-3">
-        {visible.map((s) => (
-          <Panel key={s.id} className="!p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <Link href={`/sessions/${s.id}`} className="text-lg font-semibold hover:text-[var(--accent)]">
-                  {s.title}
-                </Link>
-                <div className="mt-1 text-xs text-[var(--muted)]">
-                  {new Date(s.created_at).toLocaleString()} · {modeLabel(s.mode)} ·{" "}
-                  {fmtTime(s.duration || 0)} · {s.status}
-                </div>
-              </div>
-              <div className="flex gap-4 text-sm text-[var(--muted)]">
-                <span>WPM {s.wpm ?? "—"}</span>
-                <span>Fillers {s.filler_count ?? "—"}</span>
-                <span>Clarity {s.clarity ?? "—"}</span>
-              </div>
-            </div>
-          </Panel>
+
+      <div className="flex flex-wrap gap-1.5">
+        {FILTERS.map((f) => (
+          <Chip key={f.id} selected={filter === f.id} onClick={() => setFilter(f.id)}>
+            {f.label}
+          </Chip>
         ))}
-        {!visible.length && !error && (
-          <EmptyState
-            title={sessions.length ? "Nothing in this filter" : "No sessions yet"}
-            body={
-              sessions.length
-                ? "Try All, or record a new session."
-                : "Record a pitch, finish a Labs drill, or start a Smart Session — results land here."
-            }
-            action={
-              <Link
-                href="/"
-                className="rounded-xl bg-[var(--accent-2)] px-4 py-2 text-sm font-semibold text-white"
-              >
-                Go to Record
-              </Link>
-            }
-          />
-        )}
       </div>
+
+      {groups.map(([day, rows]) => (
+        <section key={day} className="fv-enter space-y-1">
+          <p className="fv-eyebrow-quiet pb-2">{day}</p>
+          {rows.map((s) => (
+            <Link
+              key={s.id}
+              href={`/sessions/${s.id}`}
+              className="fv-lift group -mx-3 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 rounded-[var(--r-md)] px-3 py-3.5"
+            >
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-baseline gap-2.5">
+                  <span className="text-[15px] font-medium">{s.title}</span>
+                  <span className="text-[11px] uppercase tracking-[0.14em] text-[var(--faint)]">
+                    {modeLabel(s.mode)}
+                  </span>
+                  {s.status !== "ready" && (
+                    <span className="text-[11px] text-[var(--accent)]">{s.status}</span>
+                  )}
+                </div>
+                <p className="mt-1 text-[13px] leading-relaxed text-[var(--muted)]">
+                  {sessionHeadline(s)}
+                </p>
+              </div>
+              <div className="flex items-center gap-4 text-[12px] text-[var(--faint)]">
+                <span className="fv-num">{fmtTime(s.duration || 0)}</span>
+                <ArrowRight
+                  size={14}
+                  className="opacity-0 transition-all group-hover:translate-x-1 group-hover:opacity-100"
+                />
+              </div>
+            </Link>
+          ))}
+        </section>
+      ))}
+
+      {!visible.length && !error && (
+        <EmptyState
+          title={sessions?.length ? "Nothing in this filter" : "Your sessions will appear here"}
+          body={
+            sessions?.length
+              ? "Try All, or record something new."
+              : "Record a pitch, finish a Lab, or start a Listen session — every take lands here with its own analysis."
+          }
+          action={<HeroLink href="/">Start your first recording</HeroLink>}
+        />
+      )}
     </div>
   );
 }

@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
 
 from ..db import connect, dumps, loads, utc_now
-from ..services import deepseek
+from ..services import deepseek, quota
 
 router = APIRouter(prefix="/practice", tags=["practice"])
 
@@ -24,22 +24,35 @@ class PracticeTurn(BaseModel):
 
 
 @router.post("/start")
-async def start_practice(body: PracticeStart) -> dict[str, Any]:
+async def start_practice(request: Request, body: PracticeStart) -> dict[str, Any]:
+    # Charged up front: starting a round is the unit the free tier counts.
+    state = quota.consume(request, "practice")
     history = [{"role": "user", "content": "Start the mock investor meeting. Ask your first hard question."}]
-    result = await deepseek.practice_investor_reply(history, body.pitch_context)
+    try:
+        result = await deepseek.practice_investor_reply(history, body.pitch_context)
+    except Exception:
+        # Never bill someone for a round that failed to open.
+        quota.refund(request, "practice")
+        raise
     with connect() as conn:
         conn.execute(
             "INSERT INTO practice_turns (session_id, role, content, scores_json, created_at) VALUES (?, ?, ?, ?, ?)",
             (body.session_id, "investor", result["reply"], dumps(result["scores"]), utc_now()),
         )
         conn.commit()
-    return {"reply": result["reply"], "scores": result["scores"], "history": [
-        {"role": "assistant", "content": result["reply"]}
-    ]}
+    return {
+        "reply": result["reply"],
+        "scores": result["scores"],
+        "history": [{"role": "assistant", "content": result["reply"]}],
+        "quota": state.as_dict(),
+    }
 
 
 @router.post("/turn")
-async def practice_turn(body: PracticeTurn) -> dict[str, Any]:
+async def practice_turn(request: Request, body: PracticeTurn) -> dict[str, Any]:
+    # A separate, looser ceiling: turns inside a round should feel free,
+    # but an unbounded /turn loop is an unbounded model bill.
+    turn_state = quota.consume(request, "practice_turn")
     history = list(body.history)
     history.append({"role": "user", "content": body.founder_message})
     result = await deepseek.practice_investor_reply(history, body.pitch_context)
@@ -54,7 +67,12 @@ async def practice_turn(body: PracticeTurn) -> dict[str, Any]:
             (body.session_id, "investor", result["reply"], dumps(result["scores"]), utc_now()),
         )
         conn.commit()
-    return {"reply": result["reply"], "scores": result["scores"], "history": history}
+    return {
+        "reply": result["reply"],
+        "scores": result["scores"],
+        "history": history,
+        "quota": turn_state.as_dict(),
+    }
 
 
 @router.get("/history")

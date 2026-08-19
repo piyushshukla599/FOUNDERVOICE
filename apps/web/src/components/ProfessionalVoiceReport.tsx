@@ -17,6 +17,10 @@ type Props = {
 };
 
 export function ProfessionalVoiceReport({ payload, onSeek }: Props) {
+  // The professional report is a free-form JSON blob built by the Python
+  // pipeline; its shape varies with which analyses ran. Reading it loosely here
+  // is deliberate — every field below is already guarded with a fallback.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const pro = (payload?.professional || null) as Record<string, any> | null;
   if (!pro) {
     return (
@@ -212,7 +216,7 @@ export function ProfessionalVoiceReport({ payload, onSeek }: Props) {
           <p className="text-sm">Timing: {breath.breath_timing}</p>
           <p className="text-sm">Frequency: {breath.breath_frequency ?? "—"} / min (est.)</p>
           <p className="text-sm">{breath.impact_on_clarity}</p>
-          <p className="text-sm text-[var(--accent-2)]">{breath.fix}</p>
+          <p className="text-sm text-[var(--emerald)]">{breath.fix}</p>
         </Panel>
         <Panel className="space-y-2">
           <h3 className="font-[family-name:var(--font-display)] text-xl">Listener fatigue</h3>
@@ -316,12 +320,12 @@ export function RootCauseFinding({
           </div>
         )}
         <div>
-          <span className="text-[var(--accent-2)]">Fix:</span> {event.fix}
+          <span className="text-[var(--emerald)]">Fix:</span> {event.fix}
           {event.exercise ? ` · Exercise: ${event.exercise}` : ""}
         </div>
         {expected && (
           <div>
-            <span className="text-[var(--accent-2)]">Expected:</span> {expected}
+            <span className="text-[var(--emerald)]">Expected:</span> {expected}
           </div>
         )}
         {trend && <div className="text-xs text-[var(--muted)]">{trend}</div>}

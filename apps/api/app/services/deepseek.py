@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 import httpx
@@ -7,6 +8,8 @@ import ssl
 
 from ..config import get_settings
 from . import coach_templates
+
+logger = logging.getLogger(__name__)
 
 
 def _ssl_context() -> ssl.SSLContext:
@@ -41,6 +44,17 @@ Use short paragraphs under each label. Be concrete with metrics/timestamps.
 Label uncertain scores as estimates. Cite Voice Memory / Voice Profile when provided."""
 
 
+_WARNED: set[str] = set()
+
+
+def _warn_once(key: str, message: str) -> None:
+    """One line per failure kind per process — a broken key should not flood the log."""
+    if key in _WARNED:
+        return
+    _WARNED.add(key)
+    logger.warning(message)
+
+
 async def deepseek_chat(
     messages: list[dict[str, str]],
     *,
@@ -62,11 +76,31 @@ async def deepseek_chat(
         "Authorization": f"Bearer {settings.deepseek_api_key}",
         "Content-Type": "application/json",
     }
-    async with httpx.AsyncClient(timeout=120.0, verify=_ssl_context()) as client:
-        resp = await client.post(url, json=payload, headers=headers)
-        resp.raise_for_status()
-        data = resp.json()
-        return data["choices"][0]["message"]["content"].strip()
+    # Every caller treats "" as "the model is unavailable" and falls back to a
+    # rule template. A rejected key, a dead network or a malformed body are all
+    # that same condition — letting them raise turns an optional enhancement
+    # into a 500 and takes the whole feature down.
+    try:
+        async with httpx.AsyncClient(timeout=120.0, verify=_ssl_context()) as client:
+            resp = await client.post(url, json=payload, headers=headers)
+            resp.raise_for_status()
+            data = resp.json()
+            return (data["choices"][0]["message"]["content"] or "").strip()
+    except httpx.HTTPStatusError as exc:
+        code = exc.response.status_code
+        if code in (401, 403):
+            _warn_once("deepseek-auth", f"DeepSeek rejected the API key ({code}) — using rule templates.")
+        elif code == 429:
+            _warn_once("deepseek-rate", "DeepSeek rate limit or credit exhausted — using rule templates.")
+        else:
+            _warn_once(f"deepseek-{code}", f"DeepSeek returned {code} — using rule templates.")
+        return ""
+    except (httpx.HTTPError, ssl.SSLError) as exc:
+        _warn_once("deepseek-net", f"DeepSeek unreachable ({type(exc).__name__}) — using rule templates.")
+        return ""
+    except (KeyError, IndexError, ValueError):
+        _warn_once("deepseek-shape", "DeepSeek returned an unexpected body — using rule templates.")
+        return ""
 
 
 async def generate_coach_summary(
@@ -87,9 +121,9 @@ async def generate_coach_summary(
         "Use labeled sections Observation / Root Cause / Evidence / Impact / Specific Exercise / "
         "Expected Improvement for the top 1–3 findings. End with one daily habit.\n"
         "Plain text only — no markdown syntax.\n"
-        "IMPORTANT: Run a FULL voice evaluation (pace, clarity, presence, projection, articulation) "
-        "exactly like a normal Record session. If this is a Labs drill or Practice answer, ALSO "
-        "judge how well they hit the drill/practice focus — but never replace the full evaluation.\n"
+        "IMPORTANT: If SESSION MODE is exercise (Labs), coach ONLY the chosen drill specialty. "
+        "Do not contradict the drill. Do not grade them as a failed founder. Help them succeed at THIS lab. "
+        "Use Voice Memory only to explain why this lab fits — other weaknesses wait for other labs.\n"
         f"SESSION MODE: {mode}\n"
         f"SESSION FOCUS: {focus}\n"
         f"GOAL: {goal or {'goal_key': 'executive_presence'}}\n"

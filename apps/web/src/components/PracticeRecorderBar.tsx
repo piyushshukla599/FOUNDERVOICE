@@ -1,22 +1,15 @@
 "use client";
 
-import { Mic, Square } from "lucide-react";
-import { Waveform } from "@/components/Waveform";
+import { Square } from "lucide-react";
+import { HeroButton } from "@/components/ui";
+import { VoiceViz } from "@/components/VoiceViz";
 import { fmtTime } from "@/lib/utils";
 
-type Props = {
-  recording: boolean;
-  starting?: boolean;
-  elapsed: number;
-  stream: MediaStream | null;
-  liveTranscript?: string;
-  targetSec?: number;
-  startLabel?: string;
-  onStart: () => void;
-  onStop: () => void;
-  disabled?: boolean;
-};
-
+/**
+ * Compact recorder for surfaces that keep their surrounding context — a lab
+ * script, a practice question. The waveform still carries the live state, but
+ * the screen does not take over the way the full recorder does.
+ */
 export function PracticeRecorderBar({
   recording,
   starting,
@@ -28,41 +21,43 @@ export function PracticeRecorderBar({
   onStart,
   onStop,
   disabled,
-}: Props) {
+}: {
+  recording: boolean;
+  starting?: boolean;
+  elapsed: number;
+  stream: MediaStream | null;
+  liveTranscript?: string;
+  targetSec?: number;
+  startLabel?: string;
+  onStart: () => void;
+  onStop: () => void;
+  disabled?: boolean;
+}) {
   const remaining = targetSec != null ? Math.max(0, targetSec - elapsed) : null;
 
   return (
-    <div className="space-y-3">
-      <Waveform stream={stream} active={recording} />
-      <div className="flex flex-wrap items-center gap-3">
+    <div className="space-y-4">
+      <VoiceViz stream={stream} active={recording} height={recording ? 96 : 64} tone={recording ? "accent" : "quiet"} />
+
+      <div className="flex flex-wrap items-center gap-4">
         {!recording ? (
-          <button
-            type="button"
-            disabled={disabled || starting}
-            onClick={onStart}
-            className="inline-flex items-center gap-2 rounded-xl bg-[var(--accent-2)] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
-          >
-            <Mic size={16} />
-            {starting ? "Opening mic…" : startLabel}
-          </button>
+          <HeroButton onClick={onStart} disabled={disabled || starting} arrow={false}>
+            {starting ? "Opening microphone…" : startLabel}
+          </HeroButton>
         ) : (
-          <button
-            type="button"
-            onClick={onStop}
-            className="inline-flex items-center gap-2 rounded-xl bg-[var(--danger)] px-4 py-2.5 text-sm font-semibold text-white"
-          >
-            <Square size={14} /> Stop & analyze
+          <button type="button" onClick={onStop} className="fv-ghost !h-12 !px-6 text-[14px] text-[var(--ink)]">
+            <Square size={14} className="text-[var(--danger)]" /> Stop
           </button>
         )}
-        <span className="font-mono text-sm text-[var(--muted)]">
+        <span className="fv-num text-[13px] text-[var(--muted)]">
           {fmtTime(elapsed)}
-          {remaining != null && ` · ${fmtTime(remaining)} left`}
+          {remaining != null && recording ? ` · ${fmtTime(remaining)} left` : ""}
         </span>
       </div>
+
       {liveTranscript ? (
-        <p className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-sm text-[var(--muted)]">
-          <span className="text-[var(--accent)]">Live: </span>
-          {liveTranscript}
+        <p className="max-w-xl text-[12.5px] leading-relaxed text-[var(--faint)]">
+          {liveTranscript.slice(-160)}
         </p>
       ) : null}
     </div>

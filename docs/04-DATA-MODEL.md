@@ -92,11 +92,13 @@ Per-weakness rows: `weakness_key` UNIQUE, exercise, priority, status, `expected_
 
 One row per `mission_date`: title, focus, exercise, completed flag.
 
-## Seeded exercises (22)
+## Seeded exercises (25)
 
-Keys from `SEED_EXERCISES` in `db.py`:
+Keys from `SEED_EXERCISES` in `db.py`. API also attaches `speak` / `how` / `sense` / `similar` (not DB columns — `lab_coach.LAB_GUIDE`).
 
-`breath_box`, `breath_diaphragm`, `articulation_twisters`, `consonant_finish`, `pause_drill_3`, `strategic_pause`, `pitch_variation`, `emphasis_keywords`, `executive_open`, `executive_presence`, `filler_fast`, `story_arc`, `confidence_stance`, `pronunciation_tech`, `hard_word_ladder`, `warmup_hum`, `lip_trills`, `chest_resonance`, `projection_support`, `open_vowels`, `tech_explain`, `investor_ask`.
+`breath_box`, `breath_diaphragm`, `articulation_twisters`, `consonant_finish`, `pause_drill_3`, `strategic_pause`, `pitch_variation`, `emphasis_keywords`, `executive_open`, `executive_presence`, `filler_fast`, `story_arc`, `confidence_stance`, `pronunciation_tech`, `hard_word_ladder`, `warmup_hum`, `lip_trills`, `chest_resonance`, `projection_support`, `open_vowels`, `tech_explain`, `investor_ask`, `one_liner`, `hard_question`, `board_update`.
+
+Levels (`EXERCISE_LEVELS`): 1 warm, 2 control, 3 pressure. UI treats them as a map — all choosable.
 
 ## Voice Memory pattern keys
 

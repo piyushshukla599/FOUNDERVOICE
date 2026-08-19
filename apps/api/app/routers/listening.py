@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 
 from ..config import get_settings
 from ..db import connect, dumps, loads, row_to_dict, utc_now
-from ..services import listening_summary, pipeline
+from ..services import founder_verdict, jobs, listening_summary, pipeline
 
 router = APIRouter(prefix="/listening", tags=["listening"])
 
@@ -21,6 +21,21 @@ class StartListeningBody(BaseModel):
     silence_end_sec: float = Field(default=4.0, ge=1.5, le=30.0)
     min_conversation_sec: float = Field(default=8.0, ge=3.0, le=120.0)
     min_speech_ratio: float = Field(default=0.2, ge=0.05, le=0.9)
+
+
+class VerdictBody(BaseModel):
+    exercise_session_id: str | None = None
+
+
+@router.post("/{listening_id}/verdict")
+def unlock_verdict(listening_id: str, body: VerdictBody | None = None) -> dict[str, Any]:
+    """Final Founder Voice Verdict — requires a Voice Labs exercise after the listening session."""
+    exercise_id = body.exercise_session_id if body else None
+    try:
+        verdict = founder_verdict.build_founder_verdict(listening_id, exercise_session_id=exercise_id)
+    except ValueError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    return {"id": listening_id, "verdict": verdict}
 
 
 @router.get("/active")
@@ -211,12 +226,17 @@ def end_listening(listening_id: str) -> dict[str, Any]:
         conn.commit()
 
     summary = listening_summary.build_listening_summary(listening_id)
-    return {"id": listening_id, "status": "ended", "summary": summary}
+    # Auto-unlock if user already completed a drill after this session started
+    verdict = founder_verdict.build_founder_verdict(listening_id)
+    if verdict.get("status") == "ready":
+        summary["verdict"] = verdict
+        summary["verdict_status"] = "ready"
+    return {"id": listening_id, "status": "ended", "summary": summary, "verdict": verdict}
 
 
 async def _run_safe(session_id: str) -> None:
     try:
-        await pipeline.run_pipeline(session_id, "listening")
+        await jobs.run_analysis(lambda: pipeline.run_pipeline(session_id, "listening"))
     except Exception as exc:  # noqa: BLE001
         with connect() as conn:
             conn.execute(

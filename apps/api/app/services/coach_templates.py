@@ -209,6 +209,25 @@ def build_coach_summary(
     return "\n".join(lines)
 
 
+def build_listening_collection_note(
+    metrics: dict[str, Any],
+    events: list[dict[str, Any]],
+) -> str:
+    """Short note for Smart Session clips — full verdict unlocks after Voice Labs drill."""
+    wpm = _fmt(metrics.get("wpm"))
+    fillers = _fmt(metrics.get("filler_count"))
+    clarity = _fmt(metrics.get("clarity"))
+    top = events[0] if events else {}
+    hint = top.get("fix") or "Complete today's Voice Labs drill to unlock your Founder Voice Verdict."
+    return (
+        "Smart Session clip collected (local analysis only).\n\n"
+        f"Snapshot: {wpm} WPM · {fillers} fillers · {clarity} clarity (estimates).\n\n"
+        f"Preview: {(top.get('observation') or top.get('label') or 'No major flags in this clip.')}\n\n"
+        f"Next step: {hint}\n\n"
+        "Full Founder Voice Verdict unlocks after you record today's exercise in Voice Labs."
+    )
+
+
 def build_pitch_scores(metrics: dict[str, Any], transcript: str = "") -> dict[str, Any]:
     clarity = float(metrics.get("clarity") or 60)
     conf = float(metrics.get("confidence_est") or 55)

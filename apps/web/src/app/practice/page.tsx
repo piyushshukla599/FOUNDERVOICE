@@ -2,75 +2,123 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Panel, Stat } from "@/components/ui";
+import { ArrowRight, Send } from "lucide-react";
+import {
+  Chip,
+  Disclosure,
+  Divider,
+  ErrorBanner,
+  HeroButton,
+  PageHeader,
+  Stat,
+} from "@/components/ui";
+import { FeatureIntro } from "@/components/FeatureIntro";
 import { PracticeRecorderBar } from "@/components/PracticeRecorderBar";
 import { usePracticeRecorder } from "@/hooks/usePracticeRecorder";
-import { api } from "@/lib/api";
+import { api, QuotaError, type QuotaState } from "@/lib/api";
+import { QuotaMeter, UpgradeGate } from "@/components/UpgradeGate";
 
 type Msg = { role: string; content: string };
 
-const SCENARIOS = [
+const ROUNDS = [
+  {
+    id: "standup",
+    level: 1,
+    label: "Standup",
+    hint: "Warm — no investor heat.",
+    context:
+      "You are a sharp but friendly team lead in a daily standup. Ask one question at a time about what shipped and what’s blocked. Stay short.",
+  },
+  {
+    id: "hard_q",
+    level: 2,
+    label: "Hard question",
+    hint: "Control — pause before you answer.",
+    context:
+      "You are a skeptical operator. Ask one hard question: why growth is slow, why this team, or why now. Wait. Push once if they ramble.",
+  },
   {
     id: "seed",
-    label: "Seed round",
+    level: 3,
+    label: "Investor",
+    hint: "Pressure — seed partner, live.",
     context:
-      "We're raising a seed round for FounderVoice AI — a local-first speaking coach for founders and executives. Differentiator is Voice Memory (longitudinal patterns), not one-off scores. Audio stays on-device; coaching uses an LLM on text only.",
-  },
-  {
-    id: "series_a",
-    label: "Series A",
-    context:
-      "Series A pitch: B2B SaaS for executive communication coaching. Traction: early paying teams, strong retention on weekly practice. Seeking capital to expand enterprise sales and deepen acoustic analysis.",
-  },
-  {
-    id: "demo_day",
-    label: "Demo day",
-    context:
-      "Demo day: 2-minute pitch. Problem = founders sound unsure under pressure. Solution = local recording + causal coaching + Voice Memory. Ask = intros to design partners and follow-on capital.",
-  },
-  {
-    id: "custom",
-    label: "Custom",
-    context: "",
+      "You are a skeptical seed investor. Interrupt naturally. Push on moat, traction, and the ask. After each answer, one sentence of critique.",
   },
 ];
 
+const emptyQuota: QuotaState = {
+  feature: "practice",
+  label: "practice rounds",
+  used: 0,
+  limit: 0,
+  remaining: 0,
+  unlimited: false,
+  exhausted: true,
+};
+
 export default function PracticePage() {
-  const router = useRouter();
   const rec = usePracticeRecorder();
-  const solo = usePracticeRecorder();
-  const [scenario, setScenario] = useState(SCENARIOS[0].id);
-  const [context, setContext] = useState(SCENARIOS[0].context);
+  const [round, setRound] = useState(ROUNDS[0]);
   const [history, setHistory] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [scores, setScores] = useState<Record<string, number> | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [answerMode, setAnswerMode] = useState<"voice" | "type">("voice");
-  const [savedSessions, setSavedSessions] = useState<string[]>([]);
+  const [voice, setVoice] = useState(true);
   const [lastEvalId, setLastEvalId] = useState<string | null>(null);
+  const [labRecs, setLabRecs] = useState<
+    { key: string; title: string; sound?: string; why?: string; fix_line?: string; description?: string }[]
+  >([]);
+  const [locked, setLocked] = useState<QuotaState | undefined>(undefined);
+  const [quota, setQuota] = useState<QuotaState | undefined>(undefined);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    api
+      .quota()
+      .then((q) => {
+        const state = q.features?.practice;
+        setQuota(state);
+        if (state?.exhausted) setLocked(state);
+      })
+      .catch(() => undefined);
+  }, []);
+
+  useEffect(() => {
+    api
+      .exercises()
+      .then((d) => setLabRecs(d.recommended || []))
+      .catch(() => setLabRecs([]));
+  }, []);
+
+  useEffect(() => {
+    if (!lastEvalId) return;
+    api
+      .session(lastEvalId)
+      .then((d) => {
+        if (d.lab_recs?.length) setLabRecs(d.lab_recs);
+      })
+      .catch(() => undefined);
+  }, [lastEvalId]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [history]);
 
-  useEffect(() => {
-    const s = SCENARIOS.find((x) => x.id === scenario);
-    if (s && s.id !== "custom") setContext(s.context);
-  }, [scenario]);
-
   const start = async () => {
     setBusy(true);
     setError("");
-    setSavedSessions([]);
     try {
-      const res = await api.practiceStart(context.trim() || "I am pitching my startup.");
+      const res = await api.practiceStart(round.context);
       setHistory(res.history);
       setScores(res.scores);
+      if (res.quota) setQuota(res.quota);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to start — is the API running?");
+      // A spent allowance is a gate, not an error — swap the screen, do not
+      // shout in red.
+      if (e instanceof QuotaError) setLocked(e.quota ?? { ...emptyQuota });
+      else setError(e instanceof Error ? e.message : "Could not start the round.");
     } finally {
       setBusy(false);
     }
@@ -83,7 +131,7 @@ export default function PracticePage() {
     setError("");
     try {
       const res = await api.practiceTurn({
-        pitch_context: context,
+        pitch_context: round.context,
         history,
         founder_message: msg,
       });
@@ -91,236 +139,209 @@ export default function PracticePage() {
       setScores(res.scores);
       setInput("");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
+      if (e instanceof QuotaError) setLocked(e.quota ?? { ...emptyQuota });
+      else setError(e instanceof Error ? e.message : "Could not send that answer.");
     } finally {
       setBusy(false);
     }
   };
 
-  const finishVoiceAnswer = async () => {
+  const finishVoice = async () => {
     if (!history.length || busy) return;
     setBusy(true);
     setError("");
     try {
       const result = await rec.stop();
       if (!result || result.blob.size < 800) {
-        setError("Answer too short — hold and speak, then stop.");
+        setError("Too short — speak, then stop.");
         setBusy(false);
         return;
       }
-      let spoken = result.transcript.trim();
-      const title = `Practice · Investor answer · ${new Date().toLocaleString()}`;
-      const uploaded = await api.upload(result.blob, title, "practice", {
+      const uploaded = await api.upload(result.blob, `Practice · ${round.label}`, "practice", {
         exercise_key: "investor_qa_answer",
-        exercise_title: "Investor Q&A answer",
+        exercise_title: round.label,
         exercise_category: "practice",
-        exercise_description: "Spoken answer in AI investor practice — full voice evaluation.",
-        focus_note: context.slice(0, 400),
+        exercise_description: round.hint,
+        focus_note: round.context.slice(0, 400),
       });
-      setSavedSessions((prev) => [uploaded.session_id, ...prev].slice(0, 8));
       setLastEvalId(uploaded.session_id);
-
+      const spoken = result.transcript.trim();
       if (!spoken) {
-        spoken =
-          input.trim() ||
-          "(Spoken answer recorded — transcript unavailable in this browser; see session analysis.)";
-        if (!input.trim()) {
-          setError(
-            "No live transcript (browser speech API). Recording was saved for analysis — type a short summary of what you said to continue the investor chat, or open the session.",
-          );
-        }
-      }
-
-      if (spoken && !spoken.startsWith("(Spoken")) {
-        const res = await api.practiceTurn({
-          pitch_context: context,
-          history,
-          founder_message: spoken,
-        });
-        setHistory(res.history);
-        setScores(res.scores);
-        setInput("");
-        setError("");
-      } else if (input.trim()) {
-        await sendText(input);
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Voice answer failed — is the API running?");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const finishSoloEval = async () => {
-    setBusy(true);
-    setError("");
-    try {
-      const result = await solo.stop();
-      if (!result || result.blob.size < 1000) {
-        setError("Recording too short for full evaluation.");
+        setError("No live transcript — type a one-line summary to keep the chat going. Recording is saved.");
         setBusy(false);
         return;
       }
-      const title = `Practice · Full pitch · ${new Date().toLocaleString()}`;
-      const uploaded = await api.upload(result.blob, title, "practice", {
-        exercise_key: "full_pitch_eval",
-        exercise_title: "Full pitch evaluation",
-        exercise_category: "practice",
-        exercise_description: "Same full analysis engine as Record — dedicated practice session result.",
-        focus_note: context.slice(0, 400) || "Practice pitch evaluation",
+      const res = await api.practiceTurn({
+        pitch_context: round.context,
+        history,
+        founder_message: spoken,
       });
-      router.push(`/sessions/${uploaded.session_id}`);
+      setHistory(res.history);
+      setScores(res.scores);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Upload failed — is the API running?");
+      setError(e instanceof Error ? e.message : "Voice answer failed");
     } finally {
       setBusy(false);
     }
   };
+
+  const started = history.length > 0;
+
+  /* Out of free rounds: the gate replaces the page rather than sitting under a
+     form they can no longer submit. */
+  if (locked && !started) {
+    return (
+      <div className="mx-auto max-w-2xl pt-4 md:pt-10">
+        <PageHeader
+          eyebrow="Practice"
+          title="Communication under pressure"
+          sub="Someone asks. You answer out loud, under real time pressure."
+        />
+        <div className="pt-8">
+          <UpgradeGate
+            quota={locked}
+            title="You have used your free practice rounds"
+            body="Investor practice runs a live model on every answer, so the free tier covers a couple of rounds. Pro removes the cap."
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <header>
-        <h2 className="font-[family-name:var(--font-display)] text-4xl">AI practice mode</h2>
-        <p className="mt-2 text-[var(--muted)]">
-          Every spoken answer gets the same full voice evaluation as Record — plus investor scoring.
-          Open each result as its own session report.
-        </p>
-      </header>
+    <div className="mx-auto max-w-2xl space-y-2 pt-4 md:pt-10">
+      <PageHeader
+        eyebrow="Practice"
+        title="Communication under pressure"
+        sub="Someone asks. You answer out loud. Each spoken answer still gets a full local report."
+        actions={<QuotaMeter quota={quota} />}
+      />
 
-      <Panel className="space-y-3">
-        <h3 className="font-[family-name:var(--font-display)] text-xl">Full evaluation (like Record)</h3>
-        <p className="text-sm text-[var(--muted)]">
-          Record a pitch or answer. You get WPM, clarity, professional presence, coach summary — same
-          engine as Record — saved as a dedicated Practice session.
-        </p>
-        <PracticeRecorderBar
-          recording={solo.recording}
-          starting={solo.starting}
-          elapsed={solo.elapsed}
-          stream={solo.stream}
-          liveTranscript={solo.liveTranscript}
-          startLabel="Record full evaluation"
-          disabled={busy || rec.recording}
-          onStart={() => void solo.start()}
-          onStop={() => void finishSoloEval()}
-        />
-        {solo.error && <p className="text-sm text-[var(--danger)]">{solo.error}</p>}
-      </Panel>
-
-      {lastEvalId && (
-        <Panel>
-          <p className="text-sm">
-            Latest spoken answer is running full analysis.{" "}
-            <Link href={`/sessions/${lastEvalId}`} className="text-[var(--accent)] hover:underline">
-              Open Practice session report →
-            </Link>
-          </p>
-        </Panel>
+      {locked && started && (
+        <div className="pt-4">
+          <UpgradeGate
+            quota={locked}
+            title="That was your last free round"
+            body="Your transcript above stays. Pro removes the cap so you can keep going."
+          />
+        </div>
       )}
 
-      <Panel className="space-y-3">
-        <label className="text-xs uppercase tracking-wider text-[var(--muted)]">Scenario</label>
-        <div className="flex flex-wrap gap-2">
-          {SCENARIOS.map((s) => (
+      <FeatureIntro
+        id="intro-practice"
+        title="This is Practice."
+        body="A conversation partner that pushes back. Pick the heat, answer with your voice, and see how your delivery holds when you have not rehearsed."
+      />
+
+      {!started && (
+        <>
+          <section className="fv-enter space-y-4 pt-6">
+            <p className="fv-eyebrow-quiet">Choose the heat</p>
+            <div className="space-y-1">
+              {ROUNDS.map((r) => (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => setRound(r)}
+                  className={`fv-lift -mx-3 flex w-[calc(100%+1.5rem)] items-baseline justify-between gap-4 rounded-[var(--r-md)] px-3 py-3 text-left ${
+                    round.id === r.id ? "bg-[var(--accent-soft)]" : ""
+                  }`}
+                >
+                  <span>
+                    <span
+                      className={`text-[15px] ${
+                        round.id === r.id ? "font-medium text-[var(--ink)]" : "text-[var(--ink-dim)]"
+                      }`}
+                    >
+                      Level {r.level} — {r.label}
+                    </span>
+                    <span className="mt-0.5 block text-[13px] text-[var(--muted)]">{r.hint}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <div className="pt-6">
+            <HeroButton onClick={() => void start()} disabled={busy}>
+              {busy ? "Starting…" : `Start ${round.label.toLowerCase()}`}
+            </HeroButton>
+          </div>
+        </>
+      )}
+
+      {error && (
+        <div className="pt-4">
+          <ErrorBanner message={error} />
+        </div>
+      )}
+      {rec.error && (
+        <div className="pt-4">
+          <ErrorBanner message={rec.error} />
+        </div>
+      )}
+
+      {started && (
+        <>
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-6">
+            <p className="fv-eyebrow-quiet">
+              Level {round.level} · {round.label}
+            </p>
             <button
-              key={s.id}
               type="button"
-              onClick={() => setScenario(s.id)}
-              className={`rounded-lg px-3 py-1.5 text-sm ${
-                scenario === s.id
-                  ? "bg-[var(--accent)] text-[#1a1510]"
-                  : "border border-[var(--line)] text-[var(--muted)]"
-              }`}
+              onClick={() => void start()}
+              disabled={busy}
+              className="text-[12.5px] text-[var(--muted)] transition-colors hover:text-[var(--ink)]"
             >
-              {s.label}
+              Restart round
             </button>
-          ))}
-        </div>
-        <label className="text-xs uppercase tracking-wider text-[var(--muted)]">Pitch context</label>
-        <textarea
-          value={context}
-          onChange={(e) => {
-            setScenario("custom");
-            setContext(e.target.value);
-          }}
-          rows={3}
-          className="mt-1 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] p-3 text-sm outline-none focus:border-[var(--accent)]"
-        />
-        <button
-          type="button"
-          onClick={() => void start()}
-          disabled={busy}
-          className="rounded-xl bg-[var(--accent-2)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
-        >
-          {history.length ? "Restart practice" : "Start investor Q&A"}
-        </button>
-      </Panel>
+          </div>
 
-      {scores && (
-        <div className="grid gap-3 sm:grid-cols-5">
-          {Object.entries(scores).map(([k, v]) => (
-            <Stat key={k} label={k} value={Math.round(Number(v))} />
-          ))}
-        </div>
-      )}
+          {/* The conversation, as conversation — not a form. */}
+          <div className="fv-scroll max-h-[400px] space-y-6 pt-4">
+            {history.map((m, i) => {
+              const mine = m.role === "user" || m.role === "founder";
+              return (
+                <div key={i} className={mine ? "pl-8 md:pl-16" : ""}>
+                  <p className="mb-1.5 text-[10px] uppercase tracking-[0.16em] text-[var(--faint)]">
+                    {mine ? "You" : round.label}
+                  </p>
+                  <p
+                    className={`text-[15px] leading-relaxed ${
+                      mine ? "text-[var(--ink-dim)]" : "fv-display text-[1.05rem] text-[var(--ink)]"
+                    }`}
+                  >
+                    {m.content}
+                  </p>
+                </div>
+              );
+            })}
+            <div ref={chatEndRef} />
+          </div>
 
-      <Panel className="min-h-[360px] space-y-4">
-        <div className="mb-2 max-h-[360px] space-y-3 overflow-y-auto">
-          {history.map((m, i) => (
-            <div
-              key={i}
-              className={`rounded-xl px-3 py-2 text-sm ${
-                m.role === "user" || m.role === "founder"
-                  ? "ml-8 border border-[var(--accent-2)]/40 bg-[rgba(61,143,110,0.1)]"
-                  : "mr-8 border border-[var(--line)] bg-[var(--bg-elevated)]"
-              }`}
-            >
-              <div className="mb-1 text-[10px] uppercase tracking-wider text-[var(--muted)]">
-                {m.role === "assistant" ? "Investor" : "You"}
-              </div>
-              {m.content}
-            </div>
-          ))}
-          {!history.length && (
-            <p className="text-sm text-[var(--muted)]">Start a session, then answer by voice or text.</p>
-          )}
-          <div ref={chatEndRef} />
-        </div>
+          <Divider />
 
-        {history.length > 0 && (
-          <>
-            <div className="flex gap-2 text-sm">
-              <button
-                type="button"
-                onClick={() => setAnswerMode("voice")}
-                className={`rounded-lg px-3 py-1 ${
-                  answerMode === "voice" ? "bg-[var(--bg-soft)] text-[var(--ink)]" : "text-[var(--muted)]"
-                }`}
-              >
-                Voice answer
-              </button>
-              <button
-                type="button"
-                onClick={() => setAnswerMode("type")}
-                className={`rounded-lg px-3 py-1 ${
-                  answerMode === "type" ? "bg-[var(--bg-soft)] text-[var(--ink)]" : "text-[var(--muted)]"
-                }`}
-              >
-                Type answer
-              </button>
-            </div>
+          <div className="flex gap-1.5">
+            <Chip selected={voice} onClick={() => setVoice(true)}>
+              Speak
+            </Chip>
+            <Chip selected={!voice} onClick={() => setVoice(false)}>
+              Type
+            </Chip>
+          </div>
 
-            {answerMode === "voice" ? (
+          <div className="pt-4">
+            {voice ? (
               <PracticeRecorderBar
                 recording={rec.recording}
                 starting={rec.starting}
                 elapsed={rec.elapsed}
                 stream={rec.stream}
                 liveTranscript={rec.liveTranscript}
-                startLabel="Record your answer"
+                startLabel="Answer out loud"
                 disabled={busy}
                 onStart={() => void rec.start()}
-                onStop={() => void finishVoiceAnswer()}
+                onStop={() => void finishVoice()}
               />
             ) : (
               <div className="flex gap-2">
@@ -333,41 +354,66 @@ export default function PracticePage() {
                       void sendText(input);
                     }
                   }}
-                  placeholder="Type your answer to the investor…"
-                  className="flex-1 rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-sm outline-none focus:border-[var(--accent)]"
+                  placeholder="Type your answer…"
+                  className="flex-1 rounded-[var(--r-full)] bg-[rgba(244,243,251,0.04)] px-5 py-3 text-[14px] outline-none placeholder:text-[var(--faint)] focus:bg-[rgba(244,243,251,0.07)]"
                 />
                 <button
                   type="button"
                   onClick={() => void sendText(input)}
-                  disabled={busy || !history.length}
-                  className="rounded-xl bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-[#1a1510] disabled:opacity-50"
+                  disabled={busy || !input.trim()}
+                  aria-label="Send"
+                  className="fv-hero !h-[46px] !w-[46px] !px-0"
                 >
-                  Send
+                  <Send size={16} />
                 </button>
               </div>
             )}
-          </>
-        )}
-
-        {(error || rec.error) && (
-          <p className="text-sm text-[var(--danger)]">{error || rec.error}</p>
-        )}
-        {busy && <p className="text-sm text-[var(--muted)]">Working…</p>}
-
-        {savedSessions.length > 0 && (
-          <div className="border-t border-[var(--line)] pt-3 text-sm text-[var(--muted)]">
-            Full evaluations (same as Record):{" "}
-            {savedSessions.map((id, i) => (
-              <span key={id}>
-                {i > 0 && " · "}
-                <Link href={`/sessions/${id}`} className="text-[var(--accent)] hover:underline">
-                  Answer {i + 1}
-                </Link>
-              </span>
-            ))}
           </div>
-        )}
-      </Panel>
+
+          {busy && <p className="pt-3 text-[13px] text-[var(--muted)]">Thinking…</p>}
+
+          {lastEvalId && (
+            <Link
+              href={`/sessions/${lastEvalId}`}
+              className="mt-6 inline-flex items-center gap-1.5 text-[13px] text-[var(--accent)]"
+            >
+              Open the report for your last spoken answer <ArrowRight size={13} />
+            </Link>
+          )}
+
+          {scores && (
+            <div className="pt-6">
+              <Disclosure label="How that round scored" sub="Model estimates from the conversation.">
+                <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
+                  {Object.entries(scores).map(([k, v]) => (
+                    <Stat key={k} label={k.replace(/_/g, " ")} value={Math.round(Number(v))} />
+                  ))}
+                </div>
+              </Disclosure>
+            </div>
+          )}
+        </>
+      )}
+
+      {labRecs.length > 0 && (
+        <>
+          <Divider />
+          <section className="fv-enter space-y-5">
+            <p className="fv-eyebrow-quiet">Train what showed up</p>
+            {labRecs.slice(0, 2).map((lab) => (
+              <Link key={lab.key} href={`/trainer?lab=${encodeURIComponent(lab.key)}`} className="group block">
+                <p className="text-[14.5px] leading-relaxed text-[var(--ink-dim)] transition-colors group-hover:text-[var(--ink)]">
+                  {lab.sound || lab.why || lab.fix_line || lab.description}
+                </p>
+                <span className="mt-1 inline-flex items-center gap-1.5 text-[13px] text-[var(--accent)]">
+                  {lab.title}
+                  <ArrowRight size={13} className="transition-transform group-hover:translate-x-1" />
+                </span>
+              </Link>
+            ))}
+          </section>
+        </>
+      )}
     </div>
   );
 }

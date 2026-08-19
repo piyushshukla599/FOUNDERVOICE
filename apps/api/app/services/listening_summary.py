@@ -89,6 +89,21 @@ def build_listening_summary(listening_id: str) -> dict[str, Any]:
     elif patterns and "filler" in (patterns[0].get("key") or ""):
         roi = "Replace fillers with a silent breath — practice Filler Fast (60s)."
 
+    from . import lab_coach
+
+    catalog = lab_coach.exercise_catalog()
+    lab_recs = lab_coach.recommend_labs_from_memory(patterns, catalog)
+    if avg_wpm and avg_wpm > 155:
+        extra = lab_coach.recommend_labs_from_events(
+            [],
+            {"wpm": avg_wpm},
+            catalog=catalog,
+            limit=1,
+        )
+        keys = {r["key"] for r in lab_recs}
+        lab_recs = extra + [r for r in lab_recs if r["key"] not in keys]
+    lab_recs = lab_recs[:3]
+
     # Pull first coach insight from latest ready conversation
     latest_coach = None
     for c in reversed(done):
@@ -107,7 +122,21 @@ def build_listening_summary(listening_id: str) -> dict[str, Any]:
         "most_common_weakness": common_weakness,
         "most_improved_skill": improved,
         "highest_roi_recommendation": roi,
+        "lab_recs": lab_recs,
         "latest_coach_line": latest_coach,
+        "verdict_status": "pending",
+        "verdict": {
+            "status": "pending",
+            "headline": "Complete today's Voice Labs drill to unlock your Founder Voice Verdict.",
+            "why": (
+                "Smart Session collected how you speak in real discussions. "
+                "Record today's exercise to get your final verdict."
+            ),
+            "listening_clips": len(done),
+            "exercise_required": True,
+            "cta": "Voice Labs → today's drill → record.",
+        },
+        "device_label": parent.get("device_label"),
         "conversations": [
             {
                 "id": c["id"],

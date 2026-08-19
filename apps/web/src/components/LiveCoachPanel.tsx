@@ -50,10 +50,10 @@ function LiveCoachPanelInner({
   const zoneHex = ZONE_HEX[zone.color];
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-[var(--line)] bg-[rgba(15,20,18,0.9)] p-4 md:p-6">
+    <div className="fv-raised relative overflow-hidden p-4 md:p-6">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.22em] text-[var(--accent)]">Live Coach</p>
+          <p className="fv-eyebrow">Live Coach</p>
           <p className="text-xs text-[var(--muted)]">
             Active instructor
             {!speechSupported && " · energy mode"}
@@ -99,7 +99,7 @@ function LiveCoachPanelInner({
             <span>Pace</span>
             <span style={{ color: zoneHex }}>{zone.label}</span>
           </div>
-          <div className="h-2.5 overflow-hidden rounded-full bg-[var(--bg-soft)]">
+          <div className="h-2.5 overflow-hidden rounded-full bg-[rgba(244,243,251,0.06)]">
             <div
               className="h-full rounded-full transition-[width,background-color] duration-300"
               style={{ width: `${paceFill}%`, backgroundColor: zoneHex }}
@@ -110,7 +110,7 @@ function LiveCoachPanelInner({
         <div className="mt-4 grid w-full max-w-xs grid-cols-2 gap-3">
           <div>
             <div className="mb-1 text-[10px] uppercase tracking-wider text-[var(--muted)]">Breath</div>
-            <div className="flex h-2 overflow-hidden rounded-full bg-[var(--bg-soft)]">
+            <div className="flex h-2 overflow-hidden rounded-full bg-[rgba(244,243,251,0.06)]">
               <div
                 className="h-full rounded-full transition-[width,background-color] duration-300"
                 style={{
@@ -148,8 +148,8 @@ function LiveCoachPanelInner({
             transition={{ duration: 0.18 }}
             className={`absolute bottom-24 left-1/2 -translate-x-1/2 rounded-full px-4 py-2 text-sm font-medium shadow-lg ${
               sentenceTip.kind === "great"
-                ? "bg-[rgba(61,143,110,0.95)] text-white"
-                : "bg-[rgba(212,160,23,0.95)] text-[#1a1510]"
+                ? "bg-[var(--emerald)] text-[#04150e]"
+                : "bg-[var(--gold)] text-[#1a1408]"
             }`}
           >
             {sentenceTip.text}
@@ -168,7 +168,7 @@ function LiveCoachPanelInner({
             className="absolute right-4 top-20 max-w-[200px] rounded-2xl border px-3 py-2 text-sm font-semibold shadow-xl"
             style={{
               borderColor: ZONE_HEX[coachHint.tone],
-              background: "rgba(23,30,26,0.95)",
+              background: "rgba(13, 15, 24, 0.94)",
               color: ZONE_HEX[coachHint.tone],
             }}
           >
@@ -185,7 +185,7 @@ function LiveCoachPanelInner({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.18 }}
-            className="absolute left-4 top-20 max-w-[220px] rounded-2xl border border-[var(--warn)] bg-[rgba(212,160,23,0.12)] px-3 py-2 text-sm text-[var(--warn)]"
+            className="absolute left-4 top-20 max-w-[220px] rounded-[var(--r-md)] bg-[var(--gold-soft)] px-3 py-2 text-sm text-[var(--gold)] shadow-[inset_0_0_0_1px_rgba(233,194,123,0.28)] backdrop-blur-sm"
           >
             <div className="text-[10px] uppercase tracking-wider opacity-80">Ghost Mode</div>
             {ghostHint.text}
@@ -201,8 +201,12 @@ export const LiveCoachPanel = memo(LiveCoachPanelInner);
 function Chip({ label, value, color }: { label: string; value: string; color: ZoneColor }) {
   return (
     <div
-      className="rounded-full border px-2.5 py-1 text-[11px] transition-colors duration-300"
-      style={{ borderColor: `${ZONE_HEX[color]}66`, color: ZONE_HEX[color] }}
+      className="rounded-[var(--r-full)] px-2.5 py-1 text-[11px] transition-colors duration-300"
+      style={{
+        color: ZONE_HEX[color],
+        background: `${ZONE_HEX[color]}14`,
+        boxShadow: `inset 0 0 0 1px ${ZONE_HEX[color]}40`,
+      }}
     >
       <span className="opacity-70">{label} </span>
       <span className="font-semibold">{value}</span>

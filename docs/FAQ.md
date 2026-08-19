@@ -21,5 +21,11 @@ You can host a marketing/welcome UI (e.g. Vercel). Keep the API + Whisper + `dat
 ### How do I wipe my data?
 Coach → Fresh start (type `DELETE`), or delete the `data/` folder.
 
-### Smart Session stops mid-talk?
-Silence detection is browser-side. Adjust timing in Listen settings; leave longer pauses only when you want a new conversation clip.
+### How do I use Labs?
+Open **Labs**. Each drill shows a **sentence to speak**, **how to say it**, and **what that means**. Record that line. The report grades only that skill, then suggests more labs like it.
+
+### When do I get a final Listen verdict?
+After a Smart Session, complete a Labs drill (exercise/test). Real conversations are collected first; the Founder Voice Score unlocks after the drill. Earbuds or a headset help.
+
+### Why is the web on port 3002?
+Port 3000 was already in use. Use the URL Next prints. Restart the API if the page loads but data does not (CORS).

@@ -44,8 +44,9 @@ function withMicTimeout<T>(fn: () => Promise<T>, ms: number): Promise<T> {
       .then((v) => {
         if (settled) {
           // Late success — release immediately so we don't leak a lock.
-          if (v && typeof v === "object" && "getTracks" in (v as MediaStream)) {
-            (v as MediaStream).getTracks().forEach((t) => t.stop());
+          const late = v as unknown as MediaStream | undefined;
+          if (late && typeof late === "object" && "getTracks" in late) {
+            late.getTracks().forEach((t) => t.stop());
           }
           return;
         }
@@ -68,7 +69,7 @@ export async function openMicrophone(deviceId?: string): Promise<MediaStream> {
   }
 
   const run = async () => {
-    const audio: MediaTrackConstraints = deviceId
+    const audio: boolean | MediaTrackConstraints = deviceId
       ? { deviceId: { ideal: deviceId } }
       : true;
 

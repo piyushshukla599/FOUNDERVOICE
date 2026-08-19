@@ -1,25 +1,80 @@
 @import "tailwindcss";
 
+/* ---------------------------------------------------------------------------
+   FounderVoice design language
+
+   A beautiful AI coach — not a dashboard that analyzes speaking.
+
+   Deep charcoal base lit by violet / indigo / magenta atmosphere, with gold
+   reserved for genuine premium emphasis. Gradients are lighting behind the
+   interface, never decoration on top of it. Grain keeps the darks from
+   looking like flat #000.
+--------------------------------------------------------------------------- */
+
 :root {
-  --bg: #0f1412;
-  --bg-elevated: #171e1a;
-  --bg-soft: #1e2822;
-  --ink: #e8efe9;
-  --muted: #8fa094;
-  --line: #2a3530;
-  --accent: #c4a35a;
-  --accent-2: #3d8f6e;
-  --danger: #c45c4a;
-  --warn: #d4a017;
+  /* Base — near-black with a blue cast, so the glows have something to sit in */
+  --bg: #07080d;
+  --surface: #0d0f18;
+  --surface-2: #141726;
+  --surface-3: #1c2036;
+
+  /* Text */
+  --ink: #f4f3fb;
+  --ink-dim: #c2c1d6;
+  --muted: #8b8aa3;
+  --faint: #5c5b74;
+
+  /* Lines — hairlines only */
+  --line: rgba(244, 243, 251, 0.07);
+  --line-strong: rgba(244, 243, 251, 0.14);
+
+  /* The spectrum */
+  --violet: #8b5cf6;
+  --violet-bright: #a78bfa;
+  --indigo: #5b7cfa;
+  --magenta: #e056a0;
+  --gold: #e9c27b;
+  --emerald: #3fd69a;
+
+  /* Primary accent = electric violet */
+  --accent: var(--violet);
+  --accent-bright: var(--violet-bright);
+  --accent-ink: #0a0616;
+  --accent-soft: rgba(139, 92, 246, 0.12);
+  --accent-line: rgba(139, 92, 246, 0.3);
+  --accent-glow: rgba(139, 92, 246, 0.45);
+
+  --emerald-soft: rgba(63, 214, 154, 0.12);
+  --gold-soft: rgba(233, 194, 123, 0.12);
+
+  --warn: #f0b849;
+  --danger: #f2617a;
+  --danger-soft: rgba(242, 97, 122, 0.12);
+
+  /* The signature gradient */
+  --grad: linear-gradient(120deg, var(--violet) 0%, var(--indigo) 45%, var(--magenta) 100%);
+  --grad-soft: linear-gradient(
+    120deg,
+    rgba(139, 92, 246, 0.16) 0%,
+    rgba(91, 124, 250, 0.13) 45%,
+    rgba(224, 86, 160, 0.14) 100%
+  );
+
+  /* Radius */
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 22px;
+  --r-full: 999px;
 }
 
 @theme inline {
   --color-background: var(--bg);
   --color-foreground: var(--ink);
-  --font-sans: "Candara", "Segoe UI", "Trebuchet MS", sans-serif;
-  --font-display: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
-  --font-body: "Candara", "Segoe UI", "Trebuchet MS", sans-serif;
-  --font-mono: "Cascadia Mono", "Consolas", monospace;
+  /* Resolved from the OS — no webfont fetch, so the app looks right offline. */
+  --font-sans: Inter, "Inter var", "Segoe UI Variable Text", "Segoe UI", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-display: Inter, "Inter var", "Segoe UI Variable Display", "Segoe UI", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-body: Inter, "Inter var", "Segoe UI Variable Text", "Segoe UI", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
 }
 
 * {
@@ -31,14 +86,73 @@ body {
   min-height: 100%;
 }
 
+html {
+  font-size: 15px;
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
 body {
   margin: 0;
   color: var(--ink);
-  background:
-    radial-gradient(1200px 600px at 10% -10%, rgba(61, 143, 110, 0.18), transparent 55%),
-    radial-gradient(900px 500px at 90% 0%, rgba(196, 163, 90, 0.12), transparent 50%),
-    linear-gradient(180deg, #121916 0%, var(--bg) 40%, #0c100e 100%);
+  background: var(--bg);
   font-family: var(--font-body);
+  line-height: 1.55;
+  letter-spacing: -0.011em;
+}
+
+/* Atmosphere: large blurred light sources behind everything. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: -25%;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(38rem 26rem at 14% -4%, rgba(139, 92, 246, 0.3), transparent 62%),
+    radial-gradient(34rem 24rem at 88% 6%, rgba(91, 124, 250, 0.22), transparent 62%),
+    radial-gradient(40rem 28rem at 72% 96%, rgba(224, 86, 160, 0.2), transparent 62%),
+    radial-gradient(30rem 22rem at 8% 88%, rgba(139, 92, 246, 0.14), transparent 62%);
+  filter: blur(24px);
+  animation: fv-drift 52s ease-in-out infinite alternate;
+}
+
+/* Grain: keeps the darks from reading as flat black. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+@keyframes fv-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  100% {
+    transform: translate3d(3%, 2%, 0) scale(1.08);
+  }
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: -0.032em;
+  line-height: 1.15;
+  font-weight: 600;
+}
+
+p {
+  max-width: 44rem;
 }
 
 a {
@@ -47,10 +161,9 @@ a {
 }
 
 ::selection {
-  background: rgba(196, 163, 90, 0.35);
+  background: rgba(139, 92, 246, 0.35);
 }
 
-/* Accessibility helpers */
 .sr-only {
   position: absolute;
   width: 1px;
@@ -64,10 +177,507 @@ a {
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  outline: 2px solid var(--violet-bright);
+  outline-offset: 3px;
 }
 
 button:disabled {
   cursor: not-allowed;
+}
+
+/* --- Type -------------------------------------------------------------- */
+
+.fv-display {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.034em;
+}
+
+.fv-lede {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(1.45rem, 1rem + 1.9vw, 2.5rem);
+  line-height: 1.14;
+  letter-spacing: -0.036em;
+  max-width: 22ch;
+}
+
+/* Ambient light behind a hero block. Almost invisible at rest; it breathes.
+   Use on the container, not on individual elements. */
+.fv-halo {
+  position: relative;
+}
+.fv-halo::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 38%;
+  width: min(44rem, 135%);
+  aspect-ratio: 1.55;
+  transform: translate(-50%, -50%);
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 28% 42%, rgba(139, 92, 246, 0.22), transparent 62%),
+    radial-gradient(ellipse at 74% 58%, rgba(224, 86, 160, 0.15), transparent 64%),
+    radial-gradient(ellipse at 55% 28%, rgba(91, 124, 250, 0.16), transparent 62%);
+  filter: blur(58px);
+  animation: fv-halo-breathe 19s ease-in-out infinite alternate;
+}
+
+@keyframes fv-halo-breathe {
+  0% {
+    opacity: 0.7;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.13);
+  }
+}
+
+/* Gradient text — for the one number that matters */
+.fv-grad-text {
+  background: var(--grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.fv-eyebrow {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--violet-bright);
+}
+
+.fv-eyebrow-quiet {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--muted);
+}
+
+.fv-num {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+}
+
+/* --- Surfaces ---------------------------------------------------------- */
+
+/* Glass, not cards: a hairline and a whisper of fill. */
+.fv-raised {
+  background: linear-gradient(180deg, rgba(244, 243, 251, 0.045), rgba(244, 243, 251, 0.015));
+  border-radius: var(--r-lg);
+  box-shadow: inset 0 0 0 1px rgba(244, 243, 251, 0.05);
+  backdrop-filter: blur(8px);
+}
+
+/* A panel lit from behind by the spectrum */
+.fv-glow-panel {
+  position: relative;
+  border-radius: var(--r-lg);
+  background: linear-gradient(180deg, rgba(244, 243, 251, 0.05), rgba(244, 243, 251, 0.015));
+  box-shadow: inset 0 0 0 1px rgba(139, 92, 246, 0.18);
+}
+.fv-glow-panel::before {
+  content: "";
+  position: absolute;
+  inset: -40% -10%;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--grad-soft);
+  filter: blur(46px);
+  pointer-events: none;
+}
+
+.fv-divider {
+  height: 1px;
+  background: var(--line);
+  border: 0;
+}
+
+.fv-lift {
+  transition:
+    transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1),
+    background-color 0.18s ease,
+    color 0.18s ease;
+}
+.fv-lift:hover {
+  transform: translateY(-1px);
+  background-color: rgba(244, 243, 251, 0.04);
+}
+
+/* --- Primary action ---------------------------------------------------- */
+
+.fv-hero {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  height: 52px;
+  padding: 0 1.7rem;
+  border: 0;
+  border-radius: var(--r-full);
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--grad);
+  box-shadow:
+    0 0 0 1px rgba(167, 139, 250, 0.3),
+    0 12px 34px -12px var(--accent-glow);
+  cursor: pointer;
+  transition:
+    filter 0.2s ease,
+    transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 0.2s ease;
+}
+.fv-hero:hover:not(:disabled) {
+  filter: brightness(1.1) saturate(1.05);
+  transform: translateY(-1px);
+  box-shadow:
+    0 0 0 1px rgba(167, 139, 250, 0.45),
+    0 20px 48px -14px var(--accent-glow);
+}
+.fv-hero:active:not(:disabled) {
+  transform: translateY(0);
+}
+.fv-hero:disabled {
+  opacity: 0.5;
+}
+.fv-hero .fv-arrow {
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.fv-hero:hover:not(:disabled) .fv-arrow {
+  transform: translateX(4px);
+}
+
+/* Gold is for premium emphasis only — upgrade, streaks, milestones. */
+.fv-gold {
+  color: var(--gold);
+}
+
+.fv-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 44px;
+  padding: 0 1.2rem;
+  border-radius: var(--r-full);
+  color: var(--ink-dim);
+  background: rgba(244, 243, 251, 0.05);
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease;
+}
+.fv-ghost:hover:not(:disabled) {
+  background: rgba(244, 243, 251, 0.1);
+  color: var(--ink);
+}
+
+/* --- Live state -------------------------------------------------------- */
+
+@keyframes fv-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.42;
+    transform: scale(0.84);
+  }
+}
+.fv-rec-dot {
+  animation: fv-pulse 1.7s ease-in-out infinite;
+}
+
+@keyframes fv-cue-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.fv-cue {
+  animation: fv-cue-in 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes fv-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.fv-enter {
+  animation: fv-fade-up 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* Countdown before the microphone opens */
+@keyframes fv-count {
+  0% {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+  25% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+.fv-count {
+  animation: fv-count 1s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* Training path — levels read as a route you move along. */
+.fv-path {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+.fv-path-step {
+  position: relative;
+  flex: 1;
+  padding: 0.55rem 0.5rem 0;
+  text-align: center;
+  color: var(--muted);
+  transition: color 0.2s ease;
+}
+.fv-path-step:hover {
+  color: var(--ink-dim);
+}
+.fv-path-step[aria-selected="true"] {
+  color: var(--ink);
+}
+/* the rail */
+.fv-path-step::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -7px;
+  height: 2px;
+  background: var(--line);
+}
+.fv-path-step:first-child::before {
+  left: 50%;
+  border-radius: var(--r-full) 0 0 var(--r-full);
+}
+.fv-path-step:last-child::before {
+  right: 50%;
+  border-radius: 0 var(--r-full) var(--r-full) 0;
+}
+/* the node */
+.fv-path-node {
+  position: absolute;
+  left: 50%;
+  bottom: -11px;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  border-radius: var(--r-full);
+  background: var(--surface-3);
+  box-shadow: 0 0 0 3px var(--bg);
+  transition:
+    background 0.25s ease,
+    box-shadow 0.25s ease,
+    transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.fv-path-step[aria-selected="true"] .fv-path-node {
+  background: var(--grad);
+  transform: scale(1.25);
+  box-shadow:
+    0 0 0 3px var(--bg),
+    0 0 16px 3px var(--accent-glow);
+}
+.fv-path-step[data-done="true"] .fv-path-node {
+  background: var(--violet);
+}
+
+/* --- Pills: the measurable half of a coaching line ---------------------- */
+
+/* A heading says what to do; the pill carries the number. Keeping them apart
+   is what stops copy like "Slow down (target ~130-140 WPM)." from becoming a
+   headline in three different places. */
+.fv-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.28rem 0.72rem;
+  border-radius: var(--r-full);
+  font-size: 12px;
+  line-height: 1.35;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.005em;
+  color: var(--ink-dim);
+  background: rgba(244, 243, 251, 0.05);
+  box-shadow: inset 0 0 0 1px rgba(244, 243, 251, 0.06);
+  white-space: nowrap;
+}
+.fv-pill-accent {
+  color: var(--violet-bright);
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px var(--accent-line);
+}
+.fv-pill-gold {
+  color: var(--gold);
+  background: var(--gold-soft);
+  box-shadow: inset 0 0 0 1px rgba(233, 194, 123, 0.24);
+}
+.fv-pill-done {
+  color: var(--emerald);
+  background: var(--emerald-soft);
+  box-shadow: inset 0 0 0 1px rgba(63, 214, 154, 0.24);
+}
+
+/* --- Tiles: a card you can click, lit from its own top edge -------------- */
+
+.fv-tile {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: var(--r-lg);
+  padding: 1.15rem 1.25rem;
+  background: linear-gradient(180deg, rgba(244, 243, 251, 0.045), rgba(244, 243, 251, 0.012));
+  box-shadow: inset 0 0 0 1px rgba(244, 243, 251, 0.055);
+  text-align: left;
+  transition:
+    transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 0.22s ease,
+    background-color 0.22s ease;
+}
+/* A hairline of spectrum along the top edge, revealed on approach. */
+.fv-tile::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: var(--grad);
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+.fv-tile:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 0 0 1px rgba(167, 139, 250, 0.22),
+    0 18px 40px -26px var(--accent-glow);
+}
+.fv-tile:hover::after {
+  opacity: 0.85;
+}
+.fv-tile:active {
+  transform: translateY(0);
+}
+
+/* --- Fields: inputs belong to the same glass as everything else ---------- */
+
+.fv-input {
+  width: 100%;
+  padding: 0.62rem 0.85rem;
+  border: 0;
+  border-radius: var(--r-md);
+  color: var(--ink);
+  background: rgba(244, 243, 251, 0.04);
+  box-shadow: inset 0 0 0 1px rgba(244, 243, 251, 0.07);
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+  transition:
+    background-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+.fv-input::placeholder {
+  color: var(--faint);
+}
+.fv-input:hover:not(:disabled) {
+  background: rgba(244, 243, 251, 0.055);
+}
+.fv-input:focus {
+  background: rgba(244, 243, 251, 0.06);
+  box-shadow:
+    inset 0 0 0 1px var(--accent-line),
+    0 0 0 3px rgba(139, 92, 246, 0.14);
+}
+.fv-input:disabled {
+  opacity: 0.55;
+}
+/* Native selects and options render on the OS surface — force ours. */
+select.fv-input option {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.fv-label {
+  display: block;
+  font-size: 12px;
+  letter-spacing: 0.01em;
+  color: var(--muted);
+}
+
+/* A static glass cell — the read-only sibling of .fv-tile, for grids of
+   numbers and short read-outs that are not clickable. */
+.fv-cell {
+  border-radius: var(--r-md);
+  padding: 0.7rem 0.9rem;
+  background: rgba(244, 243, 251, 0.035);
+  box-shadow: inset 0 0 0 1px rgba(244, 243, 251, 0.055);
+}
+
+/* --- Stagger: a screen should arrive, not appear all at once ------------- */
+
+.fv-stagger > * {
+  animation: fv-fade-up 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.fv-stagger > *:nth-child(1) { animation-delay: 0.02s; }
+.fv-stagger > *:nth-child(2) { animation-delay: 0.08s; }
+.fv-stagger > *:nth-child(3) { animation-delay: 0.14s; }
+.fv-stagger > *:nth-child(4) { animation-delay: 0.2s; }
+.fv-stagger > *:nth-child(5) { animation-delay: 0.26s; }
+.fv-stagger > *:nth-child(6) { animation-delay: 0.32s; }
+.fv-stagger > *:nth-child(n + 7) { animation-delay: 0.38s; }
+
+/* A quiet inline link that earns an underline on hover rather than wearing
+   one permanently. */
+.fv-quiet-link {
+  color: var(--muted);
+  text-decoration-color: transparent;
+  text-underline-offset: 4px;
+  transition:
+    color 0.18s ease,
+    text-decoration-color 0.18s ease;
+}
+.fv-quiet-link:hover {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+}
+
+.fv-scroll {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::before {
+    animation: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

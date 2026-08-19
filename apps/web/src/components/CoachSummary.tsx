@@ -60,11 +60,16 @@ export function CoachSummary({
             </ol>
           );
         }
-        return (
-          <p key={i} className="text-[var(--ink)]">
-            {inline(block.text)}
-          </p>
-        );
+        // Explicit check: narrowing the union by elimination left TS unable to
+        // prove the remaining member carries `text`.
+        if (block.type === "p") {
+          return (
+            <p key={i} className="text-[var(--ink)]">
+              {inline(block.text)}
+            </p>
+          );
+        }
+        return null;
       })}
     </div>
   );

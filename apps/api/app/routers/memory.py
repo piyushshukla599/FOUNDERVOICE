@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 
 from ..config import get_settings
 from ..db import connect, row_to_dict, utc_now
-from ..services import filler_lexicon, training_program, voice_memory, voice_profile
+from ..services import filler_lexicon, lab_coach, training_program, voice_memory, voice_profile
 
 router = APIRouter(tags=["memory"])
 
@@ -53,22 +53,61 @@ def complete_daily_mission() -> dict[str, Any]:
 @router.get("/exercises")
 def list_exercises() -> dict[str, Any]:
     with connect() as conn:
-        exercises = [row_to_dict(r) for r in conn.execute("SELECT * FROM exercises ORDER BY category").fetchall()]
+        exercises = [row_to_dict(r) for r in conn.execute("SELECT * FROM exercises ORDER BY level, category").fetchall()]
         completions = [
             row_to_dict(r)
             for r in conn.execute(
-                "SELECT * FROM exercise_completions ORDER BY completed_at DESC LIMIT 50"
+                "SELECT * FROM exercise_completions ORDER BY completed_at DESC LIMIT 80"
             ).fetchall()
         ]
+        done_keys = {
+            r["exercise_key"]
+            for r in conn.execute("SELECT DISTINCT exercise_key FROM exercise_completions").fetchall()
+        }
+        counts = {
+            r["exercise_key"]: r["n"]
+            for r in conn.execute(
+                "SELECT exercise_key, COUNT(*) AS n FROM exercise_completions GROUP BY exercise_key"
+            ).fetchall()
+        }
+
+    for e in exercises:
+        e["level"] = int(e.get("level") or 1)
+        e["times_completed"] = int(counts.get(e["key"], 0))
+        e["completed"] = e["key"] in done_keys
+        e["why"] = ""
+
+    unique_l1 = sum(1 for e in exercises if e["level"] == 1 and e["completed"])
+    unique_l2 = sum(1 for e in exercises if e["level"] == 2 and e["completed"])
+    # All labs choosable — levels are a map, not a lock. Recommend from Voice Memory.
+    unlocked = {"1": True, "2": True, "3": True}
+    xp = sum(int(e["level"]) * max(1, e["times_completed"]) for e in exercises if e["times_completed"])
+
     program = training_program.get_program()
     plan_keys = {p.get("exercise_key") for p in program.get("plan") or []}
     memory = voice_memory.get_memory_snapshot()
-    pattern_keys = {p["key"] for p in memory.get("top_patterns") or []}
+    patterns = memory.get("top_patterns") or []
+    pattern_keys = {p["key"] for p in patterns}
+    catalog = {e["key"]: e for e in exercises}
+    for e in exercises:
+        e["why"] = lab_coach.why_this_lab(e, pattern_keys, patterns)
+        lab_coach.attach_sound(e)
+
     recommended = [e for e in exercises if e.get("key") in plan_keys]
+    memory_recs = lab_coach.recommend_labs_from_memory(patterns, catalog)
+    if not recommended:
+        rec_keys = {r["key"] for r in memory_recs}
+        recommended = [e for e in exercises if e.get("key") in rec_keys]
     if not recommended:
         recommended = [e for e in exercises if e.get("target_pattern") in pattern_keys]
     if not recommended:
-        recommended = exercises[:3]
+        recommended = [e for e in exercises if e["level"] == 1][:3]
+    by_key = {r["key"]: r for r in memory_recs}
+    for e in recommended:
+        lab_coach.attach_sound(e)
+        if e["key"] in by_key:
+            e["sound"] = by_key[e["key"]].get("sound") or e.get("sound")
+            e["fix_line"] = by_key[e["key"]].get("fix_line") or e.get("fix_line")
     # Mission exercise first
     mission_key = (program.get("mission") or {}).get("exercise_key")
     if mission_key:
@@ -85,6 +124,14 @@ def list_exercises() -> dict[str, Any]:
         "goal": program.get("goal"),
         "hard_words": (program.get("profile") or {}).get("hard_words") or [],
         "philosophy": program.get("philosophy"),
+        "levels": {
+            "unlocked": unlocked,
+            "unique_l1": unique_l1,
+            "unique_l2": unique_l2,
+            "xp": xp,
+            "next_unlock": None,
+            "note": "Pick any lab. Recommended ones match your overall Voice Memory.",
+        },
     }
 
 

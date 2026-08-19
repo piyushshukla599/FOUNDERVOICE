@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   Mic,
   Library,
@@ -14,25 +14,45 @@ import {
   Sparkles,
   Ear,
   MessageCircle,
+  MoreHorizontal,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ContactModal } from "@/components/ContactModal";
 
-const links = [
-  { href: "/", label: "Record", icon: Mic },
-  { href: "/listen", label: "Smart Session", icon: Ear },
-  { href: "/library", label: "Library", icon: Library },
-  { href: "/dashboard", label: "Dashboard", icon: LineChart },
-  { href: "/coach", label: "Coach", icon: Brain },
+type NavItem = { href: string; label: string; icon: typeof Mic };
+
+/** What you do. These read first. */
+const PRIMARY: NavItem[] = [
+  { href: "/", label: "Today", icon: Sparkles },
   { href: "/trainer", label: "Labs", icon: Dumbbell },
+  { href: "/record", label: "Record", icon: Mic },
   { href: "/practice", label: "Practice", icon: MessagesSquare },
+  { href: "/listen", label: "Listen", icon: Ear },
 ];
+
+/** What you look back at. Quieter — not what you came here to do. */
+const SECONDARY: NavItem[] = [
+  { href: "/library", label: "Sessions", icon: Library },
+  { href: "/dashboard", label: "Progress", icon: LineChart },
+  { href: "/coach", label: "Coach", icon: Brain },
+];
+
+const MOBILE_PRIMARY = [PRIMARY[0], PRIMARY[1], PRIMARY[2], PRIMARY[4]];
+const MOBILE_MORE = [PRIMARY[3], ...SECONDARY];
+
+const CHROMELESS = ["/welcome", "/privacy", "/terms", "/onboarding"];
+
+function isActive(pathname: string, href: string) {
+  return pathname === href || (href !== "/" && pathname.startsWith(href));
+}
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [contactOpen, setContactOpen] = useState(false);
   const [contactInterest, setContactInterest] = useState<"feedback" | "general">("general");
-  const hideChrome = pathname === "/welcome" || pathname === "/privacy" || pathname === "/terms";
+  const [moreOpen, setMoreOpen] = useState(false);
+  const hideChrome = CHROMELESS.includes(pathname);
 
   useEffect(() => {
     const onOpen = (ev: Event) => {
@@ -44,12 +64,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("fv-open-contact", onOpen);
   }, []);
 
+  useEffect(() => {
+    setMoreOpen(false);
+  }, [pathname]);
+
   const openFeedback = () => {
     setContactInterest("feedback");
-    setContactOpen(true);
-  };
-  const openContact = () => {
-    setContactInterest("general");
     setContactOpen(true);
   };
 
@@ -62,128 +82,187 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     );
   }
 
+  /* Active state is a soft glow and a brighter word — never a bordered button. */
+  const navLink = ({ href, label, icon: Icon }: NavItem, quiet = false) => {
+    const active = isActive(pathname, href);
+    return (
+      <Link
+        key={href}
+        href={href}
+        aria-current={active ? "page" : undefined}
+        className={cn(
+          "group relative flex items-center gap-3 rounded-[var(--r-md)] px-3 py-2.5 transition-all duration-200",
+          quiet ? "text-[12.5px]" : "text-[13.5px]",
+          active
+            ? "text-[var(--ink)]"
+            : "text-[var(--muted)] hover:translate-x-0.5 hover:text-[var(--ink)]",
+        )}
+      >
+        {active && (
+          <motion.span
+            layoutId="nav-glow"
+            className="absolute inset-0 rounded-[var(--r-md)] bg-[var(--accent-soft)] shadow-[inset_0_0_0_1px_var(--accent-line),0_0_24px_-8px_var(--accent-glow)]"
+            transition={{ type: "spring", stiffness: 400, damping: 32 }}
+          />
+        )}
+        <Icon
+          size={quiet ? 14 : 15}
+          className={cn("relative z-10 shrink-0", active && "text-[var(--accent)]")}
+          aria-hidden
+        />
+        <span className={cn("relative z-10 truncate", active && "font-medium")}>{label}</span>
+      </Link>
+    );
+  };
+
   return (
     <div className="min-h-screen">
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-[var(--accent)] focus:px-3 focus:py-2 focus:text-[#1a1510]"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-[var(--r-full)] focus:bg-[var(--accent)] focus:px-4 focus:py-2 focus:text-[var(--accent-ink)]"
       >
         Skip to content
       </a>
-      <div className="mx-auto flex min-h-screen max-w-7xl gap-6 px-4 py-6 md:px-8">
+
+      <div className="mx-auto flex min-h-screen w-full max-w-6xl gap-8 px-4 py-5 sm:px-6 lg:gap-12 lg:px-8 lg:py-8">
+        {/* Navigation recedes: no border, no panel — just quiet words. */}
         <aside
-          className="sticky top-6 hidden h-[calc(100vh-3rem)] w-56 shrink-0 flex-col rounded-2xl border border-[var(--line)] bg-[rgba(23,30,26,0.85)] p-4 backdrop-blur md:flex"
+          className="sticky top-8 hidden h-[calc(100vh-4rem)] w-40 shrink-0 flex-col xl:w-48 lg:flex"
           aria-label="Primary"
         >
-          <div className="mb-8">
-            <Link href="/welcome" className="flex items-center gap-2 text-[var(--accent)]">
-              <Sparkles size={18} aria-hidden />
-              <span className="text-xs font-semibold tracking-[0.2em] uppercase">FounderVoice</span>
-            </Link>
-            <h1 className="mt-2 font-[family-name:var(--font-display)] text-2xl leading-tight text-[var(--ink)]">
-              AI Executive Coach
-            </h1>
-            <p className="mt-2 text-sm text-[var(--muted)]">Why it happened. How to fix it.</p>
-            <p className="mt-2 text-[10px] uppercase tracking-wider text-[var(--accent-2)]">
-              100% free · Local-first · Private
-            </p>
-          </div>
-          <nav className="flex flex-1 flex-col gap-1" aria-label="App">
-            {links.map(({ href, label, icon: Icon }) => {
-              const active = pathname === href || (href !== "/" && pathname.startsWith(href));
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  aria-current={active ? "page" : undefined}
-                  className={cn(
-                    "relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition",
-                    active ? "text-[var(--ink)]" : "text-[var(--muted)] hover:text-[var(--ink)]",
-                  )}
-                >
-                  {active && (
-                    <motion.span
-                      layoutId="nav-pill"
-                      className="absolute inset-0 rounded-xl bg-[var(--bg-soft)]"
-                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                    />
-                  )}
-                  <Icon size={16} className="relative z-10" aria-hidden />
-                  <span className="relative z-10">{label}</span>
-                </Link>
-              );
-            })}
+          <Link href="/" className="group mb-9 block px-3">
+            <span className="fv-grad-text text-[12px] font-semibold uppercase tracking-[0.22em] transition-opacity group-hover:opacity-80">
+              FounderVoice
+            </span>
+          </Link>
+
+          <nav className="flex flex-1 flex-col gap-6 overflow-y-auto" aria-label="App">
+            <div className="space-y-0.5">{PRIMARY.map((item) => navLink(item))}</div>
+            <div className="space-y-0.5 border-t border-[var(--line)] pt-5">
+              {SECONDARY.map((item) => navLink(item, true))}
+            </div>
           </nav>
 
-          <div className="mt-4 space-y-2 border-t border-[var(--line)] pt-4">
+          <div className="space-y-3 px-3 pt-5">
             <button
               type="button"
               onClick={openFeedback}
-              className="w-full rounded-xl bg-[var(--accent)] px-3 py-2.5 text-sm font-semibold text-[#1a1510]"
+              className="block text-[12.5px] text-[var(--muted)] transition-colors hover:text-[var(--accent)]"
             >
-              Share feedback
+              Send feedback
             </button>
-            <button
-              type="button"
-              onClick={openContact}
-              className="w-full rounded-xl border border-[var(--line)] px-3 py-2 text-sm text-[var(--muted)] hover:text-[var(--ink)]"
-            >
-              Contact us
-            </button>
-            <p className="text-[10px] leading-relaxed text-[var(--muted)]">
-              Audio stays on your machine. Never uploaded for cloud storage.
+            <p className="text-[10.5px] leading-relaxed text-[var(--faint)]">
+              Audio stays on your machine.
             </p>
-            <div className="flex flex-wrap gap-2 text-[10px] text-[var(--muted)]">
-              <Link href="/privacy" className="hover:text-[var(--accent)]">
+            <div className="flex flex-wrap gap-2 text-[10.5px] text-[var(--faint)]">
+              <Link href="/privacy" className="hover:text-[var(--muted)]">
                 Privacy
               </Link>
               <span aria-hidden>·</span>
-              <Link href="/terms" className="hover:text-[var(--accent)]">
+              <Link href="/terms" className="hover:text-[var(--muted)]">
                 Terms
               </Link>
               <span aria-hidden>·</span>
-              <Link href="/welcome" className="hover:text-[var(--accent)]">
-                About
+              <Link href="/onboarding" className="hover:text-[var(--muted)]">
+                How it works
+              </Link>
+              <span aria-hidden>·</span>
+              <Link href="/contact" className="hover:text-[var(--muted)]">
+                Contact
               </Link>
             </div>
           </div>
         </aside>
 
-        <main id="main-content" className="min-w-0 flex-1 pb-24 md:pb-0">
+        <main id="main-content" className="min-w-0 flex-1 pb-28 lg:pb-4">
           {children}
         </main>
       </div>
 
       <nav
-        className="fixed inset-x-0 bottom-0 z-40 flex justify-around border-t border-[var(--line)] bg-[rgba(15,20,18,0.95)] px-1 py-2 backdrop-blur md:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 flex justify-around border-t border-[var(--line)] bg-[rgba(7,8,13,0.88)] px-2 pb-[max(0.625rem,env(safe-area-inset-bottom))] pt-2.5 backdrop-blur-xl lg:hidden"
         aria-label="Mobile"
       >
-        {links.slice(0, 5).map(({ href, label, icon: Icon }) => {
-          const active = pathname === href || (href !== "/" && pathname.startsWith(href));
+        {MOBILE_PRIMARY.map(({ href, label, icon: Icon }) => {
+          const active = isActive(pathname, href);
           return (
             <Link
               key={href}
               href={href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex flex-col items-center gap-1 rounded-lg px-1.5 py-1 text-[10px]",
+                "flex flex-col items-center gap-1 rounded-[var(--r-md)] px-3 py-1 text-[10px]",
                 active ? "text-[var(--accent)]" : "text-[var(--muted)]",
               )}
             >
-              <Icon size={16} aria-hidden />
-              {label.split(" ")[0]}
+              <Icon size={18} aria-hidden />
+              {label}
             </Link>
           );
         })}
         <button
           type="button"
-          onClick={openFeedback}
-          className="flex flex-col items-center gap-1 rounded-lg px-1.5 py-1 text-[10px] text-[var(--accent)]"
+          onClick={() => setMoreOpen(true)}
+          aria-haspopup="dialog"
+          aria-expanded={moreOpen}
+          className="flex flex-col items-center gap-1 rounded-[var(--r-md)] px-3 py-1 text-[10px] text-[var(--muted)]"
         >
-          <MessageCircle size={16} aria-hidden />
-          Feedback
+          <MoreHorizontal size={18} aria-hidden />
+          More
         </button>
       </nav>
+
+      <AnimatePresence>
+        {moreOpen && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-end bg-black/60 backdrop-blur-sm lg:hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setMoreOpen(false)}
+          >
+            <motion.div
+              role="dialog"
+              aria-label="More"
+              initial={{ y: 48 }}
+              animate={{ y: 0 }}
+              exit={{ y: 48 }}
+              transition={{ type: "spring", stiffness: 380, damping: 34 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full rounded-t-[var(--r-lg)] bg-[var(--surface)] p-5 pb-[max(2.25rem,env(safe-area-inset-bottom))]"
+            >
+              <div className="mb-4 flex items-center justify-between">
+                <span className="fv-eyebrow-quiet">More</span>
+                <button type="button" onClick={() => setMoreOpen(false)} aria-label="Close">
+                  <X size={17} className="text-[var(--muted)]" />
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {MOBILE_MORE.map(({ href, label, icon: Icon }) => (
+                  <Link
+                    key={href}
+                    href={href}
+                    className="fv-lift rounded-[var(--r-md)] bg-[rgba(244,243,251,0.03)] px-4 py-3.5"
+                  >
+                    <Icon size={16} className="text-[var(--accent)]" aria-hidden />
+                    <div className="mt-2 text-[14px]">{label}</div>
+                  </Link>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setMoreOpen(false);
+                  openFeedback();
+                }}
+                className="mt-4 inline-flex w-full items-center justify-center gap-2 py-2.5 text-[13px] text-[var(--accent)]"
+              >
+                <MessageCircle size={15} /> Send feedback
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <ContactModal open={contactOpen} interest={contactInterest} onClose={() => setContactOpen(false)} />
     </div>

@@ -9,14 +9,68 @@ export function apiUrl(path: string): string {
   return `${API_BASE}${p}`;
 }
 
+export type QuotaState = {
+  feature: string;
+  label: string;
+  used: number;
+  /** -1 when unlimited. */
+  limit: number;
+  remaining: number;
+  unlimited: boolean;
+  exhausted: boolean;
+};
+
+/** The free allowance for this visitor ran out. Rendered as a gate, not an error. */
+export class QuotaError extends Error {
+  readonly quota?: QuotaState;
+  constructor(message: string, quota?: QuotaState) {
+    super(message);
+    this.name = "QuotaError";
+    this.quota = quota;
+  }
+}
+
+/**
+ * FastAPI reports failures as `{"detail": ...}` where detail is a string for
+ * plain aborts and an object for structured ones. Returning the raw body meant
+ * users saw a JSON blob — or, worse, a caller replaced it with a guess like
+ * "is the API running?" and hid the real cause.
+ */
+function explain(status: number, body: string): Error {
+  let detail: unknown = body;
+  try {
+    const parsed = JSON.parse(body);
+    detail = parsed?.detail ?? parsed;
+  } catch {
+    /* not JSON — the raw text is the best we have */
+  }
+
+  if (detail && typeof detail === "object") {
+    const d = detail as { error?: string; message?: string; quota?: QuotaState };
+    if (status === 402 || d.error === "free_limit_reached") {
+      return new QuotaError(d.message || "Free limit reached.", d.quota);
+    }
+    if (d.message) return new Error(d.message);
+  }
+  if (typeof detail === "string" && detail.trim()) return new Error(detail);
+  if (status === 429) return new Error("Too many requests — wait a moment and try again.");
+  if (status >= 500) return new Error("The server hit an error. Check the API logs.");
+  return new Error(`Request failed (${status}).`);
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(apiUrl(path), {
-    ...init,
-    cache: "no-store",
-  });
+  let res: Response;
+  try {
+    res = await fetch(apiUrl(path), {
+      ...init,
+      cache: "no-store",
+    });
+  } catch {
+    // Only a genuine transport failure means the API is unreachable.
+    throw new Error("Cannot reach the API. Check that it is running.");
+  }
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || res.statusText);
+    throw explain(res.status, await res.text());
   }
   return res.json() as Promise<T>;
 }
@@ -43,6 +97,12 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     }),
+  quota: () =>
+    request<{
+      enabled: boolean;
+      features: Record<string, QuotaState>;
+      upgrade_url: string;
+    }>("/api/quota"),
   sessions: () => request<SessionRow[]>("/api/sessions"),
   session: (id: string) => request<SessionDetail>(`/api/sessions/${id}`),
   deleteSession: (id: string) => request<{ status: string }>(`/api/sessions/${id}`, { method: "DELETE" }),
@@ -129,6 +189,12 @@ export const api = {
   endListening: (id: string) =>
     request<{ id: string; status: string; summary: ListeningSummary }>(`/api/listening/${id}/end`, {
       method: "POST",
+    }),
+  unlockVerdict: (listeningId: string, exerciseSessionId?: string) =>
+    request<{ id: string; verdict: FounderVerdict }>(`/api/listening/${listeningId}/verdict`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ exercise_session_id: exerciseSessionId || null }),
     }),
   uploadListeningConversation: async (
     listeningId: string,
@@ -221,32 +287,77 @@ export type SessionDetail = {
   };
   metrics: Record<string, unknown> | null;
   events: Finding[];
+  lab_recs?: LabRec[];
 };
 
 export type DashboardData = {
   windows: Record<string, Record<string, number | null>>;
   top_patterns: { key: string; label: string; frequency: number; trend: number }[];
   insights: string[];
-  series: Record<string, number | string | null>[];
+  series?: Record<string, number | string | null>[];
   recent_sessions: SessionRow[];
 };
 
 export type MemoryData = DashboardData;
 
+export type ExerciseItem = {
+  key: string;
+  title: string;
+  category: string;
+  description: string;
+  duration_sec: number;
+  target_pattern?: string;
+  level?: number;
+  times_completed?: number;
+  completed?: boolean;
+  why?: string;
+  sound?: string;
+  fix_line?: string;
+  speak?: string;
+  how?: string;
+  sense?: string;
+  similar?: string[];
+};
+
+export type LabRec = {
+  key: string;
+  title: string;
+  description?: string;
+  duration_sec?: number;
+  level?: number;
+  category?: string;
+  sound?: string;
+  why?: string;
+  fix_line?: string;
+  speak?: string;
+  how?: string;
+  sense?: string;
+  source?: string;
+};
+
 export type ExercisesData = {
-  exercises: { key: string; title: string; category: string; description: string; duration_sec: number; target_pattern?: string }[];
-  recommended: { key: string; title: string; category: string; description: string; duration_sec: number }[];
+  exercises: ExerciseItem[];
+  recommended: ExerciseItem[];
   streak: number;
   mission?: DailyMission;
   plan?: TrainingPlanItem[];
   goal?: { goal_key: string; goal_label: string };
   hard_words?: { word: string; count: number; avg_confidence?: number }[];
   philosophy?: string;
+  levels?: {
+    unlocked: Record<string, boolean>;
+    unique_l1: number;
+    unique_l2: number;
+    xp: number;
+    next_unlock?: string | null;
+  };
 };
 
 export type DailyMission = {
   date: string;
   title: string;
+  /** The measurable half of the mission — rendered as a pill, not in the headline. */
+  target?: string;
   focus_key?: string;
   exercise_key?: string;
   why?: string;
@@ -295,6 +406,8 @@ export type PracticeResult = {
   reply: string;
   scores: Record<string, number>;
   history: { role: string; content: string }[];
+  /** What this visitor has left after the call the server just served. */
+  quota?: QuotaState;
 };
 
 export type ListeningRow = {
@@ -334,6 +447,24 @@ export type ListeningDetail = {
   analyzing: boolean;
 };
 
+export type FounderVerdict = {
+  status: "pending" | "ready";
+  founder_voice_score?: number;
+  exercise_score?: number;
+  headline: string;
+  verdict?: string;
+  why?: string;
+  insights?: string[];
+  top_fix?: string;
+  daily_habit?: string;
+  listening_clips?: number;
+  exercise_required?: boolean;
+  exercise_title?: string;
+  cta?: string;
+  device_label?: string;
+  mic_note?: string;
+};
+
 export type ListeningSummary = {
   session_duration_sec: number;
   session_duration_label: string;
@@ -345,7 +476,11 @@ export type ListeningSummary = {
   most_common_weakness: string;
   most_improved_skill: string;
   highest_roi_recommendation: string;
+  lab_recs?: LabRec[];
   latest_coach_line?: string | null;
+  verdict_status?: "pending" | "ready";
+  verdict?: FounderVerdict;
+  device_label?: string;
   conversations: {
     id: string;
     title?: string;
