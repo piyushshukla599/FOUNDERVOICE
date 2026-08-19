@@ -1,21 +1,21 @@
 # TLS for the FounderVoice API.
 #
-# Caddy gets and renews a Let's Encrypt certificate on its own, so this file
-# plus an A record is the whole of it. TLS is not optional here: browsers
-# refuse getUserMedia (the microphone) on plain HTTP from a remote origin, so
-# without this the product's one feature does not run.
+# Caddy obtains and renews a Let's Encrypt certificate on its own, so this
+# file plus the A record is the whole of it. TLS is not optional here:
+# browsers refuse getUserMedia (the microphone) on plain HTTP from a remote
+# origin, so without this the product's one feature does not run.
 #
-#   sudo cp deploy/Caddyfile /etc/caddy/Caddyfile
+#   sudo cp ~/voicecoach/deploy/Caddyfile /etc/caddy/Caddyfile
 #   sudo systemctl reload caddy
 #
-# Replace api.yourdomain.com, and point its A record at this box's public IP
-# BEFORE reloading — Caddy validates over HTTP/80 and will fail otherwise.
+# The A record must already resolve before reloading — Caddy proves ownership
+# over port 80 and will fail loudly if DNS is not live yet.
 
-api.yourdomain.com {
+api.foundervoice.safeedges.in {
 	reverse_proxy 127.0.0.1:8000 {
 		# Transcription is synchronous and CPU-bound; a long recording can hold
-		# the connection for minutes. The default 30s timeout would cut it off
-		# and the browser would show a generic network error.
+		# the connection for minutes. Caddy's default 30s would cut it off and
+		# the browser would report a bare network error, hiding the cause.
 		transport http {
 			read_timeout 300s
 			write_timeout 300s
