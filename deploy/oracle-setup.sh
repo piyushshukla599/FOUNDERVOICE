@@ -18,10 +18,32 @@ SERVICE=foundervoice
 say() { printf '\n\033[1;35m==>\033[0m %s\n' "$1"; }
 
 say "System packages"
-sudo apt-get update -qq
-# ffmpeg is not in requirements.txt, but librosa needs it to decode the .webm
-# the browser records. Without it every upload fails at the decode step.
-sudo apt-get install -y -qq python3-venv python3-dev build-essential ffmpeg git curl
+# Oracle's default image is Oracle Linux (login: opc); Ubuntu is opt-in
+# (login: ubuntu). Both are offered on the same Always Free shape, so detect
+# rather than assume - an apt-only script dies on line one under Oracle Linux.
+#
+# ffmpeg is the package that matters most here: it is not in requirements.txt,
+# but librosa needs it to decode the .webm the browser records. Without it
+# every single upload fails at the decode step.
+if command -v apt-get >/dev/null 2>&1; then
+  sudo apt-get update -qq
+  sudo apt-get install -y -qq python3-venv python3-dev build-essential ffmpeg git curl
+elif command -v dnf >/dev/null 2>&1; then
+  sudo dnf install -y -q oracle-epel-release-el9 2>/dev/null || sudo dnf install -y -q epel-release 2>/dev/null || true
+  # ffmpeg is not in Oracle Linux's own repos; RPM Fusion carries it.
+  sudo dnf install -y -q --nogpgcheck "https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-$(rpm -E %rhel).noarch.rpm" 2>/dev/null || true
+  # EL9 ships Python 3.9, but numpy 2.2 requires 3.10+. Pull a newer
+  # interpreter alongside it rather than fighting pip resolution later.
+  sudo dnf install -y -q python3.12 python3.12-devel 2>/dev/null || sudo dnf install -y -q python3.11 python3.11-devel 2>/dev/null || true
+  sudo dnf install -y -q python3 python3-devel gcc gcc-c++ make git curl
+  sudo dnf install -y -q ffmpeg-free || sudo dnf install -y -q ffmpeg || {
+    echo "!! ffmpeg could not be installed. Uploads will fail to decode."
+    echo "   Install it by hand before taking traffic."
+  }
+else
+  echo "Unsupported distro: need apt-get or dnf." >&2; exit 1
+fi
+command -v ffmpeg >/dev/null || echo "!! WARNING: ffmpeg missing - audio decode will fail."
 
 say "Source"
 if [ -d "$APP_DIR/.git" ]; then
@@ -31,7 +53,21 @@ else
 fi
 
 say "Python environment (this pulls ~1 GB of wheels; give it a few minutes)"
-[ -d "$API_DIR/.venv" ] || python3 -m venv "$API_DIR/.venv"
+# Pick the newest interpreter present. numpy 2.2 refuses to build on 3.9,
+# which is still the default python3 on Oracle Linux 9 - and the failure
+# surfaces as an opaque wheel build error a long way from the cause.
+PY_BIN=""
+for c in python3.13 python3.12 python3.11 python3.10 python3; do
+  if command -v "$c" >/dev/null 2>&1 && "$c" -c 'import sys; sys.exit(0 if sys.version_info >= (3,10) else 1)' 2>/dev/null; then
+    PY_BIN="$c"; break
+  fi
+done
+if [ -z "$PY_BIN" ]; then
+  echo "Need Python 3.10 or newer; found $(python3 -V 2>&1)." >&2; exit 1
+fi
+echo "   using $PY_BIN ($($PY_BIN -V 2>&1))"
+
+[ -d "$API_DIR/.venv" ] || "$PY_BIN" -m venv "$API_DIR/.venv"
 "$API_DIR/.venv/bin/pip" install -q --upgrade pip
 "$API_DIR/.venv/bin/pip" install -q -r "$API_DIR/requirements.txt"
 
@@ -52,11 +88,21 @@ else
 fi
 
 say "Firewall (the instance's own; the VCN security list is separate)"
-sudo iptables -C INPUT -p tcp --dport 80 -j ACCEPT 2>/dev/null || \
-  sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 80 -j ACCEPT
-sudo iptables -C INPUT -p tcp --dport 443 -j ACCEPT 2>/dev/null || \
-  sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 443 -j ACCEPT
-sudo netfilter-persistent save >/dev/null 2>&1 || true
+# Oracle images ship with the host firewall closed to everything but 22, and
+# the VCN security list is a second, independent gate. Both must open or the
+# symptom is a connection that hangs rather than one that refuses.
+if command -v firewall-cmd >/dev/null 2>&1 && sudo firewall-cmd --state >/dev/null 2>&1; then
+  sudo firewall-cmd --permanent --add-service=http >/dev/null
+  sudo firewall-cmd --permanent --add-service=https >/dev/null
+  sudo firewall-cmd --reload >/dev/null
+  echo "   firewalld: 80/443 open"
+else
+  for port in 80 443; do
+    sudo iptables -C INPUT -p tcp --dport "$port" -j ACCEPT 2>/dev/null || sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport "$port" -j ACCEPT
+  done
+  sudo netfilter-persistent save >/dev/null 2>&1 || sudo service iptables save >/dev/null 2>&1 || true
+  echo "   iptables: 80/443 open"
+fi
 
 say "Service"
 sudo tee /etc/systemd/system/$SERVICE.service >/dev/null <<UNIT
