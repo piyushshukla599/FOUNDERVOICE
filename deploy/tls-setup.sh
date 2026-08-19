@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Puts the API behind HTTPS. Run AFTER oracle-setup.sh, and only once
-# api.foundervoice.safeedges.in resolves to this box — Caddy proves ownership
+# api-foundervoice.safeedges.in resolves to this box — Caddy proves ownership
 # over port 80 and fails if the A record is not live.
 #
 #   bash ~/voicecoach/deploy/tls-setup.sh
@@ -12,24 +12,44 @@ set -euo pipefail
 
 APP_DIR="${APP_DIR:-$HOME/voicecoach}"
 API_DIR="$APP_DIR/apps/api"
-API_HOST="${API_HOST:-api.foundervoice.safeedges.in}"
+API_HOST="${API_HOST:-api-foundervoice.safeedges.in}"
 WEB_ORIGIN="${WEB_ORIGIN:-https://foundervoice.safeedges.in}"
 
 say() { printf '\n\033[1;35m==>\033[0m %s\n' "$1"; }
 
 say "Checking DNS for $API_HOST"
 MYIP=$(curl -fsS --max-time 10 https://api.ipify.org || echo "?")
-RESOLVED=$(getent hosts "$API_HOST" | awk '{print $1}' | head -1 || true)
+V4=$(getent ahostsv4 "$API_HOST" 2>/dev/null | awk '{print $1}' | sort -u)
+V6=$(getent ahostsv6 "$API_HOST" 2>/dev/null | awk '{print $1}' | grep -v '^::ffff:' | sort -u)
 echo "   this box : $MYIP"
-echo "   DNS says : ${RESOLVED:-<nothing>}"
-if [ -z "$RESOLVED" ]; then
-  echo "!! $API_HOST does not resolve. Add the A record and wait a few minutes." >&2
+echo "   A    -> ${V4:-<none>}"
+echo "   AAAA -> ${V6:-<none>}"
+
+if [ -z "$V4" ]; then
+  echo "!! $API_HOST has no A record. Add it and wait a few minutes." >&2
   exit 1
 fi
-if [ "$RESOLVED" != "$MYIP" ] && [ "$MYIP" != "?" ]; then
-  echo "!! DNS points at $RESOLVED, not this box. Certificate issuance will fail." >&2
+# An AAAA left over from shared hosting is the quiet killer: this box has no
+# IPv6, so anything preferring it - Let's Encrypt included - reaches the wrong
+# server and the failure never mentions DNS.
+if [ -n "$V6" ]; then
+  echo "!! $API_HOST still has AAAA (IPv6) records:" >&2
+  echo "$V6" | sed 's/^/     /' >&2
+  echo "   This box has no IPv6, so certificate issuance will fail." >&2
+  echo "   Delete them in your DNS editor, then re-run." >&2
   exit 1
 fi
+if [ "$MYIP" != "?" ] && ! echo "$V4" | grep -qx "$MYIP"; then
+  echo "!! DNS points at:" >&2
+  echo "$V4" | sed 's/^/     /' >&2
+  echo "   but this box is $MYIP. Certificate issuance will fail." >&2
+  exit 1
+fi
+if [ "$(echo "$V4" | wc -l)" -gt 1 ]; then
+  echo "!! More than one A record; leave exactly one pointing here." >&2
+  exit 1
+fi
+echo "   DNS OK"
 
 say "Installing Caddy"
 if command -v apt-get >/dev/null 2>&1; then

@@ -11,7 +11,7 @@
 # The A record must already resolve before reloading — Caddy proves ownership
 # over port 80 and will fail loudly if DNS is not live yet.
 
-api.foundervoice.safeedges.in {
+api-foundervoice.safeedges.in {
 	reverse_proxy 127.0.0.1:8000 {
 		# Transcription is synchronous and CPU-bound; a long recording can hold
 		# the connection for minutes. Caddy's default 30s would cut it off and
