@@ -82,46 +82,65 @@ echo "   using $PY_BIN ($($PY_BIN -V 2>&1))"
 
 say "Configuration"
 MEM_MB=$(awk '/MemTotal/{print int($2/1024)}' /proc/meminfo)
-if [ ! -f "$API_DIR/.env" ]; then
-  cp "$API_DIR/.env.example" "$API_DIR/.env"
+ENV_FILE="$API_DIR/.env"
 
-  # Transcription is the only part of this app with a real memory floor.
-  # faster-whisper needs roughly 2 GB resident; below that the kernel kills
-  # the worker mid-upload, which looks like a random 502 rather than an
-  # out-of-memory error. Offer the hosted engine before that happens.
-  if [ -z "${GROQ_API_KEY:-}" ] && [ -t 0 ]; then
-    echo
-    echo "   This box has ${MEM_MB} MB of RAM."
-    echo "   Local Whisper needs ~2000 MB. A free Groq key avoids that entirely:"
-    echo "   https://console.groq.com/keys   (press Enter to use local Whisper)"
-    printf '   GROQ_API_KEY: '
-    read -r GROQ_API_KEY
-    echo
-  fi
-
-  if [ -n "${GROQ_API_KEY:-}" ]; then
-    sed -i 's|^ASR_PROVIDER=.*|ASR_PROVIDER=groq|' "$API_DIR/.env"
-    sed -i "s|^GROQ_API_KEY=.*|GROQ_API_KEY=$GROQ_API_KEY|" "$API_DIR/.env"
-    echo "   transcription: Groq whisper-large-v3-turbo (audio is uploaded to Groq)"
+# Older .env files predate some of these keys, so replacing in place is not
+# enough — a missing key has to be appended or the setting silently vanishes.
+set_env() {
+  if grep -q "^$1=" "$ENV_FILE"; then
+    sed -i "s|^$1=.*|$1=$2|" "$ENV_FILE"
   else
-    sed -i 's|^ASR_PROVIDER=.*|ASR_PROVIDER=local|' "$API_DIR/.env"
-    # base runs in ~1 GB and transcribes a 2-minute clip in seconds on 2 ARM
-    # cores. large-v3 wants ~3 GB and is several times slower — not a starting
-    # point for a shared box.
-    sed -i 's|^WHISPER_MODEL=.*|WHISPER_MODEL=base|' "$API_DIR/.env"
-    echo "   transcription: local faster-whisper (base)"
-    if [ "$MEM_MB" -lt 2000 ]; then
-      echo "   !! ${MEM_MB} MB is below what local Whisper needs. Expect the worker"
-      echo "      to be OOM-killed on the first upload. Re-run with GROQ_API_KEY set."
-    fi
+    printf '%s=%s
+' "$1" "$2" >> "$ENV_FILE"
   fi
+}
+
+if [ ! -f "$ENV_FILE" ]; then
+  cp "$API_DIR/.env.example" "$ENV_FILE"
+  FRESH=1
   # A stable secret is what makes the free-tier counters survive a restart.
-  SECRET=$(python3 -c 'import secrets; print(secrets.token_hex(32))')
-  sed -i "s|^QUOTA_SECRET=.*|QUOTA_SECRET=$SECRET|" "$API_DIR/.env"
-  sed -i 's|^API_DOCS_ENABLED=.*|API_DOCS_ENABLED=false|' "$API_DIR/.env"
-  echo "   wrote $API_DIR/.env with a fresh QUOTA_SECRET"
+  set_env QUOTA_SECRET "$(python3 -c 'import secrets; print(secrets.token_hex(32))')"
+  set_env API_DOCS_ENABLED false
+  echo "   wrote $ENV_FILE with a fresh QUOTA_SECRET"
 else
-  echo "   $API_DIR/.env exists — left untouched"
+  FRESH=0
+  echo "   $ENV_FILE exists — keeping its QUOTA_SECRET and mail settings"
+fi
+
+# Transcription is the only part of this app with a real memory floor.
+# faster-whisper needs roughly 2 GB resident; below that the kernel kills the
+# worker mid-upload, which surfaces as a random 502 rather than as an
+# out-of-memory error. Offer the hosted engine before that happens.
+if [ -z "${GROQ_API_KEY:-}" ] && [ "$FRESH" = 1 ] && [ -t 0 ]; then
+  echo
+  echo "   This box has ${MEM_MB} MB of RAM."
+  echo "   Local Whisper needs ~2000 MB. A free Groq key avoids that entirely:"
+  echo "   https://console.groq.com/keys   (press Enter to use local Whisper)"
+  printf '   GROQ_API_KEY: '
+  read -r GROQ_API_KEY
+  echo
+fi
+
+# An explicitly supplied key applies even to an existing .env — that is the
+# whole point of re-running this after switching engines.
+if [ -n "${GROQ_API_KEY:-}" ]; then
+  set_env ASR_PROVIDER groq
+  set_env GROQ_API_KEY "$GROQ_API_KEY"
+  set_env GROQ_MODEL whisper-large-v3-turbo
+  echo "   transcription: Groq whisper-large-v3-turbo (audio is uploaded to Groq)"
+elif [ "$FRESH" = 1 ]; then
+  set_env ASR_PROVIDER local
+  # base runs in ~1 GB and transcribes a 2-minute clip in seconds on 2 ARM
+  # cores. large-v3 wants ~3 GB and is several times slower — not a starting
+  # point for a shared box.
+  set_env WHISPER_MODEL base
+  echo "   transcription: local faster-whisper (base)"
+  if [ "$MEM_MB" -lt 2000 ]; then
+    echo "   !! ${MEM_MB} MB is below what local Whisper needs. Expect the worker"
+    echo "      to be OOM-killed on the first upload. Re-run with GROQ_API_KEY set."
+  fi
+else
+  echo "   transcription: unchanged (pass GROQ_API_KEY=... to switch to Groq)"
 fi
 
 say "Firewall (the instance's own; the VCN security list is separate)"
