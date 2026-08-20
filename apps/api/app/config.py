@@ -18,6 +18,14 @@ class Settings(BaseSettings):
     # Smart Session clips: collect metrics only; full verdict after exercise.
     listening_light_analysis: bool = True
 
+    # "local" loads faster-whisper in-process and needs ~2 GB of RAM.
+    # "groq" calls a hosted Whisper instead, so the box stays small.
+    asr_provider: str = "local"
+    groq_api_key: str = ""
+    groq_base_url: str = "https://api.groq.com/openai/v1"
+    groq_model: str = "whisper-large-v3-turbo"
+    groq_timeout: float = 120.0
+
     whisper_model: str = "large-v3"
     whisper_device: str = "cpu"
     whisper_compute_type: str = "int8"

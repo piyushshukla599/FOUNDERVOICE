@@ -13,7 +13,7 @@ import { ImageResponse } from "next/og";
  * the blurred light sources the live site uses.
  */
 
-export const alt = "FounderVoice AI — local-first executive speech coach";
+export const alt = "FounderVoice AI — executive speech coach for founders";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -130,7 +130,7 @@ export default function Image() {
         >
           <div style={{ display: "flex", color: GOLD }}>Free to start</div>
           <div style={{ display: "flex", margin: "0 16px" }}>·</div>
-          <div style={{ display: "flex" }}>Audio analysed locally</div>
+          <div style={{ display: "flex" }}>Coached from your history</div>
           <div style={{ display: "flex", margin: "0 16px" }}>·</div>
           <div style={{ display: "flex" }}>No account needed</div>
         </div>

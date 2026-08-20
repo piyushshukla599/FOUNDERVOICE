@@ -69,11 +69,11 @@ def transcribe(audio_path: Path) -> dict[str, Any]:
             "engine": f"faster-whisper:{settings.whisper_model}",
         }
     except Exception as exc:  # noqa: BLE001 — provide demo transcript so UI still works
-        return _demo_transcript(audio_path, str(exc))
+        return demo_transcript(audio_path, str(exc))
 
 
-def _demo_transcript(audio_path: Path, error: str) -> dict[str, Any]:
-    """Fallback when Whisper model isn't downloaded / GPU unavailable."""
+def demo_transcript(audio_path: Path, error: str) -> dict[str, Any]:
+    """Keep the pipeline running when no engine could produce a transcript."""
     try:
         import librosa
 
@@ -121,5 +121,5 @@ def _demo_transcript(audio_path: Path, error: str) -> dict[str, Any]:
         "words": words,
         "sentences": sentences,
         "engine": "demo-fallback",
-        "warning": f"Whisper unavailable ({error}). Using demo transcript for pipeline continuity.",
+        "warning": f"Transcription unavailable ({error}). Using demo transcript for pipeline continuity.",
     }

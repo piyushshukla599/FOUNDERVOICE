@@ -152,7 +152,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               Send feedback
             </button>
             <p className="text-[10.5px] leading-relaxed text-[var(--faint)]">
-              Audio stays on your machine.
+              Shared public demo — don&apos;t upload anything confidential.
             </p>
             <div className="flex flex-wrap gap-2 text-[10.5px] text-[var(--faint)]">
               <Link href="/privacy" className="hover:text-[var(--muted)]">

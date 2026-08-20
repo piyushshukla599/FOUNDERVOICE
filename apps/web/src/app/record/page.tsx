@@ -348,7 +348,7 @@ export default function RecordPage() {
         <PageHeader eyebrow="Record" title="Analyzing your communication…" />
         <section className="fv-enter fv-halo space-y-2 py-6 text-center">
           <p className="mx-auto text-[14px] text-[var(--ink-dim)]">
-            Transcribing locally, measuring delivery, then writing the coaching note. Your report opens
+            Transcribing, measuring delivery, then writing the coaching note. Your report opens
             by itself.
           </p>
           {status && <p className="text-[12px] text-[var(--muted)]">{status}</p>}

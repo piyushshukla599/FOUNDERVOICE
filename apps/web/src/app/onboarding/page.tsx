@@ -303,7 +303,7 @@ export default function OnboardingPage() {
 
               {busy && (
                 <p className="text-[13px] text-[var(--muted)]">
-                  Saving locally and starting analysis…
+                  Uploading and starting analysis…
                 </p>
               )}
 

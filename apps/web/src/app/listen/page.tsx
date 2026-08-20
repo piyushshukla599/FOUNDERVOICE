@@ -446,7 +446,7 @@ export default function ListenPage() {
 
       {past.length > 0 && (
         <section className="fv-enter">
-          <SectionTitle title="Past Listen sessions" sub="Stored locally. Open one to see every conversation." />
+          <SectionTitle title="Past Listen sessions" sub="Open one to see every conversation." />
           <ul className="divide-y divide-[var(--line)]">
             {past.map((row) => (
               <li key={row.id} className="flex flex-wrap items-center justify-between gap-2 py-3">

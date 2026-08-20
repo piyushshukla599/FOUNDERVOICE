@@ -6,7 +6,7 @@ from typing import Any
 
 from ..config import get_settings
 from ..db import connect, dumps, loads, utc_now
-from . import advanced_voice, analysis, audio, coach_templates, deepseek, filler_lexicon, lab_coach, training_program, voice_memory, voice_profile, whisper_asr
+from . import advanced_voice, analysis, asr, audio, coach_templates, deepseek, filler_lexicon, lab_coach, training_program, voice_memory, voice_profile
 
 
 async def run_pipeline(session_id: str, mode: str = "free") -> dict[str, Any]:
@@ -32,7 +32,7 @@ async def run_pipeline(session_id: str, mode: str = "free") -> dict[str, Any]:
         wav_path = settings.audio_dir / f"{session_id}.wav"
         audio.ensure_wav_mono_16k(audio_path, wav_path)
         y, sr = audio.load_audio(wav_path)
-        transcript = whisper_asr.transcribe(wav_path)
+        transcript = asr.transcribe(wav_path)
         words = transcript.get("words") or []
         duration = float(transcript.get("duration") or (len(y) / sr))
 

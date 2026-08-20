@@ -13,19 +13,19 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "FounderVoice AI — Local-first Executive Speech Coach",
+    default: "FounderVoice AI — Executive Speech Coach for Founders",
     template: "%s · FounderVoice AI",
   },
   description:
-    "100% free local-first AI coach for founders and executives. Audio stays on your machine. Voice Memory coaches from your history — not generic tips.",
+    "100% free AI speech coach for founders and executives. Voice Memory coaches from your own history — not generic tips.",
   applicationName: "FounderVoice AI",
   authors: [{ name: "FounderVoice" }],
   keywords: [
     "speech coach",
     "founder pitch",
     "executive presence",
-    "local AI",
-    "privacy",
+    "pitch practice",
+    "public speaking",
     "voice memory",
   ],
   openGraph: {
@@ -33,14 +33,14 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: siteUrl,
     siteName: "FounderVoice AI",
-    title: "FounderVoice AI — Local-first Executive Speech Coach",
+    title: "FounderVoice AI — Executive Speech Coach for Founders",
     description:
-      "Free. Private. Local. Record once — learn why you rushed, and exactly how to fix it.",
+      "Free. Record once — learn why you rushed, and exactly how to fix it.",
   },
   twitter: {
     card: "summary_large_image",
     title: "FounderVoice AI",
-    description: "Local-first AI executive speech coach. Audio never leaves your machine.",
+    description: "AI executive speech coach. Record once, and learn exactly what to fix.",
   },
   alternates: { canonical: "/" },
   robots: {
@@ -74,7 +74,7 @@ const jsonLd = {
   operatingSystem: "Web",
   url: siteUrl,
   description:
-    "Local-first AI executive speech coach for founders. Record once and learn why you rushed, and exactly how to fix it.",
+    "AI executive speech coach for founders. Record once and learn why you rushed, and exactly how to fix it.",
   offers: {
     "@type": "Offer",
     price: "0",

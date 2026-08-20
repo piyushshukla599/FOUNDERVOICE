@@ -14,7 +14,7 @@ export default function TermsPage() {
       <section className="space-y-3 text-sm leading-relaxed text-[var(--muted)]">
         <h2 className="text-lg text-[var(--ink)]">The product</h2>
         <p>
-          FounderVoice AI is a free, local-first speech coaching tool. Features, estimates, and coach
+          FounderVoice AI is a free speech coaching tool. Features, estimates, and coach
           text are provided as-is for personal and professional practice.
         </p>
         <h2 className="text-lg text-[var(--ink)]">Not medical or legal advice</h2>

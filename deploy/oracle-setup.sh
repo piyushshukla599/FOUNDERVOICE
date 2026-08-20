@@ -81,12 +81,40 @@ echo "   using $PY_BIN ($($PY_BIN -V 2>&1))"
 "$API_DIR/.venv/bin/pip" install -r "$API_DIR/requirements.txt"
 
 say "Configuration"
+MEM_MB=$(awk '/MemTotal/{print int($2/1024)}' /proc/meminfo)
 if [ ! -f "$API_DIR/.env" ]; then
   cp "$API_DIR/.env.example" "$API_DIR/.env"
-  # base runs in ~1 GB and transcribes a 2-minute clip in seconds on 2 ARM
-  # cores. large-v3 wants ~3 GB and is several times slower — not a starting
-  # point for a shared box.
-  sed -i 's|^WHISPER_MODEL=.*|WHISPER_MODEL=base|' "$API_DIR/.env"
+
+  # Transcription is the only part of this app with a real memory floor.
+  # faster-whisper needs roughly 2 GB resident; below that the kernel kills
+  # the worker mid-upload, which looks like a random 502 rather than an
+  # out-of-memory error. Offer the hosted engine before that happens.
+  if [ -z "${GROQ_API_KEY:-}" ] && [ -t 0 ]; then
+    echo
+    echo "   This box has ${MEM_MB} MB of RAM."
+    echo "   Local Whisper needs ~2000 MB. A free Groq key avoids that entirely:"
+    echo "   https://console.groq.com/keys   (press Enter to use local Whisper)"
+    printf '   GROQ_API_KEY: '
+    read -r GROQ_API_KEY
+    echo
+  fi
+
+  if [ -n "${GROQ_API_KEY:-}" ]; then
+    sed -i 's|^ASR_PROVIDER=.*|ASR_PROVIDER=groq|' "$API_DIR/.env"
+    sed -i "s|^GROQ_API_KEY=.*|GROQ_API_KEY=$GROQ_API_KEY|" "$API_DIR/.env"
+    echo "   transcription: Groq whisper-large-v3-turbo (audio is uploaded to Groq)"
+  else
+    sed -i 's|^ASR_PROVIDER=.*|ASR_PROVIDER=local|' "$API_DIR/.env"
+    # base runs in ~1 GB and transcribes a 2-minute clip in seconds on 2 ARM
+    # cores. large-v3 wants ~3 GB and is several times slower — not a starting
+    # point for a shared box.
+    sed -i 's|^WHISPER_MODEL=.*|WHISPER_MODEL=base|' "$API_DIR/.env"
+    echo "   transcription: local faster-whisper (base)"
+    if [ "$MEM_MB" -lt 2000 ]; then
+      echo "   !! ${MEM_MB} MB is below what local Whisper needs. Expect the worker"
+      echo "      to be OOM-killed on the first upload. Re-run with GROQ_API_KEY set."
+    fi
+  fi
   # A stable secret is what makes the free-tier counters survive a restart.
   SECRET=$(python3 -c 'import secrets; print(secrets.token_hex(32))')
   sed -i "s|^QUOTA_SECRET=.*|QUOTA_SECRET=$SECRET|" "$API_DIR/.env"
