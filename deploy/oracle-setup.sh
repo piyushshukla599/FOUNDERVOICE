@@ -14,6 +14,7 @@ REPO="${REPO:-https://github.com/piyushshukla599/FOUNDERVOICE.git}"
 APP_DIR="${APP_DIR:-$HOME/voicecoach}"
 API_DIR="$APP_DIR/apps/api"
 SERVICE=foundervoice
+MEM_MB=$(awk '/MemTotal/{print int($2/1024)}' /proc/meminfo)
 
 say() { printf '\n\033[1;35m==>\033[0m %s\n' "$1"; }
 
@@ -61,6 +62,22 @@ else
   git clone --depth 1 "$REPO" "$APP_DIR"
 fi
 
+say "Swap"
+# pip resolving and unpacking wheels is the peak-memory moment of this script,
+# and on a 1 GB instance it is what takes sshd down with it. Swap makes that
+# survivable - slowly, but without a reboot.
+SWAP_MB=$(awk '/SwapTotal/{print int($2/1024)}' /proc/meminfo)
+if [ "$MEM_MB" -lt 2000 ] && [ "$SWAP_MB" -lt 2048 ] && [ ! -f /swapfile-fv ]; then
+  sudo fallocate -l 2G /swapfile-fv 2>/dev/null || sudo dd if=/dev/zero of=/swapfile-fv bs=1M count=2048 status=none
+  sudo chmod 600 /swapfile-fv
+  sudo mkswap /swapfile-fv >/dev/null
+  sudo swapon /swapfile-fv
+  grep -q '/swapfile-fv' /etc/fstab || echo '/swapfile-fv none swap sw 0 0' | sudo tee -a /etc/fstab >/dev/null
+  echo "   added 2 GB swap (total now $(awk '/SwapTotal/{print int($2/1024)}' /proc/meminfo) MB)"
+else
+  echo "   ${SWAP_MB} MB swap present - leaving it alone"
+fi
+
 say "Python environment (this pulls ~1 GB of wheels; give it a few minutes)"
 # Pick the newest interpreter present. numpy 2.2 refuses to build on 3.9,
 # which is still the default python3 on Oracle Linux 9 - and the failure
@@ -78,10 +95,19 @@ echo "   using $PY_BIN ($($PY_BIN -V 2>&1))"
 
 [ -d "$API_DIR/.venv" ] || "$PY_BIN" -m venv "$API_DIR/.venv"
 "$API_DIR/.venv/bin/pip" install --upgrade pip
-"$API_DIR/.venv/bin/pip" install -r "$API_DIR/requirements.txt"
+
+# faster-whisper drags in ctranslate2, onnxruntime and av - several hundred MB
+# that a hosted-ASR box downloads, stores, and never loads. On a 1 GB instance
+# that is the step most likely to wedge the machine, so skip it.
+REQ="$API_DIR/requirements.txt"
+if [ -n "${GROQ_API_KEY:-}" ] || grep -qs '^ASR_PROVIDER=groq' "$API_DIR/.env"; then
+  REQ=$(mktemp)
+  grep -v '^faster-whisper' "$API_DIR/requirements.txt" > "$REQ"
+  echo "   hosted ASR selected - skipping faster-whisper and its runtime"
+fi
+"$API_DIR/.venv/bin/pip" install -r "$REQ"
 
 say "Configuration"
-MEM_MB=$(awk '/MemTotal/{print int($2/1024)}' /proc/meminfo)
 ENV_FILE="$API_DIR/.env"
 
 # Older .env files predate some of these keys, so replacing in place is not
