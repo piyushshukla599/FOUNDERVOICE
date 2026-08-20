@@ -5,6 +5,7 @@ from typing import Any
 
 import httpx
 
+from .. import ssl_fix
 from ..config import get_settings
 from . import audio
 
@@ -65,6 +66,7 @@ def transcribe(audio_path: Path) -> dict[str, Any]:
                     "timestamp_granularities[]": ["word", "segment"],
                 },
                 timeout=settings.groq_timeout,
+                verify=ssl_fix.client_ssl_context(),
             )
         if response.status_code >= 400:
             raise RuntimeError(f"Groq returned {response.status_code}: {response.text[:300]}")

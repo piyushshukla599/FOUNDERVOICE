@@ -13,18 +13,9 @@ logger = logging.getLogger(__name__)
 
 
 def _ssl_context() -> ssl.SSLContext:
-    try:
-        from .. import ssl_fix
+    from .. import ssl_fix
 
-        ssl_fix.configure_ssl()
-    except Exception:
-        pass
-    try:
-        import truststore
-
-        return truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-    except Exception:
-        return ssl.create_default_context()
+    return ssl_fix.client_ssl_context()
 
 
 SYSTEM_COACH = """You are FounderVoice AI — an elite executive speech coach.
