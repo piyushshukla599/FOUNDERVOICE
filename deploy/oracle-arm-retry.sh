@@ -9,14 +9,17 @@
 #   curl -fsSL https://raw.githubusercontent.com/piyushshukla599/FOUNDERVOICE/main/deploy/oracle-arm-retry.sh | bash
 #
 # Cloud Shell is already authenticated, so there is nothing to configure.
-# It idles out after ~20 min of no keystrokes, so leave the tab focused.
+# Oracle throttles launch_instance hard, so this asks only once every 5 minutes
+# and backs off further on a 429. Expect a long wait; leave the tab open, since
+# Cloud Shell disconnects the session when the browser tab closes.
 set -uo pipefail
 
 OCPUS="${OCPUS:-1}"
 MEM_GB="${MEM_GB:-6}"
 BOOT_GB="${BOOT_GB:-50}"
 NAME="${NAME:-foundervoice-arm}"
-SLEEP="${SLEEP:-60}"
+SLEEP="${SLEEP:-300}"
+MAX_BACKOFF="${MAX_BACKOFF:-1800}"
 PUBKEY_FILE="${PUBKEY_FILE:-$HOME/fv.pub}"
 
 say() { printf '\n==> %s\n' "$*"; }
@@ -71,6 +74,7 @@ fi
 
 say "Asking for ${OCPUS} OCPU / ${MEM_GB} GB. Ctrl-C to give up."
 ATTEMPT=0
+BACKOFF="$SLEEP"
 while :; do
   for AD in "${ADS[@]}"; do
     ATTEMPT=$((ATTEMPT + 1))
@@ -88,8 +92,9 @@ while :; do
       --boot-volume-size-in-gbs "$BOOT_GB" \
       --metadata "{\"ssh_authorized_keys\":\"$PUBKEY\"}" \
       --wait-for-state RUNNING 2>&1)
+    RC=$?
 
-    if [ $? -eq 0 ]; then
+    if [ "$RC" -eq 0 ]; then
       NEW_ID=$(printf '%s' "$OUT" | grep -o 'ocid1\.instance\.[a-z0-9.-]*' | head -1)
       say "Got one."
       echo "    instance $NEW_ID"
@@ -102,7 +107,14 @@ while :; do
     fi
 
     if printf '%s' "$OUT" | grep -qi 'out of host capacity'; then
-      echo "no capacity"
+      BACKOFF="$SLEEP"
+      echo "no capacity, retrying in ${BACKOFF}s"
+    elif printf '%s' "$OUT" | grep -qi 'TooManyRequests'; then
+      # Oracle throttles launch_instance per user, and knocking harder after a
+      # 429 extends the ban rather than shortening it. Back off exponentially.
+      BACKOFF=$((BACKOFF * 2))
+      [ "$BACKOFF" -gt "$MAX_BACKOFF" ] && BACKOFF="$MAX_BACKOFF"
+      echo "rate limited, backing off ${BACKOFF}s"
     elif printf '%s' "$OUT" | grep -qi 'LimitExceeded\|QuotaExceeded'; then
       say "Quota, not capacity - retrying will never help:"
       printf '%s\n' "$OUT" | tail -5
@@ -112,6 +124,7 @@ while :; do
       printf '%s\n' "$OUT" | tail -20
       exit 1
     fi
+
+    sleep "$BACKOFF"
   done
-  sleep "$SLEEP"
 done
