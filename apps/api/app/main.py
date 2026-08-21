@@ -88,9 +88,16 @@ async def workspace_middleware(request: Request, call_next):
     workspace_id = workspace.from_cookie(request.cookies.get(workspace.COOKIE_NAME))
     is_new = workspace_id is None
     if is_new:
-        # An install that predates workspaces has one waiting to be claimed.
+        # An install that predates workspaces has one waiting to be claimed,
+        # but only by someone talking to uvicorn directly. Behind a proxy the
+        # socket peer is the proxy itself, so an address check alone would
+        # hand those recordings to whoever arrived first.
         host = request.client.host if request.client else None
-        workspace_id = legacy.offer(host) or workspace.mint()
+        proxied = any(
+            h in request.headers
+            for h in ("x-forwarded-for", "x-forwarded-proto", "x-real-ip", "forwarded")
+        ) or bool((settings.trusted_proxy_header or "").strip())
+        workspace_id = legacy.offer(host, proxied=proxied) or workspace.mint()
     else:
         legacy.mark_claimed(workspace_id)
 

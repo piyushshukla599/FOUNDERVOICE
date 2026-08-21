@@ -113,7 +113,7 @@ def _unclaimed() -> str | None:
         return None
 
 
-def offer(host: str | None) -> str | None:
+def offer(host: str | None, *, proxied: bool) -> str | None:
     """The adopted workspace, if this caller should be given it.
 
     Called only when a request arrives with no usable cookie, so a visitor who
@@ -124,9 +124,17 @@ def offer(host: str | None) -> str | None:
     a second tab can get there first, and burning the offer on one of those
     would strand the recordings for good. Instead the offer stands until
     somebody comes back holding the cookie, which only a real client does.
+
+    ``proxied`` is the important argument. The deployment runs Caddy in front
+    of uvicorn on the same box, so the socket peer of every public request is
+    127.0.0.1 and a loopback check alone would hand the operator's recordings
+    to the first stranger who loaded the site. A request that arrived through
+    a proxy is therefore never offered the workspace, whatever its address
+    claims. That leaves the offer for what it is for: someone sitting at the
+    machine, talking to uvicorn directly.
     """
     workspace_id = _unclaimed()
-    if not workspace_id or not _is_local(host):
+    if not workspace_id or proxied or not _is_local(host):
         return None
     return workspace_id
 
