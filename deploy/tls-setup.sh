@@ -62,11 +62,55 @@ if command -v apt-get >/dev/null 2>&1; then
     sudo apt-get update && sudo apt-get install -y caddy
   fi
 else
-  # Caddy is not in Oracle Linux's repos; COPR carries the official build.
+  # Caddy is not in Oracle Linux's repos, and enabling COPR means another large
+  # dnf transaction - the step that repeatedly took this instance offline. The
+  # official static binary needs only curl.
   if ! command -v caddy >/dev/null 2>&1; then
-    sudo dnf -y install 'dnf-command(copr)'
-    sudo dnf -y copr enable @caddy/caddy epel-9-$(uname -m)
-    sudo dnf -y install caddy
+    case "$(uname -m)" in
+      x86_64)  CADDY_ARCH=amd64 ;;
+      aarch64) CADDY_ARCH=arm64 ;;
+      *) echo "Unsupported architecture: $(uname -m)" >&2; exit 1 ;;
+    esac
+    echo "   downloading the official static build ($CADDY_ARCH)"
+    curl -fsSL "https://caddyserver.com/api/download?os=linux&arch=$CADDY_ARCH" -o /tmp/caddy
+    sudo install -m 0755 /tmp/caddy /usr/local/bin/caddy
+    rm -f /tmp/caddy
+
+    id caddy >/dev/null 2>&1 || sudo useradd --system \
+      --home-dir /var/lib/caddy --shell /sbin/nologin caddy
+    sudo mkdir -p /etc/caddy /var/lib/caddy
+    sudo chown -R caddy:caddy /var/lib/caddy
+
+    # Same SELinux trap as the API service: systemd cannot exec a binary whose
+    # label says otherwise, and the failure reads as "Permission denied".
+    if command -v selinuxenabled >/dev/null 2>&1 && selinuxenabled 2>/dev/null; then
+      sudo chcon -t bin_t /usr/local/bin/caddy || true
+    fi
+
+    # The distro packages ship a unit; a bare binary does not.
+    sudo tee /etc/systemd/system/caddy.service >/dev/null <<'UNIT'
+[Unit]
+Description=Caddy
+Documentation=https://caddyserver.com/docs/
+After=network.target
+
+[Service]
+User=caddy
+Group=caddy
+Environment=XDG_DATA_HOME=/var/lib/caddy
+ExecStart=/usr/local/bin/caddy run --config /etc/caddy/Caddyfile
+ExecReload=/usr/local/bin/caddy reload --config /etc/caddy/Caddyfile --force
+Restart=on-failure
+TimeoutStopSec=5s
+LimitNOFILE=1048576
+# Lets an unprivileged process bind 80 and 443 without setcap, which would
+# need another package installed.
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+    sudo systemctl daemon-reload
   fi
 fi
 
