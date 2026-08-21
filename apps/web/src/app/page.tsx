@@ -12,12 +12,15 @@ import { PublicFooter, PublicHeader } from "@/components/PublicChrome";
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://foundervoice.app";
 
 export const metadata: Metadata = {
-  title: "Free AI Speech Coach for English Communication",
+  // Absolute so the home page does not inherit the "%s · FounderVoice AI"
+  // template - Google appends the site name to a home page result itself, and
+  // the doubled brand pushed the useful half of the title past the truncation.
+  title: { absolute: "Free AI Speech Coach for Founder-Level Communication" },
   description:
-    "Record 60 seconds and get instant feedback on your pace, filler words, pauses and clarity. Free, ten recordings a day, no signup.",
+    "Record sixty seconds and get instant feedback on your pace, filler words, pauses and clarity, then the one habit to fix first. Free, ten a day, no signup.",
   alternates: { canonical: "/" },
   openGraph: {
-    title: "Free AI Speech Coach for Better English Communication",
+    title: "Free AI Speech Coach for Founder-Level Communication",
     description:
       "Record 60 seconds. Learn exactly which habit is costing you, and how to fix it. Free, no signup.",
     url: SITE,
@@ -31,11 +34,11 @@ const FAQS = [
     a: "Yes. You get ten recordings every 24 hours at no cost, with no account, no card and no trial period. The allowance resets a day after your first recording, so you can keep practising indefinitely.",
   },
   {
-    q: "How can I improve my English communication skills?",
+    q: "How do I communicate at a founder level?",
     a: "Improvement comes from hearing what you actually do, not from generic advice. Record yourself answering a real question, then measure four things: your speaking pace in words per minute, how often filler words appear, how long your pauses run, and how clearly each word is articulated. Fix the single worst one, then record again. FounderVoice measures all four automatically and tells you which to work on first.",
   },
   {
-    q: "Do I need a good accent to communicate well in English?",
+    q: "Do I need to change my accent to sound credible?",
     a: "No. Clarity, pace and structure carry almost all of how competent you sound, and none of them require changing your accent. FounderVoice never scores you on sounding native. It measures whether you are understandable and whether you sound confident.",
   },
   {
@@ -47,8 +50,8 @@ const FAQS = [
     a: "Fillers appear where you are thinking and afraid of silence. The fix is not removing them directly but becoming comfortable pausing instead. Record a minute, count your fillers, then record again while deliberately pausing where they appeared. Most people halve their rate within a week.",
   },
   {
-    q: "Does it work for accents other than American or British English?",
-    a: "Yes. Transcription handles Indian, African, Australian, Singaporean and other English accents well, and the analysis measures delivery rather than pronunciation against any one standard.",
+    q: "Does it work with any accent?",
+    a: "Yes. Transcription handles Indian, African, Australian, Singaporean and other accents well, and the analysis measures delivery rather than pronunciation against any one standard.",
   },
 ];
 
@@ -104,7 +107,7 @@ export default function LandingPage() {
         <section className="py-14 text-center md:py-20">
           <p className="fv-eyebrow">Free, unlimited practice, no signup</p>
           <h1 className="fv-lede mx-auto mt-4 max-w-3xl text-balance">
-            Improve your communication by hearing what you actually sound like
+            Founder-level communication starts with hearing what you actually sound like
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-[15.5px] leading-relaxed text-[var(--muted)]">
             Record sixty seconds of ordinary speech. FounderVoice measures your pace, filler words,
@@ -185,12 +188,12 @@ export default function LandingPage() {
           <h2 className="text-[24px] leading-tight text-[var(--ink)]">Who it is for</h2>
           <div className="mt-6 grid max-w-3xl gap-5 text-[15px] leading-relaxed text-[var(--muted)] sm:grid-cols-2">
             <p>
-              <span className="text-[var(--ink)]">Non-native English speakers</span> who are fluent
-              on paper but rush and lose people in conversation.
+              <span className="text-[var(--ink)]">Founders pitching</span> investors, customers and
+              press, where the first sixty seconds decide whether the meeting continues.
             </p>
             <p>
-              <span className="text-[var(--ink)]">Founders and job seekers</span> preparing for
-              pitches, interviews and investor calls where delivery decides the outcome.
+              <span className="text-[var(--ink)]">Operators and job seekers</span> preparing for
+              interviews, standups and board updates where delivery decides the outcome.
             </p>
             <p>
               <span className="text-[var(--ink)]">Engineers and analysts</span> who know the

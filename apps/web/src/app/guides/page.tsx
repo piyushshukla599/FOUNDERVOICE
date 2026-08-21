@@ -6,7 +6,7 @@ import { GUIDES } from "@/lib/guides";
 export const metadata: Metadata = {
   title: "Speaking and Communication Guides",
   description:
-    "Practical, measurable guides to speaking better English: pace, filler words, confidence, clarity and pitch delivery. Free, with no signup.",
+    "Practical, measurable guides to founder-level delivery: pace, filler words, confidence, clarity and pitch. Free, with no signup.",
   alternates: { canonical: "/guides" },
 };
 

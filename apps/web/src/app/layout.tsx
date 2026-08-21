@@ -13,36 +13,38 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "FounderVoice AI: Executive Speech Coach for Founders",
+    default: "FounderVoice AI: Founder-Level Communication Coach",
     template: "%s · FounderVoice AI",
   },
   description:
-    "100% free AI speech coach for founders and executives. Voice Memory coaches from your own history, not generic tips.",
+    "Free AI speech coach for founders. Record sixty seconds and learn which delivery habit is costing you the room, measured against your own history.",
   applicationName: "FounderVoice AI",
   authors: [{ name: "FounderVoice" }],
   keywords: [
     "AI speech coach",
-    "improve english communication skills",
+    "founder communication",
+    "executive presence",
+    "investor pitch delivery",
+    "pitch practice",
     "public speaking practice",
     "speaking pace words per minute",
     "how to stop filler words",
     "speak with confidence",
-    "pitch practice",
-    "communication skills",
   ],
   openGraph: {
     type: "website",
     locale: "en_US",
     url: siteUrl,
     siteName: "FounderVoice AI",
-    title: "FounderVoice AI: Executive Speech Coach for Founders",
+    title: "FounderVoice AI: Founder-Level Communication Coach",
     description:
       "Free. Record once, learn why you rushed, and exactly how to fix it.",
   },
   twitter: {
     card: "summary_large_image",
     title: "FounderVoice AI",
-    description: "AI executive speech coach. Record once, and learn exactly what to fix.",
+    description:
+      "Founder-level communication, measured. Record once, and learn exactly what to fix.",
   },
   // No canonical here on purpose. In the root layout it is inherited by every
   // page that does not set its own, which declared /contact, /privacy and the
@@ -78,7 +80,7 @@ const jsonLd = {
   operatingSystem: "Web",
   url: siteUrl,
   description:
-    "AI executive speech coach for founders. Record once and learn why you rushed, and exactly how to fix it.",
+    "AI communication coach for founders. Record once and learn why you rushed, and exactly how to fix it.",
   offers: {
     "@type": "Offer",
     price: "0",
