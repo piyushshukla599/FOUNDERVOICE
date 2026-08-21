@@ -18,9 +18,12 @@ WEB_ORIGIN="${WEB_ORIGIN:-https://foundervoice.safeedges.in}"
 say() { printf '\n\033[1;35m==>\033[0m %s\n' "$1"; }
 
 say "Checking DNS for $API_HOST"
+# These pipelines legitimately produce no output, and grep -v exits 1 when it
+# filters everything out. Under pipefail that aborts the script before it can
+# report anything - the no-AAAA case is exactly what we want to succeed.
 MYIP=$(curl -fsS --max-time 10 https://api.ipify.org || echo "?")
-V4=$(getent ahostsv4 "$API_HOST" 2>/dev/null | awk '{print $1}' | sort -u)
-V6=$(getent ahostsv6 "$API_HOST" 2>/dev/null | awk '{print $1}' | grep -v '^::ffff:' | sort -u)
+V4=$(getent ahostsv4 "$API_HOST" 2>/dev/null | awk '{print $1}' | sort -u || true)
+V6=$(getent ahostsv6 "$API_HOST" 2>/dev/null | awk '{print $1}' | grep -v '^::ffff:' | sort -u || true)
 echo "   this box : $MYIP"
 echo "   A    -> ${V4:-<none>}"
 echo "   AAAA -> ${V6:-<none>}"
