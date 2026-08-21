@@ -14,7 +14,7 @@ RG="${RG:-foundervoice}"
 LOCATION="${LOCATION:-centralindia}"
 ENV_NAME="${ENV_NAME:-foundervoice-env}"
 APP="${APP:-foundervoice-api}"
-WEB_ORIGIN="${WEB_ORIGIN:-https://foundervoice.safeedges.in}"
+WEB_ORIGIN="${WEB_ORIGIN:-https://foundervoice.app}"
 CONTEXT="$(cd "$(dirname "$0")/../container" && pwd)"
 
 say() { printf '\n==> %s\n' "$*"; }

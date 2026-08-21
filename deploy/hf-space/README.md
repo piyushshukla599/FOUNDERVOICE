@@ -29,7 +29,7 @@ Set these under **Settings → Variables and secrets**:
 | --- | --- | --- |
 | `GROQ_API_KEY` | Secret | Your key from <https://console.groq.com/keys> |
 | `QUOTA_SECRET` | Secret | 64 hex chars. `python -c "import secrets;print(secrets.token_hex(32))"` |
-| `CORS_ORIGINS` | Variable | The exact frontend origin, e.g. `https://foundervoice.safeedges.in` |
+| `CORS_ORIGINS` | Variable | The exact frontend origin, e.g. `https://foundervoice.app` |
 
 `QUOTA_SECRET` must stay the same across rebuilds, or every visitor's free-tier
 counters reset to zero.

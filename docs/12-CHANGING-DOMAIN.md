@@ -3,7 +3,7 @@
 Nothing in the code hardcodes a hostname. Four things reference the domain, and
 they have to agree or the browser will fail in ways that do not mention DNS.
 
-Assume you are moving from `foundervoice.safeedges.in` to `example.com`, with
+Assume you are moving from `foundervoice.app` to `example.com`, with
 the API at `api.example.com`.
 
 ## 1. DNS

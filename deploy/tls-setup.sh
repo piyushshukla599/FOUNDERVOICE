@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Puts the API behind HTTPS. Run AFTER oracle-setup.sh, and only once
-# api-foundervoice.safeedges.in resolves to this box — Caddy proves ownership
+# api.foundervoice.app resolves to this box — Caddy proves ownership
 # over port 80 and fails if the A record is not live.
 #
 #   bash ~/voicecoach/deploy/tls-setup.sh
@@ -12,8 +12,8 @@ set -euo pipefail
 
 APP_DIR="${APP_DIR:-$HOME/voicecoach}"
 API_DIR="$APP_DIR/apps/api"
-API_HOST="${API_HOST:-api-foundervoice.safeedges.in}"
-WEB_ORIGIN="${WEB_ORIGIN:-https://foundervoice.safeedges.in}"
+API_HOST="${API_HOST:-api.foundervoice.app}"
+WEB_ORIGIN="${WEB_ORIGIN:-https://foundervoice.app}"
 
 say() { printf '\n\033[1;35m==>\033[0m %s\n' "$1"; }
 
