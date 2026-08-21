@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.2.2 — 2026-08-21
+
+### Fixed
+- **Search Console reported the app's own pages as crawl errors.** `robots.txt`
+  disallowed `/record`, `/today`, `/library`, `/sessions/` and the rest, so URL
+  Inspection answered "Crawl allowed? No: blocked by robots.txt" and refused to
+  fetch them. Worse, it never achieved what it was for: Google cannot read a
+  `noindex` on a page it is not allowed to fetch, so those URLs stayed eligible
+  to be listed as bare links. They are now crawlable and turned away at the page
+  with `X-Robots-Tag: noindex, nofollow`, which is what actually keeps them out.
+  Public pages and the sitemap were never blocked and are unchanged.
+
 ## 1.2.1 — 2026-08-21
 
 ### Fixed

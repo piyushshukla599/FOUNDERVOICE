@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import path from "path";
+import { PRIVATE_ROUTES } from "./src/lib/private-routes";
 
 const apiTarget = process.env.API_REWRITE_TARGET || "http://127.0.0.1:8000";
 
@@ -63,7 +64,18 @@ const nextConfig: NextConfig = {
       "upgrade-insecure-requests",
     ].join("; ");
 
+    const noindex = [{ key: "X-Robots-Tag", value: "noindex, nofollow" }];
+
     return [
+      // Keep the per-user screens out of search results with a header rather
+      // than a robots.txt `Disallow` line - see src/lib/private-routes.ts for
+      // why that distinction decides whether it works at all. Two entries per
+      // route because `/x/:path*` matches the children but not `/x` itself.
+      ...PRIVATE_ROUTES.map((route) => ({ source: route, headers: noindex })),
+      ...PRIVATE_ROUTES.map((route) => ({
+        source: `${route}/:path*`,
+        headers: noindex,
+      })),
       {
         source: "/:path*",
         headers: [
