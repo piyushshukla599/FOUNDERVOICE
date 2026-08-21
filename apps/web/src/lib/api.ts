@@ -68,6 +68,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     res = await fetch(apiUrl(path), {
       ...init,
       cache: "no-store",
+      // The API hands out a workspace cookie, and that cookie is the only
+      // thing keeping one visitor's recordings out of another's list. Fetch
+      // drops cookies on cross-origin requests unless asked, and the site and
+      // the API are different origins in every deployment.
+      credentials: "include",
     });
   } catch {
     // Only a genuine transport failure means the API is unreachable.

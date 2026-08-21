@@ -15,8 +15,9 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from . import ssl_fix  # noqa: F401 — patch SSL before any HTTPS clients
+from . import workspace
 from .config import get_settings
-from .db import init_db
+from .db import init_shared_db
 from .middleware_security import RequestLogMiddleware
 from .routers import contact, listening, memory, practice, sessions
 from .services import jobs, quota
@@ -46,7 +47,7 @@ class _DropClientDisconnects(logging.Filter):
 logging.getLogger("asyncio").addFilter(_DropClientDisconnects())
 
 settings = get_settings()
-init_db()
+init_shared_db()
 
 app = FastAPI(
     title="FounderVoice AI",
@@ -67,6 +68,52 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.add_middleware(RequestLogMiddleware)
+
+
+@app.middleware("http")
+async def workspace_middleware(request: Request, call_next):
+    """Give every visitor their own database, keyed by a signed cookie.
+
+    There are no accounts, so this is the only thing separating one person's
+    recordings from another's. A cookie that is missing, malformed or forged
+    gets a brand new workspace rather than a shared one.
+    """
+    workspace_id = workspace.from_cookie(request.cookies.get(workspace.COOKIE_NAME))
+    is_new = workspace_id is None
+    if is_new:
+        workspace_id = workspace.mint()
+
+    token = workspace.set_workspace(workspace_id)
+    try:
+        response = await call_next(request)
+    finally:
+        # Background tasks run after this, and carry the workspace themselves
+        # via workspace.bind() rather than relying on this context.
+        workspace.reset_workspace(token)
+
+    if is_new:
+        # The site and the API are different origins, so the cookie has to be
+        # allowed on cross-origin requests. SameSite=None demands Secure, which
+        # is fine in production and unavailable over plain http locally.
+        same_site = (settings.workspace_cookie_samesite or "lax").strip().lower()
+        if same_site not in {"lax", "strict", "none"}:
+            same_site = "lax"
+        # SameSite=None is only honoured on a Secure cookie, and a Secure
+        # cookie is dropped entirely over plain http, which is how local
+        # development is served.
+        secure = request.url.scheme == "https"
+        if same_site == "none" and not secure:
+            same_site = "lax"
+        response.set_cookie(
+            workspace.COOKIE_NAME,
+            workspace.to_cookie(workspace_id),
+            max_age=60 * 60 * 24 * 365,
+            httponly=True,
+            secure=secure,
+            samesite=same_site,
+            path="/",
+        )
+    return response
 
 app.include_router(sessions.router, prefix="/api")
 app.include_router(listening.router, prefix="/api")

@@ -39,7 +39,7 @@ from typing import Any
 from fastapi import HTTPException, Request
 
 from ..config import get_settings
-from ..db import connect, utc_now
+from ..db import connect_shared, utc_now
 
 logger = logging.getLogger(__name__)
 
@@ -253,7 +253,7 @@ def peek(request: Request, feature: str) -> QuotaState:
     if bucket is None:
         return _unlimited(feature)
     now = datetime.now(timezone.utc)
-    with connect() as conn:
+    with connect_shared() as conn:
         row = conn.execute(
             "SELECT used, window_started FROM usage_quota WHERE bucket=? AND feature=?",
             (bucket, feature),
@@ -297,7 +297,7 @@ def consume(request: Request, feature: str, *, cost: int = 1) -> QuotaState:
     limit = limit_for(feature)
     now_dt = datetime.now(timezone.utc)
     now = now_dt.isoformat()
-    with connect() as conn:
+    with connect_shared() as conn:
         # Take the write lock before reading, so the check, the window
         # rollover and the increment cannot interleave with another request's.
         conn.execute("BEGIN IMMEDIATE")
@@ -346,7 +346,7 @@ def refund(request: Request, feature: str, *, cost: int = 1) -> None:
     bucket = bucket_for(request)
     if bucket is None:
         return
-    with connect() as conn:
+    with connect_shared() as conn:
         conn.execute(
             "UPDATE usage_quota SET used = MAX(0, used - ?), last_seen = ? "
             "WHERE bucket=? AND feature=?",

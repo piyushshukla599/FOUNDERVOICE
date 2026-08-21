@@ -10,7 +10,7 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from ..config import get_settings
-from ..db import connect, utc_now
+from ..db import connect_shared, utc_now
 from ..rate_limit import allow
 
 router = APIRouter(tags=["contact"])
@@ -85,7 +85,7 @@ def submit_contact(request: Request, body: ContactBody) -> dict[str, Any]:
     if interest not in {"feedback", "general", "upgrade", "pro", "support", "partnership"}:
         interest = "general"
 
-    with connect() as conn:
+    with connect_shared() as conn:
         conn.execute(
             """
             INSERT INTO contact_leads (created_at, name, email, phone, company, message, interest)

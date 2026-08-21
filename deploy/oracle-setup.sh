@@ -127,11 +127,8 @@ else
   echo "   $ENV_FILE exists - keeping its QUOTA_SECRET and mail settings"
 fi
 
-# These are wrong for any public deployment whether or not the .env is new, so
-# enforce them on every run. .env.example ships ALLOW_GLOBAL_WIPE=true for
-# people running this on their own machine; here it would let any visitor
-# delete every other visitor's recordings.
-set_env ALLOW_GLOBAL_WIPE false
+# Wrong for any public deployment whether or not the .env is new, so enforce
+# it on every run rather than only on the first.
 set_env API_DOCS_ENABLED false
 
 

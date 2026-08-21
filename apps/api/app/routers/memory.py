@@ -188,14 +188,9 @@ def replace_fillers(body: FillersSetBody) -> dict[str, Any]:
 def fresh_start(body: FreshStartBody) -> dict[str, Any]:
     """Wipe sessions, Voice Memory, practice history, and local media files."""
     settings = get_settings()
-    # The wipe is global and unauthenticated. That is fine when you are the
-    # only user of your own install, and not fine on anything public.
-    if not settings.allow_global_wipe:
-        raise HTTPException(
-            403,
-            "Fresh start is disabled on this deployment because all visitors "
-            "share one workspace. Delete individual sessions instead.",
-        )
+    # This deletes everything the caller can see, which is now everything in
+    # their own workspace and nothing else: connect() opens a database chosen
+    # by their cookie, and the audio lives under the same directory.
     if body.confirm != "DELETE":
         raise HTTPException(400, 'Type confirm: "DELETE" to wipe all data.')
 
@@ -218,8 +213,14 @@ def fresh_start(body: FreshStartBody) -> dict[str, Any]:
         conn.commit()
 
     for row in rows:
-        path = Path(row["audio_path"] or "")
-        if path.exists():
+        # A session whose upload failed has no audio_path, and Path("") is
+        # Path("."), which exists. That turned a wipe into an attempt to
+        # unlink the working directory.
+        raw = (row["audio_path"] or "").strip()
+        if not raw:
+            continue
+        path = Path(raw)
+        if path.is_file():
             path.unlink(missing_ok=True)
             deleted["files"] += 1
 

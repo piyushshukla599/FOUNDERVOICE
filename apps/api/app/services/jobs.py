@@ -17,6 +17,7 @@ Every run now goes to a single worker thread:
 from __future__ import annotations
 
 import asyncio
+import contextvars
 import logging
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Awaitable, Callable
@@ -39,7 +40,11 @@ async def run_analysis(factory: Callable[[], Awaitable[Any]]) -> Any:
     inside the worker thread that runs it, not on the caller's loop.
     """
     loop = asyncio.get_running_loop()
-    return await loop.run_in_executor(_executor, _run, factory)
+    # run_in_executor does not carry context variables across the thread
+    # boundary, and the pipeline needs the caller's workspace to know which
+    # database to write its results into.
+    ctx = contextvars.copy_context()
+    return await loop.run_in_executor(_executor, lambda: ctx.run(_run, factory))
 
 
 def queue_depth() -> int:

@@ -8,6 +8,7 @@ from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, Reque
 from fastapi.responses import FileResponse
 
 from ..config import get_settings
+from .. import workspace
 from ..db import connect, dumps, loads, row_to_dict, utc_now
 from ..rate_limit import allow
 from ..services import jobs, lab_coach, pipeline, quota, report_pdf, voice_memory
@@ -180,7 +181,7 @@ async def upload_session(
         )
         conn.commit()
 
-    background.add_task(_run_safe, session_id, mode)
+    background.add_task(workspace.bind(_run_safe), session_id, mode)
     return {"session_id": session_id, "status": "pending", "mode": mode}
 
 
@@ -205,7 +206,7 @@ async def reanalyze(session_id: str, background: BackgroundTasks) -> dict[str, A
         mode = row["mode"]
         conn.execute("UPDATE sessions SET status=?, error=NULL WHERE id=?", ("pending", session_id))
         conn.commit()
-    background.add_task(_run_safe, session_id, mode)
+    background.add_task(workspace.bind(_run_safe), session_id, mode)
     return {"session_id": session_id, "status": "pending"}
 
 

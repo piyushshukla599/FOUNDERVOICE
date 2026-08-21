@@ -186,27 +186,6 @@ CREATE TABLE IF NOT EXISTS custom_fillers (
     created_at TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS contact_leads (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    created_at TEXT NOT NULL,
-    name TEXT NOT NULL,
-    email TEXT NOT NULL,
-    phone TEXT,
-    company TEXT,
-    message TEXT,
-    interest TEXT
-);
-
-CREATE TABLE IF NOT EXISTS usage_quota (
-    bucket TEXT NOT NULL,
-    feature TEXT NOT NULL,
-    used INTEGER NOT NULL DEFAULT 0,
-    first_seen TEXT NOT NULL,
-    last_seen TEXT NOT NULL,
-    window_started TEXT,
-    PRIMARY KEY (bucket, feature)
-);
-
 CREATE INDEX IF NOT EXISTS idx_sessions_created ON sessions(created_at);
 CREATE INDEX IF NOT EXISTS idx_events_session ON events(session_id);
 CREATE INDEX IF NOT EXISTS idx_events_kind ON events(kind);
@@ -241,32 +220,9 @@ def _migrate(conn: sqlite3.Connection) -> None:
         )
         """
     )
-    # Quota counters used to accumulate for the lifetime of the row. They now
-    # roll, so each row records when its window opened.
-    quota_cols = {r[1] for r in conn.execute("PRAGMA table_info(usage_quota)").fetchall()}
-    if quota_cols and "window_started" not in quota_cols:
-        conn.execute("ALTER TABLE usage_quota ADD COLUMN window_started TEXT")
-        # Existing rows have no window; treat first_seen as its start so nobody
-        # is stuck at their old lifetime total.
-        conn.execute("UPDATE usage_quota SET window_started = first_seen WHERE window_started IS NULL")
-
     ex_cols = {r[1] for r in conn.execute("PRAGMA table_info(exercises)").fetchall()}
     if "level" not in ex_cols:
         conn.execute("ALTER TABLE exercises ADD COLUMN level INTEGER DEFAULT 1")
-    conn.execute(
-        """
-        CREATE TABLE IF NOT EXISTS contact_leads (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            created_at TEXT NOT NULL,
-            name TEXT NOT NULL,
-            email TEXT NOT NULL,
-            phone TEXT,
-            company TEXT,
-            message TEXT,
-            interest TEXT
-        )
-        """
-    )
 
 SEED_EXERCISES = [
     ("breath_box", "Box Breathing", "breathing", "Inhale 4s, hold 4s, exhale 4s, hold 4s. Repeat 6 cycles. Speak one sentence after each cycle.", 120, "speaking_on_empty_breath"),
@@ -326,11 +282,75 @@ EXERCISE_LEVELS: dict[str, int] = {
 }
 
 
+# Tables that must survive a visitor clearing their cookie. Quota counters are
+# keyed by network address: if they lived in the per-workspace database, a new
+# cookie would mean a new allowance and the limit would be decorative.
+SHARED_SCHEMA = """
+CREATE TABLE IF NOT EXISTS contact_leads (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    created_at TEXT NOT NULL,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    phone TEXT,
+    company TEXT,
+    message TEXT,
+    interest TEXT
+);
+
+CREATE TABLE IF NOT EXISTS usage_quota (
+    bucket TEXT NOT NULL,
+    feature TEXT NOT NULL,
+    used INTEGER NOT NULL DEFAULT 0,
+    first_seen TEXT NOT NULL,
+    last_seen TEXT NOT NULL,
+    window_started TEXT,
+    PRIMARY KEY (bucket, feature)
+);
+"""
+
+
 def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _migrate_shared(conn: sqlite3.Connection) -> None:
+    """Bring an older shared database up to date."""
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(usage_quota)").fetchall()}
+    if cols and "window_started" not in cols:
+        conn.execute("ALTER TABLE usage_quota ADD COLUMN window_started TEXT")
+        # Existing rows have no window; treat first_seen as its start so nobody
+        # is stuck at their old lifetime total.
+        conn.execute(
+            "UPDATE usage_quota SET window_started = first_seen WHERE window_started IS NULL"
+        )
+
+
+def init_shared_db() -> None:
+    settings = get_settings()
+    settings.data_root.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(settings.shared_db_path, check_same_thread=False)
+    try:
+        conn.executescript(SHARED_SCHEMA)
+        _migrate_shared(conn)
+        conn.commit()
+    finally:
+        conn.close()
+
+
+@contextmanager
+def connect_shared() -> Iterator[sqlite3.Connection]:
+    """The database that is the same for everyone: quota counters and leads."""
+    settings = get_settings()
+    conn = sqlite3.connect(settings.shared_db_path, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    try:
+        yield conn
+    finally:
+        conn.close()
+
+
 def init_db() -> None:
+    """Create the current workspace's database and directories."""
     settings = get_settings()
     settings.data_path.mkdir(parents=True, exist_ok=True)
     settings.audio_dir.mkdir(parents=True, exist_ok=True)
@@ -338,7 +358,7 @@ def init_db() -> None:
     settings.reports_dir.mkdir(parents=True, exist_ok=True)
     settings.models_dir.mkdir(parents=True, exist_ok=True)
 
-    with connect() as conn:
+    with _open(settings.db_path) as conn:
         conn.executescript(SCHEMA)
         _migrate(conn)
         for row in SEED_EXERCISES:
@@ -356,15 +376,38 @@ def init_db() -> None:
 
 
 @contextmanager
-def connect() -> Iterator[sqlite3.Connection]:
-    settings = get_settings()
-    conn = sqlite3.connect(settings.db_path, check_same_thread=False)
+def _open(path: Any) -> Iterator[sqlite3.Connection]:
+    conn = sqlite3.connect(path, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     try:
         yield conn
     finally:
         conn.close()
+
+
+# Creating a workspace's schema is idempotent but not free, so remember which
+# ones this process has already prepared.
+_READY: set[str] = set()
+
+
+@contextmanager
+def connect() -> Iterator[sqlite3.Connection]:
+    """The current visitor's database.
+
+    Which file this opens depends on the workspace in context, which is what
+    isolates one visitor from another. A query that forgets to filter still
+    cannot reach another visitor's rows, because they are in a different file.
+    """
+    settings = get_settings()
+    path = settings.db_path
+    key = str(path)
+    if key not in _READY:
+        # First request for this workspace in this process: build it.
+        init_db()
+        _READY.add(key)
+    with _open(path) as conn:
+        yield conn
 
 
 def row_to_dict(row: sqlite3.Row | None) -> dict[str, Any] | None:

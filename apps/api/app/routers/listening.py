@@ -8,6 +8,7 @@ from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, Uploa
 from pydantic import BaseModel, Field
 
 from ..config import get_settings
+from .. import workspace
 from ..db import connect, dumps, loads, row_to_dict, utc_now
 from ..services import founder_verdict, jobs, listening_summary, pipeline
 
@@ -207,7 +208,7 @@ async def upload_conversation(
         )
         conn.commit()
 
-    background.add_task(_run_safe, session_id)
+    background.add_task(workspace.bind(_run_safe), session_id)
     return {"session_id": session_id, "status": "pending", "title": auto_title}
 
 

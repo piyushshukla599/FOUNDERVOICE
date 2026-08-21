@@ -37,5 +37,5 @@ counters reset to zero.
 ## Note on storage
 
 Free Spaces have ephemeral disk: sessions and Voice Memory are lost whenever the
-container restarts. The app has no accounts, so all visitors share one
-workspace — treat this deployment as a public demo, not private storage.
+container restarts. Each visitor gets their own workspace, keyed by a signed
+cookie, but nothing here survives a redeploy.

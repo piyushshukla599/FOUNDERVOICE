@@ -35,15 +35,16 @@ export default function PrivacyPage() {
             privacy terms, not ours.
           </li>
           <li>
-            <strong className="text-[var(--ink)]">There are no accounts.</strong> Every visitor
-            shares one workspace, so recordings and reports you create are visible to other people
-            using the demo, and they can delete them.
+            <strong className="text-[var(--ink)]">There are no accounts.</strong> Your recordings
+            live in a private workspace identified by a cookie in your browser, so other visitors
+            cannot see or delete them. Clearing that cookie, or opening the site in another
+            browser, starts a new empty workspace and makes the old one unreachable.
           </li>
         </ul>
         <p>
-          Please do not upload anything confidential. No unreleased financials, no customer
-          information, nothing you would not post publicly. The demo exists so you can try the
-          coaching, not to store your real pitch material.
+          Because there is no password, treat this as convenient rather than secure. It suits
+          practice material and interview answers. Do not upload unreleased financials, customer
+          information, or anything else you would not want stored on a server you do not control.
         </p>
 
         <h2 className="text-lg text-[var(--ink)]">Running it yourself</h2>

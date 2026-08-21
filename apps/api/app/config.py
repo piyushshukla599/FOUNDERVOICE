@@ -73,17 +73,42 @@ class Settings(BaseSettings):
     # Where an exhausted visitor is sent to ask for more.
     upgrade_url: str = "/contact?interest=pro"
 
-    # /api/fresh-start deletes every session, recording and Voice Memory for
-    # the whole database, and there are no accounts, so on a shared deployment
-    # any visitor can erase everyone's work. Off unless deliberately enabled.
-    allow_global_wipe: bool = False
+    # The workspace cookie is what separates one visitor's recordings from
+    # another's. "lax" is correct when the API shares a registrable domain with
+    # the site (foundervoice.app and api.foundervoice.app do), and is the safer
+    # choice because it is not sent on cross-site writes. Set "none" only if
+    # the API lives on an unrelated domain, where "lax" would drop the cookie
+    # and hand every request a brand new workspace.
+    workspace_cookie_samesite: str = "lax"
+
 
     # Production toggles
     api_docs_enabled: bool = True  # set API_DOCS_ENABLED=false in production if desired
 
     @property
-    def data_path(self) -> Path:
+    def data_root(self) -> Path:
+        """Everything the server stores, across all visitors."""
         return Path(self.data_dir).resolve()
+
+    @property
+    def data_path(self) -> Path:
+        """This visitor's own corner of it.
+
+        Every derived path below hangs off this, so setting a workspace scopes
+        the database, the audio, the transcripts and the reports in one move
+        rather than in every query that touches them.
+        """
+        from .workspace import get_workspace
+
+        workspace_id = get_workspace()
+        if workspace_id:
+            return self.data_root / "ws" / workspace_id
+        return self.data_root
+
+    @property
+    def shared_db_path(self) -> Path:
+        """Counters and leads, which must survive a visitor clearing cookies."""
+        return self.data_root / "shared.db"
 
     @property
     def audio_dir(self) -> Path:
@@ -99,7 +124,8 @@ class Settings(BaseSettings):
 
     @property
     def models_dir(self) -> Path:
-        return self.data_path / "models"
+        # Model weights are shared: they are large, and identical per visitor.
+        return self.data_root / "models"
 
     @property
     def db_path(self) -> Path:
