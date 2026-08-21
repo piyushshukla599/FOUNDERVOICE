@@ -103,7 +103,7 @@ export default function ListenPage() {
         {s.message && <ErrorBanner message={s.message} />}
 
         <section className="fv-enter fv-halo space-y-7 py-4">
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3">
             <Stat label="Elapsed" value={fmtTime(elapsed)} />
             <Stat label="Conversations" value={conversationCount} tone="accent" />
             <Stat label="Microphone" value={s.vadSnap?.signalQuality ?? "—"} hint={s.activeMicLabel || undefined} />

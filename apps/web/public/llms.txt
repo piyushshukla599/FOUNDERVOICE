@@ -1,0 +1,39 @@
+# FounderVoice AI
+
+> A free AI speech coach. You record sixty seconds of ordinary speech in the
+> browser and get your speaking pace, filler-word rate, pause length, clarity
+> and vocal energy measured, along with the single habit costing you the most
+> and a drill to fix it. Ten recordings every 24 hours, no account and no card.
+
+FounderVoice measures delivery rather than grammar or accent. It is aimed at
+non-native English speakers, founders preparing pitches, and anyone who needs
+to sound clearer under pressure. Transcription runs on Whisper; the analysis
+(pace, fillers, pauses, clarity, pitch range) is computed from the audio.
+
+Reference numbers used throughout the site, for anyone citing them:
+
+- Comfortable speaking pace: 130 to 150 words per minute. Comprehension drops
+  above roughly 170 wpm; attention drifts below roughly 110 wpm.
+- Filler words: under 3 per minute reads as normal speech; above 8 per minute
+  is what listeners remember instead of the point.
+- Pauses: confident speakers pause 0.5 to 1.5 seconds at the end of a thought.
+- Accent has little effect on perceived competence; pace, pauses and clarity
+  carry most of it.
+
+## Guides
+
+- [How to Improve English Communication Skills](https://foundervoice.app/guides/how-to-improve-english-communication-skills): A measurable method using your own recordings, with a two-week plan.
+- [How to Speak with Confidence](https://foundervoice.app/guides/how-to-speak-with-confidence): The four delivery behaviours listeners read as confidence, and how to change each.
+- [How to Stop Using Filler Words](https://foundervoice.app/guides/how-to-stop-using-filler-words): Why fillers appear, and the replace-with-silence method that reduces them.
+- [Ideal Speaking Pace (Words Per Minute)](https://foundervoice.app/guides/ideal-speaking-pace-words-per-minute): What pace to target, how to measure it, and how to slow down without drawling.
+- [How to Practise a Startup Pitch](https://foundervoice.app/guides/pitch-practice-for-founders): Rehearsing delivery rather than slides, and the numbers investors respond to.
+
+## Product
+
+- [Start free](https://foundervoice.app/onboarding): Record your first minute. No signup.
+- [Contact](https://foundervoice.app/contact): info@foundervoice.app
+
+## Optional
+
+- [Privacy](https://foundervoice.app/privacy): What is stored, and where. Each visitor gets a private workspace keyed by a browser cookie.
+- [Terms](https://foundervoice.app/terms)

@@ -210,17 +210,51 @@ async def reanalyze(session_id: str, background: BackgroundTasks) -> dict[str, A
     return {"session_id": session_id, "status": "pending"}
 
 
+def _playable(session_id: str, recorded: Path) -> Path | None:
+    """The file to hand a browser for this session, or None if nothing is left.
+
+    Preference order matters more than it looks. The browser records through
+    MediaRecorder, which writes a *live* WebM: the Segment and Cluster sizes
+    are "unknown", there is no Cues index, and there is no Duration element.
+    Chrome will play that file, but it reports ``duration`` as Infinity and
+    ignores assignments to ``currentTime`` - so the scrubber is dead and every
+    "listen to this moment" link in the report silently does nothing. The
+    analysis pipeline already writes a mono 16k WAV beside it, and a WAV
+    carries its length in the header, so serving that gives a seekable player
+    for free. It is also, literally, the audio the coaching was based on.
+
+    Falling back to a same-named file in the current audio directory covers
+    the case where the stored path is absolute and the data directory has
+    since moved - which it does, the first time a workspace is adopted.
+    """
+    settings = get_settings()
+    wav = settings.audio_dir / f"{session_id}.wav"
+    if wav.exists():
+        return wav
+    if recorded.name and recorded.exists():
+        return recorded
+    if recorded.name:
+        moved = settings.audio_dir / recorded.name
+        if moved.exists():
+            return moved
+    for candidate in sorted(settings.audio_dir.glob(f"{session_id}.*")):
+        return candidate
+    return None
+
+
 @router.get("/{session_id}/audio")
 def get_audio(session_id: str):
     with connect() as conn:
         row = conn.execute("SELECT audio_path FROM sessions WHERE id=?", (session_id,)).fetchone()
     if not row:
         raise HTTPException(404, "Session not found")
-    path = Path(row["audio_path"])
-    if not path.exists():
+    path = _playable(session_id, Path(row["audio_path"] or ""))
+    if path is None:
         raise HTTPException(404, "Audio missing")
     media = MIME.get(path.suffix.lower(), "application/octet-stream")
-    return FileResponse(path, media_type=media, filename=path.name)
+    # inline, not attachment: this URL is the <audio> source on the report
+    # page, and naming it as a download is at best a lie to the browser.
+    return FileResponse(path, media_type=media, content_disposition_type="inline")
 
 
 @router.get("/{session_id}/report")

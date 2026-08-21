@@ -1,18 +1,26 @@
 {
   "name": "FounderVoice AI",
   "short_name": "FounderVoice",
-  "description": "Local-first AI executive speech coach. Audio stays on your machine.",
-  "start_url": "/",
+  "description": "Free AI speech coach. Record 60 seconds and get your pace, filler words, pauses and clarity measured.",
+  "start_url": "/onboarding",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#0f1412",
-  "theme_color": "#0f1412",
+  "background_color": "#07080d",
+  "theme_color": "#8b5cf6",
   "lang": "en",
+  "categories": ["education", "productivity"],
   "icons": [
     {
       "src": "/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
+    },
+    {
+      "src": "/apple-icon",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

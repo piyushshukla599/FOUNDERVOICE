@@ -64,7 +64,10 @@ export function ContactForm() {
 
   return (
     <div className="mx-auto max-w-2xl pt-4 md:pt-10">
+      {/* The page renders the h1 on the server, because this component needs
+          searchParams and therefore ships no server HTML of its own. */}
       <PageHeader
+        as="h2"
         eyebrow={isPro ? "Pro access" : "Contact"}
         title={isPro ? "Unlock the full coach" : "Talk to us"}
         sub={

@@ -528,7 +528,7 @@ export default function CoachPage() {
             value={confirmText}
             onChange={(e) => setConfirmText(e.target.value)}
             placeholder="Type DELETE to confirm"
-            className="min-w-[200px] rounded-[var(--r-full)] bg-[rgba(244,243,251,0.04)] px-5 py-2.5 text-[14px] outline-none placeholder:text-[var(--faint)] focus:bg-[rgba(207,106,85,0.1)]"
+            className="min-w-[200px] rounded-[var(--r-full)] bg-[rgba(244,243,251,0.04)] px-5 py-2.5 text-[14px] outline-none placeholder:text-[var(--faint)] focus:bg-[rgba(244,243,251,0.07)]"
           />
           <Button variant="danger" disabled={busy || confirmText !== "DELETE"} onClick={() => void wipe()}>
             {busy ? "Deleting…" : "Delete all my data"}

@@ -15,6 +15,10 @@ data/models/*
 *.db
 data/leads/*
 !data/leads/.gitkeep
+# Per-visitor workspaces: every recording, transcript, report and database the
+# server holds lives under here. Nothing in it belongs in the repository.
+data/ws/
+data/.legacy-workspace
 .DS_Store
 apps/web/.env.local
 .env.local

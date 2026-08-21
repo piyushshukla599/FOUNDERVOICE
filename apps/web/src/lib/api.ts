@@ -1,12 +1,46 @@
 import { assertUploadSize } from "./upload";
 
 /** Browser talks to FastAPI directly, avoids Next.js 10MB proxy buffering on uploads/audio. */
-export const API_BASE =
+const CONFIGURED_BASE =
   process.env.NEXT_PUBLIC_API_BASE?.replace(/\/$/, "") || "http://127.0.0.1:8000";
+
+const LOOPBACK = /^(localhost|127\.0\.0\.1|\[::1\]|::1)$/i;
+
+/**
+ * The API origin, with one correction applied in the browser.
+ *
+ * Locally the site is usually opened on localhost:3000 while the API is
+ * configured as 127.0.0.1:8000. Those are the same machine but *different
+ * sites* as far as cookies are concerned, and the workspace cookie is
+ * SameSite=Lax. Fetches survive that (the app asks for credentials), but a
+ * plain subresource does not: the <audio> element and the PDF link arrive at
+ * the API with no cookie, land in a brand new empty workspace, and 404. Worse,
+ * the API answers them with a Set-Cookie, which replaces the good cookie and
+ * takes the visitor's whole session list with it.
+ *
+ * So when both hosts are loopback, follow whichever one the page was actually
+ * opened on. Same host, same site, one cookie. Anything else - a real API
+ * domain, a LAN address - is left exactly as configured.
+ */
+function resolveBase(): string {
+  if (typeof window === "undefined") return CONFIGURED_BASE;
+  try {
+    const configured = new URL(CONFIGURED_BASE);
+    const here = window.location.hostname;
+    if (!LOOPBACK.test(configured.hostname) || !LOOPBACK.test(here)) return CONFIGURED_BASE;
+    if (configured.hostname === here) return CONFIGURED_BASE;
+    configured.hostname = here;
+    return configured.origin;
+  } catch {
+    return CONFIGURED_BASE;
+  }
+}
+
+export const API_BASE = CONFIGURED_BASE;
 
 export function apiUrl(path: string): string {
   const p = path.startsWith("/") ? path : `/${path}`;
-  return `${API_BASE}${p}`;
+  return `${resolveBase()}${p}`;
 }
 
 export type QuotaState = {

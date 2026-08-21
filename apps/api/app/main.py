@@ -15,7 +15,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from . import ssl_fix  # noqa: F401 — patch SSL before any HTTPS clients
-from . import workspace
+from . import legacy, workspace
 from .config import get_settings
 from .db import init_shared_db
 from .middleware_security import RequestLogMiddleware
@@ -49,6 +49,13 @@ logging.getLogger("asyncio").addFilter(_DropClientDisconnects())
 settings = get_settings()
 init_shared_db()
 
+_adopted = legacy.adopt_legacy_data()
+if _adopted:
+    logging.getLogger("foundervoice.api").info(
+        "Moved pre-workspace data into workspace %s; the first local visitor gets it.",
+        _adopted,
+    )
+
 app = FastAPI(
     title="FounderVoice AI",
     version="1.0.0",
@@ -81,7 +88,21 @@ async def workspace_middleware(request: Request, call_next):
     workspace_id = workspace.from_cookie(request.cookies.get(workspace.COOKIE_NAME))
     is_new = workspace_id is None
     if is_new:
-        workspace_id = workspace.mint()
+        # An install that predates workspaces has one waiting to be claimed.
+        host = request.client.host if request.client else None
+        workspace_id = legacy.offer(host) or workspace.mint()
+    else:
+        legacy.mark_claimed(workspace_id)
+
+    # Only the app's own fetches may create a workspace. A subresource - an
+    # <audio> element, an image, a PDF link - can reach the API without the
+    # cookie when the site and the API are different sites, and answering one
+    # of those with Set-Cookie replaced the visitor's workspace with an empty
+    # one and lost their whole session list. Sec-Fetch-Dest is sent by every
+    # browser that enforces SameSite in the first place, so its absence means
+    # a non-browser client, which is free to have a workspace minted for it.
+    dest = request.headers.get("sec-fetch-dest", "")
+    may_mint = dest in ("", "empty", "document")
 
     token = workspace.set_workspace(workspace_id)
     try:
@@ -91,7 +112,7 @@ async def workspace_middleware(request: Request, call_next):
         # via workspace.bind() rather than relying on this context.
         workspace.reset_workspace(token)
 
-    if is_new:
+    if is_new and may_mint:
         # The site and the API are different origins, so the cookie has to be
         # allowed on cross-origin requests. SameSite=None demands Secure, which
         # is fine in production and unavailable over plain http locally.

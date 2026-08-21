@@ -15,11 +15,14 @@ export function SessionTimeline({
   events,
   onSeek,
   activeStart,
+  progress = 0,
 }: {
   duration: number;
   events: Finding[];
   onSeek: (t: number) => void;
   activeStart?: number | null;
+  /** Where playback is, so the line doubles as the scrubber. */
+  progress?: number;
 }) {
   const [hover, setHover] = useState<number | null>(null);
   const total = Math.max(duration || 0, 1);
@@ -44,8 +47,25 @@ export function SessionTimeline({
       <p className="fv-eyebrow-quiet mb-6">Where it happened</p>
 
       <div className="relative">
-        {/* the track */}
-        <div className="relative h-px w-full bg-[var(--line-strong)]">
+        {/* The whole line is the scrubber; the marks are shortcuts along it. */}
+        <div
+          className="relative h-px w-full cursor-pointer bg-[var(--line-strong)]"
+          onClick={(event) => {
+            const box = event.currentTarget.getBoundingClientRect();
+            onSeek(((event.clientX - box.left) / box.width) * total);
+          }}
+        >
+          <div
+            className="absolute inset-y-0 left-0"
+            style={{ width: `${Math.min(100, (progress / total) * 100)}%`, background: "var(--grad)" }}
+          />
+          <span
+            className="pointer-events-none absolute top-1/2 h-3 w-px -translate-y-1/2 bg-[var(--ink)] transition-opacity"
+            style={{
+              left: `${Math.min(100, (progress / total) * 100)}%`,
+              opacity: progress > 0 ? 0.9 : 0,
+            }}
+          />
           {marks.map((e, i) => {
             const pct = Math.min(98, Math.max(1, (e.start / total) * 100));
             const isActive = activeStart != null && Math.abs(activeStart - e.start) < 0.4;
@@ -54,7 +74,12 @@ export function SessionTimeline({
               <button
                 key={`${e.start}-${i}`}
                 type="button"
-                onClick={() => onSeek(e.start)}
+                onClick={(event) => {
+                  // Otherwise the click also lands on the track behind it and
+                  // seeks to wherever the dot happens to sit, not to the mark.
+                  event.stopPropagation();
+                  onSeek(e.start);
+                }}
                 onMouseEnter={() => setHover(i)}
                 onMouseLeave={() => setHover((h) => (h === i ? null : h))}
                 onFocus={() => setHover(i)}
@@ -69,7 +94,7 @@ export function SessionTimeline({
                   } ${severe ? "bg-[var(--accent)]" : "bg-[var(--muted)]"}`}
                   style={
                     isActive || hover === i
-                      ? { boxShadow: "0 0 0 4px rgba(217,190,134,0.16)" }
+                      ? { boxShadow: "0 0 0 4px var(--accent-glow)" }
                       : undefined
                   }
                 />

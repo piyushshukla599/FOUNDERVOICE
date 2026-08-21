@@ -27,8 +27,8 @@ export type Guide = {
 export const GUIDES: Guide[] = [
   {
     slug: "how-to-improve-english-communication-skills",
-    title: "How to Improve Your English Communication Skills by Speaking",
-    metaTitle: "How to Improve English Communication Skills (Free Method)",
+    title: "How to Improve Your Communication Skills by Speaking",
+    metaTitle: "Improve English Communication Skills",
     description:
       "A measurable method for improving spoken English: track pace, filler words, pauses and clarity from your own recordings instead of following generic advice.",
     intro:
@@ -87,7 +87,7 @@ export const GUIDES: Guide[] = [
   {
     slug: "how-to-speak-with-confidence",
     title: "How to Speak with Confidence (Without Faking It)",
-    metaTitle: "How to Speak with Confidence: What Actually Works",
+    metaTitle: "How to Speak with Confidence",
     description:
       "Confidence in speech is produced by pace, pauses and pitch range, not by feeling confident. Here is what listeners actually respond to, and how to change it.",
     intro:
@@ -138,9 +138,9 @@ export const GUIDES: Guide[] = [
   {
     slug: "how-to-stop-using-filler-words",
     title: "How to Stop Saying Um, Uh and Like",
-    metaTitle: "How to Stop Using Filler Words: A Measurable Fix",
+    metaTitle: "How to Stop Using Filler Words",
     description:
-      "Filler words come from discomfort with silence, not from a bad habit you can simply drop. Here is the method that actually reduces them, with the numbers to aim for.",
+      "Filler words come from discomfort with silence, not a habit you can drop. The method that actually reduces them, with numbers to aim for.",
     intro:
       "Filler words appear in the gap between finishing one thought and starting the next, when you are unwilling to leave that gap silent. You cannot remove them by trying not to say them, because that leaves the gap unfilled and the discomfort intact. What works is deliberately replacing each filler with a pause until silence stops feeling like failure. Aim for under 3 fillers per minute; above 8 is where listeners start noticing the fillers instead of your point.",
     updated: "2026-08-21",
@@ -187,7 +187,7 @@ export const GUIDES: Guide[] = [
   {
     slug: "ideal-speaking-pace-words-per-minute",
     title: "What Is a Good Speaking Pace? Words Per Minute Explained",
-    metaTitle: "Ideal Speaking Pace: Words Per Minute Guide",
+    metaTitle: "Ideal Speaking Pace (Words Per Minute)",
     description:
       "The right speaking pace is 130 to 150 words per minute for most situations. Here is how to measure yours, why nerves push it up, and how to bring it down.",
     intro:
@@ -231,7 +231,7 @@ export const GUIDES: Guide[] = [
   {
     slug: "pitch-practice-for-founders",
     title: "How to Practise Your Startup Pitch Out Loud",
-    metaTitle: "Startup Pitch Practice: How to Rehearse Out Loud",
+    metaTitle: "How to Practise a Startup Pitch",
     description:
       "Most founders rehearse a pitch by rereading slides. Here is how to practise delivery instead, and the specific numbers investors respond to.",
     intro:

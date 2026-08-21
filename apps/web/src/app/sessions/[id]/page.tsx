@@ -17,6 +17,7 @@ import {
   Stat,
   Steps,
 } from "@/components/ui";
+import { AudioPlayer, type AudioHandle } from "@/components/AudioPlayer";
 import { CoachSummary } from "@/components/CoachSummary";
 import { SessionTimeline } from "@/components/SessionTimeline";
 import { ProfessionalVoiceReport, RootCauseFinding } from "@/components/ProfessionalVoiceReport";
@@ -42,8 +43,10 @@ function SessionPage() {
   const [data, setData] = useState<SessionDetail | null>(null);
   const [history, setHistory] = useState<SessionRow[]>([]);
   const [error, setError] = useState("");
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const audioRef = useRef<AudioHandle>(null);
   const [activeStart, setActiveStart] = useState<number | null>(null);
+  const [playhead, setPlayhead] = useState(0);
+  const playerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let alive = true;
@@ -98,12 +101,9 @@ function SessionPage() {
   }, [data?.session, history, id]);
 
   const playAt = (t: number) => {
-    const a = audioRef.current;
-    if (!a) return;
-    a.currentTime = Math.max(0, t);
-    void a.play();
+    audioRef.current?.seek(t);
     setActiveStart(t);
-    a.scrollIntoView({ behavior: "smooth", block: "center" });
+    playerRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
 
   if (error) return <ErrorBanner message={error} />;
@@ -260,8 +260,16 @@ function SessionPage() {
           events={data.events}
           onSeek={playAt}
           activeStart={activeStart}
+          progress={playhead}
         />
-        <audio ref={audioRef} controls className="w-full" src={apiUrl(`/api/sessions/${id}/audio`)} />
+        <div ref={playerRef}>
+          <AudioPlayer
+            ref={audioRef}
+            src={apiUrl(`/api/sessions/${id}/audio`)}
+            fallbackDuration={session.duration || 0}
+            onProgress={setPlayhead}
+          />
+        </div>
         <SectionTitle
           eyebrow="Transcript"
           title="Read along"

@@ -42,7 +42,7 @@ export function LiveWaveform({ stream, active, color }: Props) {
       analyser.getByteFrequencyData(data);
       const w = canvas.width;
       const h = canvas.height;
-      c.fillStyle = "#0f1412";
+      c.fillStyle = "#07080d";  // --bg
       c.fillRect(0, 0, w, h);
 
       const gap = 3;

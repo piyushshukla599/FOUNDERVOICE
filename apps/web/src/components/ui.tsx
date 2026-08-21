@@ -38,17 +38,21 @@ export function PageHeader({
   title,
   sub,
   actions,
+  /* A page that already renders its own h1 on the server passes "h2", so the
+     document keeps exactly one top-level heading. */
+  as: Heading = "h1",
 }: {
   eyebrow?: string;
   title: string;
   sub?: string;
   actions?: ReactNode;
+  as?: "h1" | "h2";
 }) {
   return (
     <header className="fv-enter flex flex-wrap items-end justify-between gap-5 pb-1">
       <div className="min-w-0 space-y-2">
         {eyebrow && <p className="fv-eyebrow">{eyebrow}</p>}
-        <h1 className="fv-display text-[1.9rem] leading-tight md:text-[2.4rem]">{title}</h1>
+        <Heading className="fv-display text-[1.9rem] leading-tight md:text-[2.4rem]">{title}</Heading>
         {sub && <p className="text-[14px] leading-relaxed text-[var(--muted)]">{sub}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-3">{actions}</div>}

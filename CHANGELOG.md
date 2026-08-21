@@ -1,5 +1,42 @@
 # Changelog
 
+## 1.2.1 — 2026-08-21
+
+### Fixed
+- **Recordings would not play back.** The Content-Security-Policy allowed the API
+  origin in `connect-src` but not `media-src`, so Chrome blocked every `<audio>`
+  source before it made a request. There was no network entry and no message —
+  just a player that did nothing.
+- Playback now serves the analysed 16k WAV rather than the browser's own WebM.
+  MediaRecorder writes no duration and no cue index, so the element reported a
+  duration of Infinity, the scrubber was dead, and every "listen to this moment"
+  link in the report silently did nothing.
+- The audio route is served `inline` instead of as an attachment, resolves the
+  file by session id if the stored path has moved, and says so when nothing is left.
+- **A visitor's workspace could be replaced by an empty one.** Any request that
+  reached the API without the workspace cookie — an `<audio>` element or the PDF
+  link, both of which drop a SameSite=Lax cookie when the site and the API are
+  different sites — was answered with a fresh workspace *and* a `Set-Cookie`,
+  taking the whole session list with it. Only the app's own fetches can mint one now.
+- On a loopback install the client follows whichever host the page was opened on,
+  so `localhost:3000` talks to `localhost:8000` and the cookie is first-party.
+- Data recorded before per-visitor workspaces existed is moved into a workspace of
+  its own on first start and handed to the first local visitor, instead of being
+  orphaned in place.
+- `public/icon.svg` shadowed the app-router icon route, returning 500 for every
+  request; the stale file (old palette) is gone and `/icon.svg` serves the current mark.
+- Windows asyncio no longer logs a traceback when a browser aborts a range request.
+
+### Experience
+- Session report player replaces the OS `<audio controls>` widget: gradient play
+  button, scrubbable hairline, and the timeline above doubles as the scrubber with
+  a live playhead.
+- Professional voice report rebuilt without cards — 13 panels became scored rows,
+  hairlines and whitespace.
+- Waveform canvases, the PWA splash colour and the last stray palette tokens moved
+  off the retired green/beige scheme.
+- Listen stats and other tight grids no longer squeeze on narrow screens.
+
 ## 1.2.0 — 2026-08-19
 
 ### Experience (no feature or content changes)

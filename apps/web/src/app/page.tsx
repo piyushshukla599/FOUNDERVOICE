@@ -12,9 +12,9 @@ import { PublicFooter, PublicHeader } from "@/components/PublicChrome";
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://foundervoice.app";
 
 export const metadata: Metadata = {
-  title: "Free AI Speech Coach: Improve English Communication and Speaking Skills",
+  title: "Free AI Speech Coach for English Communication",
   description:
-    "Record yourself for 60 seconds and get instant feedback on pace, filler words, clarity and confidence. A free AI communication coach for English speakers, with no signup and no card.",
+    "Record 60 seconds and get instant feedback on your pace, filler words, pauses and clarity. Free, ten recordings a day, no signup.",
   alternates: { canonical: "/" },
   openGraph: {
     title: "Free AI Speech Coach for Better English Communication",
@@ -104,7 +104,7 @@ export default function LandingPage() {
         <section className="py-14 text-center md:py-20">
           <p className="fv-eyebrow">Free, unlimited practice, no signup</p>
           <h1 className="fv-lede mx-auto mt-4 max-w-3xl text-balance">
-            Improve your English communication by hearing what you actually sound like
+            Improve your communication by hearing what you actually sound like
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-[15.5px] leading-relaxed text-[var(--muted)]">
             Record sixty seconds of ordinary speech. FounderVoice measures your pace, filler words,

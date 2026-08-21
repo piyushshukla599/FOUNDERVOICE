@@ -36,7 +36,7 @@ export function Waveform({ stream, active }: Props) {
       analyser.getByteFrequencyData(data);
       const w = canvas.width;
       const h = canvas.height;
-      c.fillStyle = "#0f1412";
+      c.fillStyle = "#07080d";  // --bg
       c.fillRect(0, 0, w, h);
       const gap = 3;
       const barW = (w - gap * barCount) / barCount;
@@ -46,8 +46,8 @@ export function Waveform({ stream, active }: Props) {
         const x = i * (barW + gap);
         const y = (h - bh) / 2;
         const grad = c.createLinearGradient(0, y, 0, y + bh);
-        grad.addColorStop(0, "#c4a35a");
-        grad.addColorStop(1, "#3d8f6e");
+        grad.addColorStop(0, "#8b5cf6");  // --violet
+        grad.addColorStop(1, "#e056a0");  // --magenta
         c.fillStyle = grad;
         c.fillRect(x, y, barW, bh);
       }

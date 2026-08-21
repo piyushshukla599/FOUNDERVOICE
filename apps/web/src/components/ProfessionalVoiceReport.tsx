@@ -8,13 +8,54 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Panel, Stat } from "@/components/ui";
+import { Divider, Meter, SectionTitle, Stat } from "@/components/ui";
 import { fmtTime } from "@/lib/utils";
 
 type Props = {
   payload: Record<string, unknown> | null | undefined;
   onSeek?: (t: number) => void;
 };
+
+/** A scored dimension: the name, a hairline bar, the number. No box. */
+function ScoreRow({ label, value }: { label: string; value: number | null }) {
+  return (
+    <div className="flex items-center gap-4">
+      <span className="w-[9.5rem] shrink-0 text-[12.5px] capitalize text-[var(--muted)]">
+        {label.replace(/_/g, " ")}
+      </span>
+      <span className="min-w-0 flex-1">
+        <Meter value={value ?? 0} tone={value != null && value >= 70 ? "accent" : "quiet"} />
+      </span>
+      <span className="fv-num w-9 shrink-0 text-right text-[13px]">
+        {value == null ? "—" : Math.round(value)}
+      </span>
+    </div>
+  );
+}
+
+/** A label with its answer under it. Used where boxes used to be. */
+function Note({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <p className="fv-eyebrow-quiet mb-1.5">{label}</p>
+      <div className="text-[13.5px] leading-relaxed">{children}</div>
+    </div>
+  );
+}
+
+function Pill({ children, on = false }: { children: React.ReactNode; on?: boolean }) {
+  return (
+    <span
+      className={`rounded-[var(--r-full)] px-3 py-1 text-[12px] ${
+        on
+          ? "bg-[var(--accent-soft)] text-[var(--accent)] shadow-[inset_0_0_0_1px_var(--accent-line)]"
+          : "bg-[rgba(244,243,251,0.04)] text-[var(--ink-dim)]"
+      }`}
+    >
+      {children}
+    </span>
+  );
+}
 
 export function ProfessionalVoiceReport({ payload, onSeek }: Props) {
   // The professional report is a free-form JSON blob built by the Python
@@ -24,12 +65,10 @@ export function ProfessionalVoiceReport({ payload, onSeek }: Props) {
   const pro = (payload?.professional || null) as Record<string, any> | null;
   if (!pro) {
     return (
-      <Panel>
-        <p className="text-sm text-[var(--muted)]">
-          Professional voice analysis appears after the next recording (re-analyze older sessions to
-          upgrade).
-        </p>
-      </Panel>
+      <p className="text-[13px] leading-relaxed text-[var(--muted)]">
+        Professional voice analysis appears after the next recording (re-analyze older sessions to
+        upgrade).
+      </p>
     );
   }
 
@@ -52,16 +91,26 @@ export function ProfessionalVoiceReport({ payload, onSeek }: Props) {
     t: p.t,
     hz: p.hz,
   }));
+  const emotions = [
+    "calmness",
+    "nervousness",
+    "excitement",
+    "stress",
+    "enthusiasm",
+    "confidence",
+    "hesitation",
+  ];
 
   return (
-    <div className="space-y-4">
-      <Panel className="space-y-3">
-        <h3 className="font-[family-name:var(--font-display)] text-xl">How you sound</h3>
-        <p className="text-sm text-[var(--muted)]">
-          Estimates from acoustic features, not medical scores. We improve clarity and habits, never
-          your accent.
-        </p>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <div>
+      {/* Headline numbers, unboxed, as one grid of type. */}
+      <section>
+        <SectionTitle
+          eyebrow="Acoustic analysis"
+          title="How you sound"
+          sub="Estimates from acoustic features, not medical scores. We improve clarity and habits, never your accent."
+        />
+        <div className="grid grid-cols-2 gap-x-6 gap-y-6 sm:grid-cols-3 lg:grid-cols-4">
           <Stat label="Voice Quality" value={vq.score ?? "—"} hint="Overall estimate" />
           <Stat label="Executive Presence" value={ep.score ?? "—"} hint={ep.biggest_weakness?.label} />
           <Stat label="Authority" value={authority.score ?? "—"} />
@@ -73,199 +122,257 @@ export function ProfessionalVoiceReport({ payload, onSeek }: Props) {
             value={`${listener.comfortable_listening_minutes ?? "—"} min`}
             hint="Listener fatigue estimate"
           />
-          <Stat label="Avg pitch" value={pitch.average_pitch_hz ? `${Math.round(pitch.average_pitch_hz)} Hz` : "—"} />
+          <Stat
+            label="Avg pitch"
+            value={pitch.average_pitch_hz ? `${Math.round(pitch.average_pitch_hz)} Hz` : "—"}
+          />
         </div>
-        {vq.reasoning && <p className="text-sm leading-relaxed">{vq.reasoning}</p>}
-      </Panel>
+        {vq.reasoning && (
+          <p className="mt-6 max-w-prose text-[13.5px] leading-relaxed text-[var(--ink-dim)]">
+            {vq.reasoning}
+          </p>
+        )}
+      </section>
 
-      <Panel>
-        <h3 className="mb-3 font-[family-name:var(--font-display)] text-xl">Voice quality dimensions</h3>
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {Object.entries(dims).map(([k, v]) => (
-            <div key={k} className="rounded-lg border border-[var(--line)] px-3 py-2 text-sm">
-              <div className="text-[var(--muted)]">{k.replace(/_/g, " ")}</div>
-              <div className="font-medium">{Math.round(Number(v))}</div>
+      {Object.keys(dims).length > 0 && (
+        <>
+          <Divider />
+          <section>
+            <SectionTitle eyebrow="Detail" title="Voice quality dimensions" />
+            <div className="space-y-3">
+              {Object.entries(dims).map(([k, v]) => (
+                <ScoreRow key={k} label={k} value={Number(v)} />
+              ))}
             </div>
-          ))}
-        </div>
-      </Panel>
+          </section>
+        </>
+      )}
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Panel className="space-y-2">
-          <h3 className="font-[family-name:var(--font-display)] text-xl">Pitch analysis</h3>
-          <p className="text-sm text-[var(--muted)]">{pitch.summary}</p>
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            <div>Range: {pitch.pitch_range_hz ?? "—"} Hz</div>
-            <div>Stability: {pitch.pitch_stability ?? "—"}</div>
-            <div>Monotone: {pitch.monotone_score ?? "—"}</div>
-            <div>Fry (est.): {pitch.vocal_fry_est ?? "—"}</div>
+      <Divider />
+      <section className="grid gap-10 lg:grid-cols-2">
+        <div>
+          <SectionTitle eyebrow="Melody" title="Pitch" sub={pitch.summary} />
+          <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+            <Stat label="Range" value={pitch.pitch_range_hz != null ? `${pitch.pitch_range_hz} Hz` : "—"} />
+            <Stat label="Stability" value={pitch.pitch_stability ?? "—"} />
+            <Stat label="Monotone" value={pitch.monotone_score ?? "—"} />
+            <Stat label="Fry (est.)" value={pitch.vocal_fry_est ?? "—"} />
           </div>
           {pitchSeries.length > 2 && (
-            <div className="mt-2 h-40">
+            <div className="mt-6 h-40">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={pitchSeries}>
+                <LineChart data={pitchSeries} margin={{ top: 4, right: 4, bottom: 0, left: -18 }}>
                   <XAxis
                     dataKey="t"
-                    stroke="#8fa094"
+                    stroke="var(--faint)"
+                    tickLine={false}
+                    axisLine={false}
                     tickFormatter={(v) => fmtTime(Number(v))}
                     fontSize={10}
                   />
-                  <YAxis stroke="#8fa094" fontSize={10} domain={["auto", "auto"]} />
+                  <YAxis
+                    stroke="var(--faint)"
+                    tickLine={false}
+                    axisLine={false}
+                    fontSize={10}
+                    domain={["auto", "auto"]}
+                  />
                   <Tooltip
-                    contentStyle={{ background: "#171e1a", border: "1px solid #2a3530" }}
+                    contentStyle={{
+                      background: "var(--surface-2)",
+                      border: "1px solid var(--line-strong)",
+                      borderRadius: "var(--r-md)",
+                      fontSize: 12,
+                    }}
                     labelFormatter={(v) => fmtTime(Number(v))}
                   />
-                  <Line type="monotone" dataKey="hz" stroke="#c4a35a" dot={false} strokeWidth={1.5} />
+                  <Line type="monotone" dataKey="hz" stroke="#8b5cf6" dot={false} strokeWidth={1.5} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
           )}
-        </Panel>
+        </div>
 
-        <Panel className="space-y-2">
-          <h3 className="font-[family-name:var(--font-display)] text-xl">Resonance</h3>
-          <p className="text-lg font-medium">{resonance.placement}</p>
-          <p className="text-sm text-[var(--muted)]">
+        <div>
+          <SectionTitle eyebrow="Placement" title="Resonance" />
+          <p className="fv-display text-[1.35rem]">{resonance.placement}</p>
+          <p className="mt-2 text-[13px] text-[var(--muted)]">
             Chest {resonance.chest_resonance ?? "—"} · Nasal {resonance.nasal_resonance ?? "—"} ·
             Resonance {resonance.vocal_resonance ?? "—"}
           </p>
-          <p className="text-sm">
+          <p className="mt-5 text-[13.5px] leading-relaxed">
             Recommend: {resonance.recommendation} → Labs exercise{" "}
             <span className="text-[var(--accent)]">{resonance.exercise}</span>
           </p>
-          <p className="text-xs text-[var(--muted)]">{resonance.note}</p>
-        </Panel>
-      </div>
-
-      <Panel className="space-y-3">
-        <h3 className="font-[family-name:var(--font-display)] text-xl">Executive Presence</h3>
-        <p className="text-sm leading-relaxed">{ep.reason}</p>
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {Object.entries(breakdown).map(([k, v]) => (
-            <div key={k} className="rounded-lg border border-[var(--line)] px-3 py-2 text-sm">
-              <div className="text-[var(--muted)]">{k.replace(/_/g, " ")}</div>
-              <div className="font-medium">{Math.round(Number(v))}</div>
-            </div>
-          ))}
-        </div>
-        <div className="grid gap-3 sm:grid-cols-3 text-sm">
-          <div className="rounded-xl border border-[var(--line)] p-3">
-            <div className="text-[var(--muted)]">Biggest weakness</div>
-            <div className="font-semibold">{ep.biggest_weakness?.label ?? "—"}</div>
-            <div className="text-[var(--muted)]">{ep.biggest_weakness?.why}</div>
-          </div>
-          <div className="rounded-xl border border-[var(--line)] p-3">
-            <div className="text-[var(--muted)]">Fastest improvement</div>
-            <div className="font-semibold">{ep.fastest_improvement?.label ?? "—"}</div>
-            <div className="text-[var(--muted)]">{ep.fastest_improvement?.habit}</div>
-          </div>
-          <div className="rounded-xl border border-[var(--line)] p-3">
-            <div className="text-[var(--muted)]">Potential after practice</div>
-            <div className="font-semibold">{ep.potential_after_practice ?? "—"}</div>
-          </div>
-        </div>
-      </Panel>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Panel className="space-y-2">
-          <h3 className="font-[family-name:var(--font-display)] text-xl">Authority · {authority.score ?? "—"}</h3>
-          <ul className="list-disc space-y-1 pl-5 text-sm">
-            {(authority.reasons || []).map((r: string, i: number) => (
-              <li key={i}>{r}</li>
-            ))}
-          </ul>
-          <p className="text-sm text-[var(--muted)]">{authority.improvement_plan}</p>
-        </Panel>
-        <Panel className="space-y-2">
-          <h3 className="font-[family-name:var(--font-display)] text-xl">Trust · {trust.score ?? "—"}</h3>
-          <p className="text-sm">{trust.reason}</p>
-          <p className="text-sm text-[var(--muted)]">{trust.improvement_plan}</p>
-        </Panel>
-      </div>
-
-      <Panel className="space-y-3">
-        <h3 className="font-[family-name:var(--font-display)] text-xl">Emotional voice timeline</h3>
-        <div className="flex flex-wrap gap-2 text-sm">
-          {["calmness", "nervousness", "excitement", "stress", "enthusiasm", "confidence", "hesitation"].map(
-            (k) => (
-              <span key={k} className="rounded-lg border border-[var(--line)] px-2 py-1">
-                {k}: {emotion[k] != null ? Math.round(Number(emotion[k])) : "—"}
-              </span>
-            ),
+          {resonance.note && (
+            <p className="mt-2 text-[12px] leading-relaxed text-[var(--muted)]">{resonance.note}</p>
           )}
         </div>
-        <ul className="space-y-2">
-          {(emotion.timeline || []).slice(0, 12).map((row: { t: number; label: string }, i: number) => (
-            <li key={i}>
-              <button
-                type="button"
-                className="text-left text-sm hover:text-[var(--accent)]"
-                onClick={() => onSeek?.(row.t)}
-              >
-                <span className="text-[var(--muted)]">{fmtTime(row.t)}</span>{row.label}
-              </button>
-            </li>
-          ))}
-        </ul>
-        <p className="text-xs text-[var(--muted)]">{emotion.note}</p>
-      </Panel>
+      </section>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Panel className="space-y-2">
-          <h3 className="font-[family-name:var(--font-display)] text-xl">Breath</h3>
-          <p className="text-sm">Timing: {breath.breath_timing}</p>
-          <p className="text-sm">Frequency: {breath.breath_frequency ?? "—"} / min (est.)</p>
-          <p className="text-sm">{breath.impact_on_clarity}</p>
-          <p className="text-sm text-[var(--emerald)]">{breath.fix}</p>
-        </Panel>
-        <Panel className="space-y-2">
-          <h3 className="font-[family-name:var(--font-display)] text-xl">Listener fatigue</h3>
-          <p className="text-2xl font-semibold">{listener.comfortable_listening_minutes ?? "—"} min</p>
-          <p className="text-sm text-[var(--muted)]">{listener.why}</p>
-          <div className="flex gap-2 text-xs text-[var(--muted)]">
-            {(listener.options || [5, 15, 30, 60]).map((m: number) => (
-              <span
-                key={m}
-                className={`rounded border px-2 py-1 ${
-                  m === listener.comfortable_listening_minutes
-                    ? "border-[var(--accent)] text-[var(--accent)]"
-                    : "border-[var(--line)]"
-                }`}
-              >
-                {m}m
-              </span>
+      <Divider />
+      <section>
+        <SectionTitle eyebrow="How you land" title="Executive presence" sub={ep.reason} />
+        {Object.keys(breakdown).length > 0 && (
+          <div className="space-y-3">
+            {Object.entries(breakdown).map(([k, v]) => (
+              <ScoreRow key={k} label={k} value={Number(v)} />
             ))}
           </div>
-        </Panel>
-      </div>
+        )}
+        <div className="mt-8 grid gap-6 sm:grid-cols-3">
+          <Note label="Biggest weakness">
+            <span className="fv-display block text-[1.05rem]">{ep.biggest_weakness?.label ?? "—"}</span>
+            <span className="mt-1 block text-[var(--muted)]">{ep.biggest_weakness?.why}</span>
+          </Note>
+          <Note label="Fastest improvement">
+            <span className="fv-display block text-[1.05rem]">
+              {ep.fastest_improvement?.label ?? "—"}
+            </span>
+            <span className="mt-1 block text-[var(--muted)]">{ep.fastest_improvement?.habit}</span>
+          </Note>
+          <Note label="Potential after practice">
+            <span className="fv-display fv-num block text-[1.05rem] text-[var(--emerald)]">
+              {ep.potential_after_practice ?? "—"}
+            </span>
+          </Note>
+        </div>
+      </section>
 
-      <Panel className="space-y-3">
-        <h3 className="font-[family-name:var(--font-display)] text-xl">Articulation & clarity</h3>
-        <p className="text-sm">{accent.policy}</p>
-        <p className="text-sm">{accent.example}</p>
+      <Divider />
+      <section className="grid gap-10 lg:grid-cols-2">
+        <div>
+          <SectionTitle eyebrow={`Score ${authority.score ?? "—"}`} title="Authority" />
+          <ul className="space-y-2 text-[13.5px] leading-relaxed">
+            {(authority.reasons || []).map((r: string, i: number) => (
+              <li key={i} className="flex gap-2.5">
+                <span className="mt-[0.55em] h-1 w-1 shrink-0 rounded-[var(--r-full)] bg-[var(--accent)]" />
+                <span>{r}</span>
+              </li>
+            ))}
+          </ul>
+          {authority.improvement_plan && (
+            <p className="mt-4 text-[13px] leading-relaxed text-[var(--muted)]">
+              {authority.improvement_plan}
+            </p>
+          )}
+        </div>
+        <div>
+          <SectionTitle eyebrow={`Score ${trust.score ?? "—"}`} title="Trust" />
+          <p className="text-[13.5px] leading-relaxed">{trust.reason}</p>
+          {trust.improvement_plan && (
+            <p className="mt-4 text-[13px] leading-relaxed text-[var(--muted)]">
+              {trust.improvement_plan}
+            </p>
+          )}
+        </div>
+      </section>
+
+      <Divider />
+      <section>
+        <SectionTitle
+          eyebrow="Across the recording"
+          title="Emotional voice timeline"
+          sub="Click a moment to hear it."
+        />
+        <div className="grid gap-x-8 gap-y-3 sm:grid-cols-2">
+          {emotions.map((k) => (
+            <ScoreRow key={k} label={k} value={emotion[k] != null ? Number(emotion[k]) : null} />
+          ))}
+        </div>
+        {(emotion.timeline || []).length > 0 && (
+          <ul className="mt-7 space-y-0.5">
+            {(emotion.timeline || [])
+              .slice(0, 12)
+              .map((row: { t: number; label: string }, i: number) => (
+                <li key={i}>
+                  <button
+                    type="button"
+                    className="-mx-2 flex w-full items-baseline gap-3 rounded-[var(--r-sm)] px-2 py-1.5 text-left text-[13.5px] transition hover:bg-[rgba(244,243,251,0.04)]"
+                    onClick={() => onSeek?.(row.t)}
+                  >
+                    <span className="fv-num shrink-0 text-[11px] text-[var(--faint)]">
+                      {fmtTime(row.t)}
+                    </span>
+                    <span>{row.label}</span>
+                  </button>
+                </li>
+              ))}
+          </ul>
+        )}
+        {emotion.note && (
+          <p className="mt-4 text-[12px] leading-relaxed text-[var(--muted)]">{emotion.note}</p>
+        )}
+      </section>
+
+      <Divider />
+      <section className="grid gap-10 lg:grid-cols-2">
+        <div>
+          <SectionTitle eyebrow="Support" title="Breath" />
+          <div className="space-y-2 text-[13.5px] leading-relaxed">
+            <p>Timing: {breath.breath_timing}</p>
+            <p>
+              Frequency: <span className="fv-num">{breath.breath_frequency ?? "—"}</span> / min (est.)
+            </p>
+            <p className="text-[var(--muted)]">{breath.impact_on_clarity}</p>
+            {breath.fix && <p className="text-[var(--emerald)]">{breath.fix}</p>}
+          </div>
+        </div>
+        <div>
+          <SectionTitle eyebrow="How long you hold a room" title="Listener fatigue" />
+          <p className="fv-display fv-num text-[2rem]">
+            {listener.comfortable_listening_minutes ?? "—"}
+            <span className="ml-1 text-[1rem] text-[var(--muted)]">min</span>
+          </p>
+          <p className="mt-2 text-[13px] leading-relaxed text-[var(--muted)]">{listener.why}</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {(listener.options || [5, 15, 30, 60]).map((m: number) => (
+              <Pill key={m} on={m === listener.comfortable_listening_minutes}>
+                {m}m
+              </Pill>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <Divider />
+      <section>
+        <SectionTitle eyebrow="Words" title="Articulation & clarity" />
+        <div className="max-w-prose space-y-2 text-[13.5px] leading-relaxed">
+          <p>{accent.policy}</p>
+          <p className="text-[var(--muted)]">{accent.example}</p>
+        </div>
         {(artic.practice_list || []).length > 0 && (
           <>
-            <p className="text-sm text-[var(--muted)]">Practice list (slow → normal → presentation):</p>
-            <div className="flex flex-wrap gap-2">
+            <p className="mt-6 text-[12px] text-[var(--muted)]">
+              Practice list (slow → normal → presentation):
+            </p>
+            <div className="mt-2.5 flex flex-wrap gap-2">
               {artic.practice_list.map((w: string) => (
-                <span key={w} className="rounded-lg border border-[var(--line)] px-3 py-1 text-sm">
-                  {w}
-                </span>
+                <Pill key={w}>{w}</Pill>
               ))}
             </div>
           </>
         )}
-        <p className="text-sm">
-          Persuasion: {persuasiveness.where_lost} (score {persuasiveness.score ?? "—"})
+        <p className="mt-6 text-[13.5px] leading-relaxed">
+          Persuasion: {persuasiveness.where_lost} (score{" "}
+          <span className="fv-num">{persuasiveness.score ?? "—"}</span>)
         </p>
-      </Panel>
+      </section>
 
       {(pro.one_habit_next || pro.expected_if_fixed) && (
-        <Panel className="border-[var(--accent)]/30">
-          <h3 className="font-[family-name:var(--font-display)] text-xl">One habit next</h3>
-          <p className="mt-2 text-sm">{pro.one_habit_next}</p>
-          <p className="mt-1 text-sm text-[var(--accent)]">Expected: {pro.expected_if_fixed}</p>
-        </Panel>
+        <>
+          <Divider />
+          <section className="fv-halo py-2 text-center">
+            <p className="fv-eyebrow-quiet mb-3">One habit next</p>
+            <p className="fv-lede mx-auto max-w-2xl text-balance">{pro.one_habit_next}</p>
+            {pro.expected_if_fixed && (
+              <p className="mt-4 text-[13.5px] text-[var(--accent)]">
+                Expected: {pro.expected_if_fixed}
+              </p>
+            )}
+          </section>
+        </>
       )}
     </div>
   );
@@ -301,34 +408,43 @@ export function RootCauseFinding({
     <button
       type="button"
       onClick={() => onSeek?.(event.start || 0)}
-      className="block w-full rounded-xl border border-[var(--line)] p-3 text-left hover:border-[var(--accent)]"
+      className="group -mx-3 block w-full rounded-[var(--r-md)] px-3 py-3 text-left transition hover:bg-[rgba(244,243,251,0.04)]"
     >
-      <div className="text-sm font-semibold">{observation}</div>
-      <div className="mt-1 text-xs text-[var(--muted)]">{fmtTime(event.start || 0)}</div>
-      <div className="mt-2 space-y-1 text-sm">
-        <div>
-          <span className="text-[var(--accent)]">Cause:</span> {event.cause}
-        </div>
+      <div className="flex items-baseline gap-3">
+        <span className="fv-num shrink-0 text-[11px] text-[var(--faint)]">
+          {fmtTime(event.start || 0)}
+        </span>
+        <span className="fv-display text-[15px] group-hover:text-[var(--accent)]">{observation}</span>
+      </div>
+      <div className="mt-2.5 space-y-1.5 pl-[3.4rem] text-[13px] leading-relaxed">
+        <p>
+          <span className="text-[var(--accent)]">Cause: </span>
+          {event.cause}
+        </p>
         {evidence && (
-          <div>
-            <span className="text-[var(--accent)]">Evidence:</span> {evidence}
-          </div>
+          <p>
+            <span className="text-[var(--accent)]">Evidence: </span>
+            {evidence}
+          </p>
         )}
         {impact && (
-          <div>
-            <span className="text-[var(--accent)]">Impact:</span> {impact}
-          </div>
+          <p>
+            <span className="text-[var(--accent)]">Impact: </span>
+            {impact}
+          </p>
         )}
-        <div>
-          <span className="text-[var(--emerald)]">Fix:</span> {event.fix}
+        <p>
+          <span className="text-[var(--emerald)]">Fix: </span>
+          {event.fix}
           {event.exercise ? ` · Exercise: ${event.exercise}` : ""}
-        </div>
+        </p>
         {expected && (
-          <div>
-            <span className="text-[var(--emerald)]">Expected:</span> {expected}
-          </div>
+          <p>
+            <span className="text-[var(--emerald)]">Expected: </span>
+            {expected}
+          </p>
         )}
-        {trend && <div className="text-xs text-[var(--muted)]">{trend}</div>}
+        {trend && <p className="text-[12px] text-[var(--muted)]">{trend}</p>}
       </div>
     </button>
   );

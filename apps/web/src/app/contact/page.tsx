@@ -20,6 +20,11 @@ export const metadata: Metadata = {
 export default function ContactPage() {
   return (
     <>
+      {/* Server-rendered so the page has an h1 and readable copy even though
+          the form itself is client-only. */}
+      <header className="mx-auto max-w-2xl px-1 pt-4 md:pt-10">
+        <h1 className="sr-only">Contact FounderVoice AI</h1>
+      </header>
       <Suspense fallback={null}>
         <ContactForm />
       </Suspense>

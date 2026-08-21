@@ -165,7 +165,7 @@ function LiveCoachPanelInner({
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.18 }}
-            className="absolute right-4 top-20 max-w-[200px] rounded-2xl border px-3 py-2 text-sm font-semibold shadow-xl"
+            className="absolute right-4 top-20 max-w-[200px] rounded-[var(--r-md)] border px-3 py-2 text-sm font-semibold shadow-[0_8px_30px_-12px_rgba(0,0,0,0.8)] backdrop-blur-sm"
             style={{
               borderColor: ZONE_HEX[coachHint.tone],
               background: "rgba(13, 15, 24, 0.94)",

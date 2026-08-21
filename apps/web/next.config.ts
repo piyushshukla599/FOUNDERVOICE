@@ -17,9 +17,27 @@ const nextConfig: NextConfig = {
   async headers() {
     // The browser has to be allowed to reach the API, and that origin is only
     // known at build time. Getting this wrong blocks every request the app
-    // makes, so it is derived rather than written out by hand.
-    const api = (process.env.NEXT_PUBLIC_API_BASE || "").replace(/\/$/, "");
-    const connect = ["'self'", api].filter(Boolean).join(" ");
+    // makes, so it is derived rather than written out by hand. Falling back to
+    // the rewrite target rather than to nothing matters: an unset variable
+    // used to produce a policy that silently blocked the whole app.
+    const api = (process.env.NEXT_PUBLIC_API_BASE || apiTarget).replace(/\/$/, "");
+    // On a loopback API both spellings have to be listed. The client follows
+    // whichever host the page was opened on so that the workspace cookie is
+    // same-site (see resolveBase in lib/api.ts), and CSP is generated here at
+    // build time, long before anyone knows which one that will be.
+    const origins = new Set([api]);
+    try {
+      const parsed = new URL(api);
+      if (/^(localhost|127\.0\.0\.1)$/i.test(parsed.hostname)) {
+        for (const host of ["localhost", "127.0.0.1"]) {
+          parsed.hostname = host;
+          origins.add(parsed.origin);
+        }
+      }
+    } catch {
+      /* a malformed base is left as the single entry above */
+    }
+    const fromApi = ["'self'", ...origins].filter(Boolean).join(" ");
 
     // 'unsafe-inline' for scripts is unavoidable without threading a nonce
     // through every response: the App Router inlines its hydration payload.
@@ -31,9 +49,13 @@ const nextConfig: NextConfig = {
       "style-src 'self' 'unsafe-inline'",
       // blob: covers the recorder's own audio; data: covers inlined icons.
       "img-src 'self' data: blob:",
-      "media-src 'self' blob:",
+      // The API origin belongs here as well as in connect-src. Playback is an
+      // <audio src> pointed straight at FastAPI, not a fetch, and media-src is
+      // what governs that - leaving it at 'self' blocked every recording from
+      // playing back with no network request and no error anyone could read.
+      `media-src ${fromApi} blob:`,
       "font-src 'self' data:",
-      `connect-src ${connect}`,
+      `connect-src ${fromApi}`,
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",
