@@ -43,7 +43,7 @@ const MOBILE_PRIMARY = [PRIMARY[0], PRIMARY[1], PRIMARY[2], PRIMARY[4]];
 const MOBILE_MORE = [PRIMARY[3], ...SECONDARY];
 
 // Public pages carry their own header and footer rather than the app nav.
-const CHROMELESS = ["/", "/welcome", "/privacy", "/terms", "/onboarding"];
+const CHROMELESS = ["/", "/welcome", "/privacy", "/terms", "/onboarding", "/contact"];
 // Matched by prefix, since every guide under this path is public too.
 const CHROMELESS_PREFIXES = ["/guides"];
 

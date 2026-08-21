@@ -1,7 +1,11 @@
 import Link from "next/link";
 
 export const metadata = {
-  alternates: { canonical: "/privacy" }, title: "Privacy Policy" };
+  alternates: { canonical: "/privacy" },
+  title: "Privacy Policy",
+  description:
+    "What FounderVoice stores, where recordings live, how long they are kept, and how each visitor's workspace is kept separate from everyone else's.",
+};
 
 export default function PrivacyPage() {
   return (

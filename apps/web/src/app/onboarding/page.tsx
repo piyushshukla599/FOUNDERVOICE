@@ -101,7 +101,7 @@ export default function OnboardingPage() {
                   FounderVoice
                 </p>
                 <h1 className="fv-display text-[2.4rem] leading-[1.08] tracking-tight md:text-[3.2rem]">
-                  Become a better speaker.
+                  Become a better speaker.{" "}
                   <span className="block text-[var(--muted)]">One conversation at a time.</span>
                 </h1>
               </div>
@@ -140,6 +140,50 @@ export default function OnboardingPage() {
                   >
                     Skip for now
                   </button>
+                </div>
+              </div>
+
+              {/* Below the button on purpose. This is the page every guide CTA
+                  lands on, and it answered none of the questions someone
+                  arriving cold actually has - it was 62 words to a crawler and
+                  not many more to a reader. Nothing here sits between anyone
+                  and the record button. */}
+              <div className="max-w-xl space-y-6 border-t border-[var(--line)] pt-8">
+                <div>
+                  <h2 className="text-[15px] font-medium text-[var(--ink)]">
+                    What the next minute looks like
+                  </h2>
+                  <ol className="mt-3 space-y-2.5 text-[14px] leading-relaxed text-[var(--muted)]">
+                    <li>
+                      <span className="text-[var(--ink-dim)]">You answer one question aloud.</span>{" "}
+                      The kind you would get in an interview, a standup or a pitch. Sixty seconds is
+                      enough, and unrehearsed is better than polished - rehearsed speech hides the
+                      habits worth finding.
+                    </li>
+                    <li>
+                      <span className="text-[var(--ink-dim)]">You get five numbers.</span> Speaking
+                      pace in words per minute, filler words per minute, how long your pauses run,
+                      word-level clarity, and pitch range. Each one comes with the timestamp that
+                      produced it, so you can hear the moment rather than trust a score.
+                    </li>
+                    <li>
+                      <span className="text-[var(--ink-dim)]">You get one drill.</span> Not a list
+                      of twelve. The single habit costing you the most, chosen from what your
+                      recording actually showed.
+                    </li>
+                  </ol>
+                </div>
+
+                <div>
+                  <h2 className="text-[15px] font-medium text-[var(--ink)]">
+                    What it costs and what it keeps
+                  </h2>
+                  <p className="mt-3 text-[14px] leading-relaxed text-[var(--muted)]">
+                    Ten recordings every 24 hours, free, with no account, no card and no trial
+                    period. Recordings belong to the workspace held by this browser, so they are
+                    not shared with anyone else who visits. After three sessions the coaching stops
+                    being generic and starts comparing you against your own history.
+                  </p>
                 </div>
               </div>
             </section>

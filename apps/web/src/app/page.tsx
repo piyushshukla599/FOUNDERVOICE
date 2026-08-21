@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PublicFooter, PublicHeader } from "@/components/PublicChrome";
+import { GUIDES } from "@/lib/guides";
+import { OG_IMAGE } from "@/lib/schema";
 
 /**
  * The public landing page, and the only page most people see before deciding
@@ -12,21 +14,45 @@ import { PublicFooter, PublicHeader } from "@/components/PublicChrome";
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://foundervoice.app";
 
 export const metadata: Metadata = {
-  // Absolute so the home page does not inherit the "%s · FounderVoice AI"
+  // Absolute so the home page does not inherit the "%s · FounderVoice"
   // template - Google appends the site name to a home page result itself, and
   // the doubled brand pushed the useful half of the title past the truncation.
-  title: { absolute: "Free AI Speech Coach for Founder-Level Communication" },
+  //
+  // It deliberately does not say "AI speech coach". That phrase is contested by
+  // products with years of authority, and it describes a category rather than
+  // this product; "communication coach for founders" is the narrower claim this
+  // site can actually earn.
+  title: { absolute: "FounderVoice: AI Communication Coach for Founders" },
   description:
-    "Record sixty seconds and get instant feedback on your pace, filler words, pauses and clarity, then the one habit to fix first. Free, ten a day, no signup.",
+    "Practise your investor pitch, cut filler words and fix your speaking pace. Record sixty seconds and get delivery measured, with the one habit to fix first. Free.",
   alternates: { canonical: "/" },
   openGraph: {
-    title: "Free AI Speech Coach for Founder-Level Communication",
+    title: "FounderVoice: AI Communication Coach for Founders",
     description:
-      "Record 60 seconds. Learn exactly which habit is costing you, and how to fix it. Free, no signup.",
+      "Record sixty seconds. Learn exactly which habit is costing you the room, and how to fix it. Free, no signup.",
     url: SITE,
     type: "website",
+    images: [OG_IMAGE],
   },
 };
+
+/** Linked from the body so the guides are one click from the front door. */
+const FEATURED_GUIDES = [
+  "how-to-stop-using-filler-words",
+  "how-to-stop-talking-too-fast",
+  "pitch-practice-for-founders",
+  "how-to-prepare-for-investor-qa",
+];
+
+/** Where founders actually use this. Named because search intent lives here. */
+const USE_CASES = [
+  ["Investor pitches", "The sixty-second version, and the questions after it."],
+  ["Customer demos", "Explaining the product to someone hearing it for the first time."],
+  ["Podcasts and interviews", "Long-form answers where rambling costs you the edit."],
+  ["Presentations", "Pace and pauses across ten minutes, not ten seconds."],
+  ["Standups and board updates", "Short status that lands without filler."],
+  ["Team communication", "The everyday case that decides how you are read."],
+] as const;
 
 const FAQS = [
   {
@@ -185,6 +211,18 @@ export default function LandingPage() {
         </section>
 
         <section className="border-t border-[var(--line)] py-14">
+          <h2 className="text-[24px] leading-tight text-[var(--ink)]">Where founders use it</h2>
+          <dl className="mt-7 grid gap-x-10 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
+            {USE_CASES.map(([h, p]) => (
+              <div key={h}>
+                <dt className="text-[15px] font-medium text-[var(--ink)]">{h}</dt>
+                <dd className="mt-1.5 text-[14px] leading-relaxed text-[var(--muted)]">{p}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+
+        <section className="border-t border-[var(--line)] py-14">
           <h2 className="text-[24px] leading-tight text-[var(--ink)]">Who it is for</h2>
           <div className="mt-6 grid max-w-3xl gap-5 text-[15px] leading-relaxed text-[var(--muted)] sm:grid-cols-2">
             <p>
@@ -216,6 +254,38 @@ export default function LandingPage() {
               </div>
             ))}
           </dl>
+        </section>
+
+        {/* The guides were two clicks deep behind a single hub link, which left
+            the only organic-acquisition surface on the site with no equity from
+            the front door. Descriptive anchors, not "read more". */}
+        <section className="border-t border-[var(--line)] py-14">
+          <h2 className="text-[24px] leading-tight text-[var(--ink)]">Start with the problem</h2>
+          <ul className="mt-7 grid max-w-3xl gap-6 sm:grid-cols-2">
+            {FEATURED_GUIDES.map((slug) => {
+              const guide = GUIDES.find((g) => g.slug === slug);
+              if (!guide) return null;
+              return (
+                <li key={slug}>
+                  <Link
+                    href={`/guides/${guide.slug}`}
+                    className="text-[15.5px] leading-snug text-[var(--ink-dim)] transition-colors hover:text-[var(--violet-bright)]"
+                  >
+                    {guide.title}
+                  </Link>
+                  <p className="mt-1.5 text-[13.5px] leading-relaxed text-[var(--faint)]">
+                    {guide.description}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+          <Link
+            href="/guides"
+            className="mt-8 inline-block text-[14px] text-[var(--violet-bright)]"
+          >
+            All {GUIDES.length} guides
+          </Link>
         </section>
 
         <section className="border-t border-[var(--line)] py-16 text-center">

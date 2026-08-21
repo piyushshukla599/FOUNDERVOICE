@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PublicFooter, PublicHeader } from "@/components/PublicChrome";
-import { GUIDES, getGuide } from "@/lib/guides";
+import { GUIDES, getGuide, relatedGuides } from "@/lib/guides";
+import { OG_IMAGE, ORG_ID } from "@/lib/schema";
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://foundervoice.app";
 
@@ -24,6 +25,10 @@ export async function generateMetadata({
     title: guide.metaTitle,
     description: guide.description,
     alternates: { canonical: `/guides/${guide.slug}` },
+    // Keywords are ignored by Google, but this is the only place the target
+    // intent is visible from the rendered page, which makes an audit of what
+    // each URL is meant to rank for possible without reading the source.
+    keywords: [guide.primaryKeyword, ...guide.secondaryKeywords],
     openGraph: {
       type: "article",
       title: guide.metaTitle,
@@ -31,6 +36,13 @@ export async function generateMetadata({
       url,
       publishedTime: guide.updated,
       modifiedTime: guide.updated,
+      images: [OG_IMAGE],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: guide.metaTitle,
+      description: guide.description,
+      images: [OG_IMAGE.url],
     },
   };
 }
@@ -41,8 +53,12 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
   if (!guide) notFound();
 
   const url = `${SITE}/guides/${guide.slug}`;
-  // Article and FAQ in one graph, plus breadcrumbs, so the page can win both a
-  // normal result and an expandable FAQ result for the same query.
+  const related = relatedGuides(guide);
+
+  // Article, breadcrumbs and FAQ in one graph. The Organization itself is
+  // declared once in the root layout; referencing it by @id here rather than
+  // repeating it is what makes the publisher one entity across the site
+  // instead of eleven look-alikes with the same name.
   const schema = {
     "@context": "https://schema.org",
     "@graph": [
@@ -53,8 +69,13 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
         datePublished: guide.updated,
         dateModified: guide.updated,
         mainEntityOfPage: url,
-        author: { "@type": "Organization", name: "FounderVoice AI", url: SITE },
-        publisher: { "@type": "Organization", name: "FounderVoice AI", url: SITE },
+        url,
+        // The generated social card. Article rich results want an image and
+        // this is the only one every guide is guaranteed to have.
+        image: [`${SITE}/opengraph-image`],
+        inLanguage: "en",
+        author: { "@id": ORG_ID(SITE) },
+        publisher: { "@id": ORG_ID(SITE) },
       },
       {
         "@type": "BreadcrumbList",
@@ -64,6 +85,9 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
           { "@type": "ListItem", position: 3, name: guide.title, item: url },
         ],
       },
+      // FAQPage no longer earns a SERP feature (Google retired FAQ rich results
+      // in May 2026). It stays because the questions are real and the markup
+      // still describes the page honestly to anything else reading it.
       ...(guide.faqs.length
         ? [
             {
@@ -78,8 +102,6 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
         : []),
     ],
   };
-
-  const others = GUIDES.filter((g) => g.slug !== guide.slug).slice(0, 3);
 
   return (
     <>
@@ -141,34 +163,42 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
           )}
         </article>
 
+        {/* The CTA names the number this reader came for. A generic "try the
+            product" panel on a filler-words page asks someone mid-problem to
+            take an interest in a tour instead. */}
         <aside className="mt-12 rounded-2xl border border-[var(--line)] p-7">
-          <h2 className="text-[17px] text-[var(--ink)]">Measure yours in sixty seconds</h2>
-          <p className="mt-2 text-[14.5px] leading-relaxed text-[var(--muted)]">
-            FounderVoice records a minute of your speech and reports every number in this guide:
-            pace, filler rate, pause length and clarity. Ten recordings a day, free, no account.
-          </p>
+          <h2 className="text-[17px] text-[var(--ink)]">{guide.cta.h}</h2>
+          <p className="mt-2 text-[14.5px] leading-relaxed text-[var(--muted)]">{guide.cta.p}</p>
           <Link
-            href="/onboarding"
+            href={guide.cta.href}
+            data-fv-event="seo_cta_click"
+            data-fv-guide={guide.slug}
             className="mt-5 inline-block rounded-full bg-[var(--accent)] px-6 py-3 text-[14px] font-medium text-white transition-opacity hover:opacity-90"
           >
-            Start free
+            {guide.cta.label}
           </Link>
+          <p className="mt-3 text-[12.5px] text-[var(--faint)]">
+            Free, ten recordings a day, no account.
+          </p>
         </aside>
 
-        {others.length > 0 && (
-          <nav className="mt-12 border-t border-[var(--line)] pt-8" aria-label="More guides">
+        {related.length > 0 && (
+          <nav className="mt-12 border-t border-[var(--line)] pt-8" aria-label="Related guides">
             <h2 className="text-[13px] uppercase tracking-[0.16em] text-[var(--faint)]">
-              More guides
+              Related guides
             </h2>
-            <ul className="mt-4 space-y-3">
-              {others.map((g) => (
+            <ul className="mt-5 space-y-5">
+              {related.map((g) => (
                 <li key={g.slug}>
                   <Link
                     href={`/guides/${g.slug}`}
-                    className="text-[15px] text-[var(--ink-dim)] transition-colors hover:text-[var(--violet-bright)]"
+                    className="text-[15.5px] text-[var(--ink-dim)] transition-colors hover:text-[var(--violet-bright)]"
                   >
                     {g.title}
                   </Link>
+                  <p className="mt-1 text-[13.5px] leading-relaxed text-[var(--faint)]">
+                    {g.description}
+                  </p>
                 </li>
               ))}
             </ul>

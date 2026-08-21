@@ -48,7 +48,7 @@ export function PublicFooter() {
           Questions? <a href="mailto:info@foundervoice.app" className="text-[var(--violet-bright)]">info@foundervoice.app</a>
         </p>
         <p className="mt-2 text-[12.5px] text-[var(--faint)]">
-          FounderVoice AI. Free speech and communication coaching, powered by your own recordings.
+          FounderVoice. Communication coaching for founders, measured from your own recordings.
         </p>
       </div>
     </footer>

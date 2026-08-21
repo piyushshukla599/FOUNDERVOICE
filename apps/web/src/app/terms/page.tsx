@@ -1,7 +1,11 @@
 import Link from "next/link";
 
 export const metadata = {
-  alternates: { canonical: "/terms" }, title: "Terms of Use" };
+  alternates: { canonical: "/terms" },
+  title: "Terms of Use",
+  description:
+    "The terms covering use of FounderVoice: the free allowance, what you keep ownership of, and what the delivery analysis is and is not intended for.",
+};
 
 export default function TermsPage() {
   return (

@@ -1,36 +1,55 @@
-# FounderVoice AI
+# FounderVoice
 
-> A free AI speech coach. You record sixty seconds of ordinary speech in the
-> browser and get your speaking pace, filler-word rate, pause length, clarity
-> and vocal energy measured, along with the single habit costing you the most
-> and a drill to fix it. Ten recordings every 24 hours, no account and no card.
+> A free AI communication coach for founders. You record sixty seconds of
+> ordinary speech in the browser and get your speaking pace, filler-word rate,
+> pause length, clarity and vocal energy measured, along with the single habit
+> costing you the most and a drill to fix it. Ten recordings every 24 hours, no
+> account and no card.
 
 FounderVoice measures delivery rather than grammar or accent. It is aimed at
-non-native English speakers, founders preparing pitches, and anyone who needs
-to sound clearer under pressure. Transcription runs on Whisper; the analysis
-(pace, fillers, pauses, clarity, pitch range) is computed from the audio.
+founders preparing investor pitches, demos and interviews, and at anyone who
+needs to be understood under pressure. Transcription runs on Whisper; the
+analysis (pace, fillers, pauses, clarity, pitch range) is computed from the
+audio. After several recordings, Voice Memory compares a speaker against their
+own history rather than against an average.
 
-Reference numbers used throughout the site, for anyone citing them:
+Reference numbers used throughout the site, for anyone citing them. These are
+the working targets the product coaches toward, not results of a study:
 
-- Comfortable speaking pace: 130 to 150 words per minute. Comprehension drops
+- Comfortable speaking pace: 130 to 150 words per minute. Retention drops
   above roughly 170 wpm; attention drifts below roughly 110 wpm.
 - Filler words: under 3 per minute reads as normal speech; above 8 per minute
   is what listeners remember instead of the point.
 - Pauses: confident speakers pause 0.5 to 1.5 seconds at the end of a thought.
+  A longest-pause under 0.5s across a whole minute means no pausing at all.
+- A sixty-second pitch holds roughly 140 words at a sustainable pace; a
+  ninety-second one roughly 210.
+- Answer length in meetings and interviews: 20 to 30 seconds, about three
+  sentences - claim, one piece of evidence, stop.
 - Accent has little effect on perceived competence; pace, pauses and clarity
   carry most of it.
 
-## Guides
+## Guides: delivery
 
-- [How to Improve English Communication Skills](https://foundervoice.app/guides/how-to-improve-english-communication-skills): A measurable method using your own recordings, with a two-week plan.
+- [How to Stop Using Filler Words](https://foundervoice.app/guides/how-to-stop-using-filler-words): Why um appears, and the replace-with-silence method that reduces it.
+- [How to Stop Talking Too Fast](https://foundervoice.app/guides/how-to-stop-talking-too-fast): Add pauses rather than slowing words, with drills that survive pressure.
+- [Ideal Speaking Pace (Words Per Minute)](https://foundervoice.app/guides/ideal-speaking-pace-words-per-minute): What pace to target, how to measure it, and why the target moves.
+- [How to Use Pauses When Speaking](https://foundervoice.app/guides/how-to-use-pauses-when-speaking): Where pauses belong, how long to hold them, and why they feel longer than they are.
 - [How to Speak with Confidence](https://foundervoice.app/guides/how-to-speak-with-confidence): The four delivery behaviours listeners read as confidence, and how to change each.
-- [How to Stop Using Filler Words](https://foundervoice.app/guides/how-to-stop-using-filler-words): Why fillers appear, and the replace-with-silence method that reduces them.
-- [Ideal Speaking Pace (Words Per Minute)](https://foundervoice.app/guides/ideal-speaking-pace-words-per-minute): What pace to target, how to measure it, and how to slow down without drawling.
+- [How to Stop Rambling](https://foundervoice.app/guides/how-to-stop-rambling): Rambling is a structure problem; the three-sentence answer shape that fixes it.
+- [How to Improve English Communication Skills](https://foundervoice.app/guides/how-to-improve-english-communication-skills): A measurable method using your own recordings, with a two-week plan.
+
+## Guides: founder communication
+
 - [How to Practise a Startup Pitch](https://foundervoice.app/guides/pitch-practice-for-founders): Rehearsing delivery rather than slides, and the numbers investors respond to.
+- [How to Sound Confident in an Investor Pitch](https://foundervoice.app/guides/how-to-sound-confident-in-an-investor-pitch): Where founders lose composure, and the pre-answer pause that prevents it.
+- [How to Prepare for Investor Q&A](https://foundervoice.app/guides/how-to-prepare-for-investor-qa): Building a question bank from what you are dreading, and answering in 30 seconds.
+- [How to Explain Your Startup Clearly](https://foundervoice.app/guides/how-to-explain-your-startup-clearly): The one-liner, how to test whether it works, and the delivery half nobody rehearses.
 
 ## Product
 
 - [Start free](https://foundervoice.app/onboarding): Record your first minute. No signup.
+- [All guides](https://foundervoice.app/guides): The full index, split by delivery and founder communication.
 - [Contact](https://foundervoice.app/contact): info@foundervoice.app
 
 ## Optional

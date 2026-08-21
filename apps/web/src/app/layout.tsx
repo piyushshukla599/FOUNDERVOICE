@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
+import { AnalyticsBridge } from "@/components/AnalyticsBridge";
 import { AppShell } from "@/components/AppShell";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { BRAND, ORG_ID, organizationNode, webSiteNode } from "@/lib/schema";
 import "./globals.css";
 
 // No next/font/google here on purpose. This product is local-first and has to
@@ -10,41 +12,45 @@ import "./globals.css";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
+// One spelling of the name, everywhere. "FounderVoice AI", "Founder Voice" and
+// "FounderVoice" competing across titles, schema and footer split the brand
+// into three entities as far as a search engine is concerned, and none of them
+// accumulates the signal the other two earned.
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "FounderVoice AI: Founder-Level Communication Coach",
-    template: "%s · FounderVoice AI",
+    default: `${BRAND}: Communication Coach for Founders`,
+    template: `%s · ${BRAND}`,
   },
   description:
-    "Free AI speech coach for founders. Record sixty seconds and learn which delivery habit is costing you the room, measured against your own history.",
-  applicationName: "FounderVoice AI",
-  authors: [{ name: "FounderVoice" }],
+    "Free AI communication coach for founders. Record sixty seconds and learn which delivery habit is costing you the room, measured against your own history.",
+  applicationName: BRAND,
+  authors: [{ name: BRAND, url: siteUrl }],
+  creator: BRAND,
+  publisher: BRAND,
   keywords: [
-    "AI speech coach",
     "founder communication",
-    "executive presence",
-    "investor pitch delivery",
-    "pitch practice",
-    "public speaking practice",
+    "investor pitch practice",
+    "startup pitch practice",
+    "AI communication coach",
     "speaking pace words per minute",
     "how to stop filler words",
-    "speak with confidence",
+    "how to speak with confidence",
+    "presentation practice",
   ],
   openGraph: {
     type: "website",
     locale: "en_US",
     url: siteUrl,
-    siteName: "FounderVoice AI",
-    title: "FounderVoice AI: Founder-Level Communication Coach",
-    description:
-      "Free. Record once, learn why you rushed, and exactly how to fix it.",
+    siteName: BRAND,
+    title: `${BRAND}: Communication Coach for Founders`,
+    description: "Free. Record once, learn why you rushed, and exactly how to fix it.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "FounderVoice AI",
-    description:
-      "Founder-level communication, measured. Record once, and learn exactly what to fix.",
+    title: BRAND,
+    description: "Founder communication, measured. Record once, and learn exactly what to fix.",
   },
   // No canonical here on purpose. In the root layout it is inherited by every
   // page that does not set its own, which declared /contact, /privacy and the
@@ -70,29 +76,48 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-/* Structured data: tells search engines this is a free web application, which
-   is what earns the rich result rather than a plain blue link. */
+/**
+ * Site-wide structured data, emitted from the root layout so every page
+ * carries the same brand entity. Individual pages add their own nodes
+ * (Article, BreadcrumbList) and reference this Organization by `@id` rather
+ * than redeclaring it, which is what makes them one company instead of eleven.
+ *
+ * The free allowance in `offers` mirrors `free_upload_limit` and
+ * `free_practice_limit` in apps/api/app/config.py. It previously advertised
+ * five recordings while the API granted ten, and schema that contradicts the
+ * page is the kind of thing that costs a rich result outright.
+ */
 const jsonLd = {
   "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  name: "FounderVoice AI",
-  applicationCategory: "BusinessApplication",
-  operatingSystem: "Web",
-  url: siteUrl,
-  description:
-    "AI communication coach for founders. Record once and learn why you rushed, and exactly how to fix it.",
-  offers: {
-    "@type": "Offer",
-    price: "0",
-    priceCurrency: "USD",
-    description: "Free tier: 5 recordings and 2 investor practice rounds.",
-  },
-  featureList: [
-    "Local Whisper transcription",
-    "Founder Voice score",
-    "Voice Memory across sessions",
-    "Targeted speaking labs",
-    "Investor practice under pressure",
+  "@graph": [
+    organizationNode(siteUrl),
+    webSiteNode(siteUrl),
+    {
+      "@type": "SoftwareApplication",
+      "@id": `${siteUrl}/#app`,
+      name: BRAND,
+      applicationCategory: "BusinessApplication",
+      operatingSystem: "Web",
+      url: siteUrl,
+      publisher: { "@id": ORG_ID(siteUrl) },
+      description:
+        "AI communication coach for founders. Record sixty seconds and learn why you rushed, and exactly how to fix it.",
+      offers: {
+        "@type": "Offer",
+        price: "0",
+        priceCurrency: "USD",
+        description: "Free: ten recordings every 24 hours and two practice rounds. No account.",
+      },
+      featureList: [
+        "Speaking pace in words per minute",
+        "Filler word count with timestamps",
+        "Pause length and placement",
+        "Word-level clarity",
+        "Vocal energy and pitch range",
+        "Voice Memory across sessions",
+        "Investor practice under pressure",
+      ],
+    },
   ],
 };
 
@@ -106,6 +131,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         />
       </head>
       <body className="antialiased">
+        <AnalyticsBridge />
         <ErrorBoundary>
           <AppShell>{children}</AppShell>
         </ErrorBoundary>

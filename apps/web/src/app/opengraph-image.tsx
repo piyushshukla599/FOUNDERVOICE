@@ -13,7 +13,7 @@ import { ImageResponse } from "next/og";
  * the blurred light sources the live site uses.
  */
 
-export const alt = "FounderVoice AI: executive speech coach for founders";
+export const alt = "FounderVoice: AI communication coach for founders";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
