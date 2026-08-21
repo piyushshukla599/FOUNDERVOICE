@@ -18,6 +18,22 @@ MEM_MB=$(awk '/MemTotal/{print int($2/1024)}' /proc/meminfo)
 
 say() { printf '\n\033[1;35m==>\033[0m %s\n' "$1"; }
 
+say "Swap"
+# pip resolving and unpacking wheels is the peak-memory moment of this script,
+# and on a 1 GB instance it is what takes sshd down with it. Swap makes that
+# survivable - slowly, but without a reboot.
+SWAP_MB=$(awk '/SwapTotal/{print int($2/1024)}' /proc/meminfo)
+if [ "$MEM_MB" -lt 2000 ] && [ "$SWAP_MB" -lt 2048 ] && [ ! -f /swapfile-fv ]; then
+  sudo fallocate -l 2G /swapfile-fv 2>/dev/null || sudo dd if=/dev/zero of=/swapfile-fv bs=1M count=2048 status=none
+  sudo chmod 600 /swapfile-fv
+  sudo mkswap /swapfile-fv >/dev/null
+  sudo swapon /swapfile-fv
+  grep -q '/swapfile-fv' /etc/fstab || echo '/swapfile-fv none swap sw 0 0' | sudo tee -a /etc/fstab >/dev/null
+  echo "   added 2 GB swap (total now $(awk '/SwapTotal/{print int($2/1024)}' /proc/meminfo) MB)"
+else
+  echo "   ${SWAP_MB} MB swap present - leaving it alone"
+fi
+
 say "System packages"
 # Oracle's default image is Oracle Linux (login: opc); Ubuntu is opt-in
 # (login: ubuntu). Both are offered on the same Always Free shape, so detect
@@ -57,23 +73,7 @@ else
   curl -fsSL "${REPO%.git}/archive/refs/heads/${BRANCH:-main}.tar.gz" | tar xz -C "$APP_DIR" --strip-components=1
 fi
 
-say "Swap"
-# pip resolving and unpacking wheels is the peak-memory moment of this script,
-# and on a 1 GB instance it is what takes sshd down with it. Swap makes that
-# survivable - slowly, but without a reboot.
-SWAP_MB=$(awk '/SwapTotal/{print int($2/1024)}' /proc/meminfo)
-if [ "$MEM_MB" -lt 2000 ] && [ "$SWAP_MB" -lt 2048 ] && [ ! -f /swapfile-fv ]; then
-  sudo fallocate -l 2G /swapfile-fv 2>/dev/null || sudo dd if=/dev/zero of=/swapfile-fv bs=1M count=2048 status=none
-  sudo chmod 600 /swapfile-fv
-  sudo mkswap /swapfile-fv >/dev/null
-  sudo swapon /swapfile-fv
-  grep -q '/swapfile-fv' /etc/fstab || echo '/swapfile-fv none swap sw 0 0' | sudo tee -a /etc/fstab >/dev/null
-  echo "   added 2 GB swap (total now $(awk '/SwapTotal/{print int($2/1024)}' /proc/meminfo) MB)"
-else
-  echo "   ${SWAP_MB} MB swap present - leaving it alone"
-fi
-
-say "Python environment (this pulls ~1 GB of wheels; give it a few minutes)"
+say "Python environment (this pulls a few hundred MB of wheels; give it a few minutes)"
 # Pick the newest interpreter present. numpy 2.2 refuses to build on 3.9,
 # which is still the default python3 on Oracle Linux 9 - and the failure
 # surfaces as an opaque wheel build error a long way from the cause.
