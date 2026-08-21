@@ -182,6 +182,16 @@ else
 fi
 
 say "Service"
+# Oracle Linux runs SELinux in enforcing mode, and everything under /home is
+# labelled user_home_t, which a systemd unit is not allowed to execute. The
+# unit fails with 203/EXEC "Permission denied" even though the same command
+# runs fine by hand from an unconfined shell. Relabel just the venv's
+# executables rather than moving the checkout or weakening SELinux.
+if command -v selinuxenabled >/dev/null 2>&1 && selinuxenabled 2>/dev/null; then
+  echo "   SELinux enforcing - relabelling $API_DIR/.venv/bin as bin_t"
+  sudo chcon -R -t bin_t "$API_DIR/.venv/bin" ||     echo "   !! chcon failed; the service may fail with 203/EXEC"
+fi
+
 sudo tee /etc/systemd/system/$SERVICE.service >/dev/null <<UNIT
 [Unit]
 Description=FounderVoice API
