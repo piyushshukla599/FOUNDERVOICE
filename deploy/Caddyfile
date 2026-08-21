@@ -16,6 +16,12 @@
 
 API_HOST_PLACEHOLDER {
 	reverse_proxy 127.0.0.1:8000 {
+		# Overwrite rather than append. The API derives its per-visitor quota
+		# from this header, so a caller who could prepend their own value
+		# would choose their own identity and get a fresh allowance per
+		# request. {remote_host} is the address Caddy actually accepted.
+		header_up X-Forwarded-For {remote_host}
+
 		# Transcription is synchronous and CPU-bound; a long recording can hold
 		# the connection for minutes. Caddy's default 30s would cut it off and
 		# the browser would report a bare network error, hiding the cause.

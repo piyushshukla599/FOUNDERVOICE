@@ -203,6 +203,7 @@ CREATE TABLE IF NOT EXISTS usage_quota (
     used INTEGER NOT NULL DEFAULT 0,
     first_seen TEXT NOT NULL,
     last_seen TEXT NOT NULL,
+    window_started TEXT,
     PRIMARY KEY (bucket, feature)
 );
 
@@ -240,6 +241,15 @@ def _migrate(conn: sqlite3.Connection) -> None:
         )
         """
     )
+    # Quota counters used to accumulate for the lifetime of the row. They now
+    # roll, so each row records when its window opened.
+    quota_cols = {r[1] for r in conn.execute("PRAGMA table_info(usage_quota)").fetchall()}
+    if quota_cols and "window_started" not in quota_cols:
+        conn.execute("ALTER TABLE usage_quota ADD COLUMN window_started TEXT")
+        # Existing rows have no window; treat first_seen as its start so nobody
+        # is stuck at their old lifetime total.
+        conn.execute("UPDATE usage_quota SET window_started = first_seen WHERE window_started IS NULL")
+
     ex_cols = {r[1] for r in conn.execute("PRAGMA table_info(exercises)").fetchall()}
     if "level" not in ex_cols:
         conn.execute("ALTER TABLE exercises ADD COLUMN level INTEGER DEFAULT 1")

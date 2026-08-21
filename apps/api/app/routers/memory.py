@@ -187,10 +187,18 @@ def replace_fillers(body: FillersSetBody) -> dict[str, Any]:
 @router.post("/fresh-start")
 def fresh_start(body: FreshStartBody) -> dict[str, Any]:
     """Wipe sessions, Voice Memory, practice history, and local media files."""
+    settings = get_settings()
+    # The wipe is global and unauthenticated. That is fine when you are the
+    # only user of your own install, and not fine on anything public.
+    if not settings.allow_global_wipe:
+        raise HTTPException(
+            403,
+            "Fresh start is disabled on this deployment because all visitors "
+            "share one workspace. Delete individual sessions instead.",
+        )
     if body.confirm != "DELETE":
         raise HTTPException(400, 'Type confirm: "DELETE" to wipe all data.')
 
-    settings = get_settings()
     deleted = {"sessions": 0, "files": 0}
 
     with connect() as conn:

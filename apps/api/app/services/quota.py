@@ -33,6 +33,7 @@ import ipaddress
 import logging
 import secrets
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from fastapi import HTTPException, Request
@@ -95,8 +96,15 @@ def _normalize(raw: str) -> str | None:
     return str(ip)
 
 
-def client_ip(request: Request) -> str | None:
-    """The visitor's address, trusting only what an operator has vouched for."""
+def client_ip(request: Request) -> tuple[str | None, bool]:
+    """The visitor's address and whether it came from a header.
+
+    Returns ``(address, from_header)``. When a trusted proxy header is
+    configured the socket peer is the proxy itself, so the header is the only
+    meaningful identity - and a request that somehow arrives without it must
+    not fall back to the peer, or every caller would look like the loopback
+    proxy and be exempt.
+    """
     settings = get_settings()
     header = (settings.trusted_proxy_header or "").strip().lower()
     if header:
@@ -106,14 +114,26 @@ def client_ip(request: Request) -> str | None:
             first = value.split(",")[0].strip()
             normalized = _normalize(first)
             if normalized:
-                return normalized
+                return normalized, True
+        # Configured but missing or unparseable: count it, do not exempt it.
+        return None, True
     if request.client and request.client.host:
-        return _normalize(request.client.host)
-    return None
+        return _normalize(request.client.host), False
+    return None, False
 
 
-def is_exempt(ip: str | None) -> bool:
-    """Loopback and LAN callers are the operator, not the public."""
+def is_exempt(ip: str | None, *, from_header: bool = False) -> bool:
+    """Loopback and LAN callers are the operator, not the public.
+
+    Never granted on an address that arrived in a header. Whether a forged
+    ``X-Forwarded-For: 127.0.0.1`` reaches this code depends on whether the
+    proxy replaces the header or appends to it - Caddy replaces, so today it
+    does not. That is the proxy's behaviour protecting us, not ours, and it
+    changes the moment someone edits the Caddyfile or puts a different proxy
+    in front. Exemption is a decision about the *socket*, so require one.
+    """
+    if from_header:
+        return False
     if not get_settings().quota_exempt_private:
         return False
     if not ip:
@@ -127,9 +147,16 @@ def is_exempt(ip: str | None) -> bool:
 
 def bucket_for(request: Request) -> str | None:
     """A hashed, non-reversible identity - or None when this caller is exempt."""
-    ip = client_ip(request)
-    if ip is None or is_exempt(ip):
+    ip, from_header = client_ip(request)
+    if is_exempt(ip, from_header=from_header):
         return None
+    if ip is None:
+        if not from_header:
+            # No proxy configured and no peer address: nothing to meter.
+            return None
+        # Behind a proxy with no usable address. Share one bucket so these
+        # requests are still capped rather than unlimited.
+        ip = "unattributable"
     digest = hmac.new(_secret().encode("utf-8"), ip.encode("utf-8"), hashlib.sha256)
     return digest.hexdigest()
 
@@ -141,12 +168,42 @@ def limit_for(feature: str) -> int:
     return int(getattr(get_settings(), attr, 0) or 0)
 
 
+def _window() -> timedelta:
+    return timedelta(hours=max(1, int(get_settings().quota_window_hours or 24)))
+
+
+def _parse(ts: str | None) -> datetime | None:
+    if not ts:
+        return None
+    try:
+        parsed = datetime.fromisoformat(ts)
+    except ValueError:
+        return None
+    # Rows written before the window existed may lack an offset.
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+
+
+def _window_state(row: Any, now: datetime) -> tuple[int, datetime]:
+    """Usage in the current window, and when that window opened.
+
+    A window that has run out is reported as zero used and starting now, so an
+    expired counter reads as a fresh allowance without needing a sweep job.
+    """
+    if row is None:
+        return 0, now
+    started = _parse(row["window_started"] if "window_started" in row.keys() else None)
+    if started is None or now - started >= _window():
+        return 0, now
+    return int(row["used"] or 0), started
+
+
 @dataclass
 class QuotaState:
     feature: str
     used: int
     limit: int
     unlimited: bool = False
+    window_started: datetime | None = None
 
     @property
     def remaining(self) -> int:
@@ -158,9 +215,22 @@ class QuotaState:
     def exhausted(self) -> bool:
         return not self.unlimited and self.used >= self.limit
 
+    @property
+    def resets_at(self) -> datetime | None:
+        if self.unlimited or self.window_started is None:
+            return None
+        return self.window_started + _window()
+
     def as_dict(self) -> dict[str, Any]:
+        resets_at = self.resets_at
+        seconds = None
+        if resets_at is not None:
+            seconds = max(0, int((resets_at - datetime.now(timezone.utc)).total_seconds()))
         return {
             "feature": self.feature,
+            "resets_at": resets_at.isoformat() if resets_at else None,
+            "resets_in_seconds": seconds,
+            "window_hours": int(get_settings().quota_window_hours or 24),
             "label": FEATURE_LABELS.get(self.feature, self.feature),
             "used": self.used,
             "limit": -1 if self.unlimited else self.limit,
@@ -182,13 +252,16 @@ def peek(request: Request, feature: str) -> QuotaState:
     bucket = bucket_for(request)
     if bucket is None:
         return _unlimited(feature)
+    now = datetime.now(timezone.utc)
     with connect() as conn:
         row = conn.execute(
-            "SELECT used FROM usage_quota WHERE bucket=? AND feature=?",
+            "SELECT used, window_started FROM usage_quota WHERE bucket=? AND feature=?",
             (bucket, feature),
         ).fetchone()
-    used = int(row["used"]) if row else 0
-    return QuotaState(feature=feature, used=used, limit=limit_for(feature))
+    used, started = _window_state(row, now)
+    return QuotaState(
+        feature=feature, used=used, limit=limit_for(feature), window_started=started
+    )
 
 
 def snapshot(request: Request) -> dict[str, Any]:
@@ -222,29 +295,38 @@ def consume(request: Request, feature: str, *, cost: int = 1) -> QuotaState:
         return _unlimited(feature)
 
     limit = limit_for(feature)
-    now = utc_now()
+    now_dt = datetime.now(timezone.utc)
+    now = now_dt.isoformat()
     with connect() as conn:
-        # Take the write lock before reading, so the check and the increment
-        # cannot interleave with another request's.
+        # Take the write lock before reading, so the check, the window
+        # rollover and the increment cannot interleave with another request's.
         conn.execute("BEGIN IMMEDIATE")
         try:
             row = conn.execute(
-                "SELECT used FROM usage_quota WHERE bucket=? AND feature=?",
+                "SELECT used, window_started FROM usage_quota WHERE bucket=? AND feature=?",
                 (bucket, feature),
             ).fetchone()
-            used = int(row["used"]) if row else 0
+            used, started = _window_state(row, now_dt)
             if used + cost > limit:
                 conn.rollback()
-                raise QuotaExceeded(QuotaState(feature=feature, used=used, limit=limit))
+                raise QuotaExceeded(
+                    QuotaState(
+                        feature=feature, used=used, limit=limit, window_started=started
+                    )
+                )
+            # used is the windowed count, so an expired window is written back
+            # as a fresh total rather than added to the stale one.
             conn.execute(
                 """
-                INSERT INTO usage_quota (bucket, feature, used, first_seen, last_seen)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO usage_quota
+                    (bucket, feature, used, first_seen, last_seen, window_started)
+                VALUES (?, ?, ?, ?, ?, ?)
                 ON CONFLICT(bucket, feature) DO UPDATE SET
-                  used = used + excluded.used,
-                  last_seen = excluded.last_seen
+                  used = ?,
+                  last_seen = excluded.last_seen,
+                  window_started = excluded.window_started
                 """,
-                (bucket, feature, cost, now, now),
+                (bucket, feature, used + cost, now, now, started.isoformat(), used + cost),
             )
             conn.commit()
         except QuotaExceeded:
@@ -252,7 +334,9 @@ def consume(request: Request, feature: str, *, cost: int = 1) -> QuotaState:
         except Exception:
             conn.rollback()
             raise
-    return QuotaState(feature=feature, used=used + cost, limit=limit)
+    return QuotaState(
+        feature=feature, used=used + cost, limit=limit, window_started=started
+    )
 
 
 def refund(request: Request, feature: str, *, cost: int = 1) -> None:

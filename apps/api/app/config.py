@@ -44,7 +44,7 @@ class Settings(BaseSettings):
     max_upload_bytes: int = 100 * 1024 * 1024  # 100 MB
 
     # Contact / feedback form → your inbox
-    contact_to_email: str = ""
+    contact_to_email: str = "info@foundervoice.app"
     contact_from_email: str = ""
     smtp_host: str = ""
     smtp_port: int = 587
@@ -55,9 +55,12 @@ class Settings(BaseSettings):
     # Whisper transcription and the practice chat are the costly paths; these
     # cap what one anonymous visitor can spend on a free host.
     quota_enabled: bool = True
-    free_upload_limit: int = 5
+    free_upload_limit: int = 10
     free_practice_limit: int = 2
     free_practice_turn_limit: int = 20
+    # Counters roll rather than accumulate forever: a visitor gets the full
+    # allowance again this many hours after their first use of a feature.
+    quota_window_hours: int = 24
     # HMAC key for hashing client addresses. MUST be set in production, or
     # counters reset on every restart. Generate: python -c "import secrets;print(secrets.token_hex(32))"
     quota_secret: str = ""
@@ -69,6 +72,11 @@ class Settings(BaseSettings):
     quota_exempt_private: bool = True
     # Where an exhausted visitor is sent to ask for more.
     upgrade_url: str = "/contact?interest=pro"
+
+    # /api/fresh-start deletes every session, recording and Voice Memory for
+    # the whole database, and there are no accounts, so on a shared deployment
+    # any visitor can erase everyone's work. Off unless deliberately enabled.
+    allow_global_wipe: bool = False
 
     # Production toggles
     api_docs_enabled: bool = True  # set API_DOCS_ENABLED=false in production if desired

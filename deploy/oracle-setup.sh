@@ -121,12 +121,19 @@ if [ ! -f "$ENV_FILE" ]; then
   FRESH=1
   # A stable secret is what makes the free-tier counters survive a restart.
   set_env QUOTA_SECRET "$(python3 -c 'import secrets; print(secrets.token_hex(32))')"
-  set_env API_DOCS_ENABLED false
   echo "   wrote $ENV_FILE with a fresh QUOTA_SECRET"
 else
   FRESH=0
-  echo "   $ENV_FILE exists — keeping its QUOTA_SECRET and mail settings"
+  echo "   $ENV_FILE exists - keeping its QUOTA_SECRET and mail settings"
 fi
+
+# These are wrong for any public deployment whether or not the .env is new, so
+# enforce them on every run. .env.example ships ALLOW_GLOBAL_WIPE=true for
+# people running this on their own machine; here it would let any visitor
+# delete every other visitor's recordings.
+set_env ALLOW_GLOBAL_WIPE false
+set_env API_DOCS_ENABLED false
+
 
 # Transcription is the only part of this app with a real memory floor.
 # faster-whisper needs roughly 2 GB resident; below that the kernel kills the
