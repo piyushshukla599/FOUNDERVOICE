@@ -38,7 +38,7 @@ def ensure_wav_mono_16k(src: Path, dest: Path) -> Path:
     except (FileNotFoundError, subprocess.CalledProcessError):
         pass
 
-    # PyAV (ships with faster-whisper stack) — handles webm/mp3/m4a without system ffmpeg
+    # PyAV bundles its own ffmpeg — handles webm/mp3/m4a with no system ffmpeg
     try:
         import av
 

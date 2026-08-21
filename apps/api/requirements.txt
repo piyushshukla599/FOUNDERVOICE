@@ -8,6 +8,10 @@ numpy==2.2.1
 soundfile==0.13.1
 librosa==0.10.2.post1
 faster-whisper==1.1.0
+# Imported directly by services/audio.py to decode the browser's webm
+# uploads. It used to arrive via faster-whisper, which left hosted-ASR
+# deployments with no decoder and no system ffmpeg.
+av==18.0.0
 webrtcvad-wheels==2.0.14
 reportlab==4.2.5
 aiofiles==24.1.0

@@ -23,43 +23,38 @@ say "System packages"
 # (login: ubuntu). Both are offered on the same Always Free shape, so detect
 # rather than assume - an apt-only script dies on line one under Oracle Linux.
 #
-# ffmpeg is the package that matters most here: it is not in requirements.txt,
-# but librosa needs it to decode the .webm the browser records. Without it
-# every single upload fails at the decode step.
+# Keep this as small as possible. On the 1/8-OCPU Always Free shape a large dnf
+# transaction starves sshd and takes the whole box offline, so only the
+# interpreter is genuinely required: PyAV bundles its own ffmpeg, and the
+# source can be fetched with curl when git is absent.
 if command -v apt-get >/dev/null 2>&1; then
   sudo apt-get update
-  sudo apt-get install -y python3-venv python3-dev build-essential ffmpeg git curl
+  sudo apt-get install -y python3-venv python3-dev build-essential curl
 elif command -v dnf >/dev/null 2>&1; then
   # Fail fast on a dead mirror instead of hanging on the default long retries.
   DNF="sudo dnf -y --setopt=timeout=20 --setopt=retries=2"
 
-  echo "-- base packages (first dnf run rebuilds its cache; ~1-2 min)"
-  $DNF install gcc gcc-c++ make git curl python3 python3-devel
-
-  # EL9 ships Python 3.9, but numpy 2.2 requires 3.10+.
-  echo "-- newer interpreter"
+  # EL9 ships Python 3.9, but numpy 2.2 requires 3.10+. This is the one package
+  # the install cannot proceed without.
+  echo "-- interpreter (first dnf run rebuilds its cache; this is the slow step)"
   $DNF install python3.12 python3.12-devel || $DNF install python3.11 python3.11-devel || true
-
-  # ffmpeg is not in Oracle's own repos. EPEL's ffmpeg-free is enough for
-  # decoding and is far more reliable to fetch than RPM Fusion; only fall
-  # back to RPM Fusion if EPEL does not have it.
-  echo "-- EPEL + ffmpeg"
-  $DNF install oracle-epel-release-el9 || $DNF install epel-release || true
-  if ! $DNF install ffmpeg-free; then
-    echo "-- ffmpeg-free unavailable, trying RPM Fusion"
-    timeout 120 sudo dnf -y --nogpgcheck install       "https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-$(rpm -E %rhel).noarch.rpm" || true
-    $DNF install ffmpeg || true
-  fi
 else
   echo "Unsupported distro: need apt-get or dnf." >&2; exit 1
 fi
-command -v ffmpeg >/dev/null || echo "!! WARNING: ffmpeg missing - audio decode will fail."
 
 say "Source"
-if [ -d "$APP_DIR/.git" ]; then
-  git -C "$APP_DIR" pull --ff-only
+if command -v git >/dev/null 2>&1; then
+  if [ -d "$APP_DIR/.git" ]; then
+    git -C "$APP_DIR" pull --ff-only
+  else
+    git clone --depth 1 "$REPO" "$APP_DIR"
+  fi
 else
-  git clone --depth 1 "$REPO" "$APP_DIR"
+  # Installing git costs a full dnf transaction, which is exactly what knocks a
+  # throttled instance offline. A tarball needs only curl and tar.
+  echo "   git not installed - fetching a tarball instead"
+  mkdir -p "$APP_DIR"
+  curl -fsSL "${REPO%.git}/archive/refs/heads/${BRANCH:-main}.tar.gz" | tar xz -C "$APP_DIR" --strip-components=1
 fi
 
 say "Swap"
