@@ -88,6 +88,7 @@ def quota_status(request: Request):
 @app.get("/api/health")
 def health():
     enhanced = bool(settings.deepseek_api_key and not settings.deepseek_api_key.startswith("sk-your"))
+    _asr_provider = settings.asr_provider.strip().lower()
     return {
         "ok": True,
         "product": "FounderVoice AI",
@@ -96,10 +97,12 @@ def health():
         "ai_coach_ready": True,
         "ai_coach_enhanced": enhanced and settings.coach_mode == "enhanced",
         "deepseek_configured": enhanced,
-        "whisper_model": settings.whisper_model,
+        "asr_provider": _asr_provider,
+        "asr_model": settings.groq_model if _asr_provider == "groq" else settings.whisper_model,
         "analysis_queue": jobs.queue_depth(),
         "listening_light_analysis": settings.listening_light_analysis,
-        "privacy": "local-first",
+        # Truthful per deployment: audio only stays put when Whisper runs here.
+        "privacy": "local-first" if _asr_provider == "local" else "hosted-asr",
         "quota_enabled": settings.quota_enabled,
         "free_limits": {
             "upload": settings.free_upload_limit,

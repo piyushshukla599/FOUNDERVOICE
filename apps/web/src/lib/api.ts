@@ -82,7 +82,8 @@ export const api = {
       deepseek_configured?: boolean;
       ai_coach_enhanced?: boolean;
       ai_coach?: string;
-      whisper_model: string;
+      asr_provider?: string;
+      asr_model?: string;
     }>("/api/health"),
   contact: (body: {
     name: string;
