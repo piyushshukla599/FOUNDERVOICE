@@ -4,7 +4,11 @@ from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-ROOT = Path(__file__).resolve().parents[3]
+# apps/api/app/config.py -> the repo root is four levels up. A container that
+# copies only ``app/`` sits shallower than that, and parents[3] raised
+# IndexError at import time rather than anywhere useful, so fall back.
+_PARENTS = Path(__file__).resolve().parents
+ROOT = _PARENTS[3] if len(_PARENTS) > 3 else _PARENTS[-1]
 
 
 class Settings(BaseSettings):
