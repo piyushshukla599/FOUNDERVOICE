@@ -13,8 +13,13 @@ pinned: false
 Backend for [FounderVoice AI](https://github.com/piyushshukla599/FOUNDERVOICE) —
 transcription, delivery analysis, and coaching for founder pitches.
 
-The source is cloned from GitHub at build time. After pushing to `main`, use
+Copy `deploy/container/Dockerfile` from the repo into this Space as `Dockerfile`
+— it is shared with the Azure deployment so the two cannot drift. The app
+source is cloned from GitHub at build time, so after pushing to `main` use
 **Settings → Factory rebuild** to redeploy.
+
+Note: Hugging Face now requires a PRO plan to create Docker Spaces; only Static
+Spaces are free. See `deploy/azure/deploy.sh` for a free alternative.
 
 ## Required secrets
 
