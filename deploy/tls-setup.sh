@@ -118,7 +118,10 @@ UNIT
 fi
 
 say "Configuration"
-sudo cp "$APP_DIR/deploy/Caddyfile" /etc/caddy/Caddyfile
+# The template is domain-agnostic; a plain copy would have kept whatever
+# hostname happened to be committed and issued a certificate for that
+# instead of $API_HOST.
+sed "s|API_HOST_PLACEHOLDER|$API_HOST|" "$APP_DIR/deploy/Caddyfile" \n  | sudo tee /etc/caddy/Caddyfile >/dev/null
 sudo systemctl enable --now caddy
 sudo systemctl reload caddy || sudo systemctl restart caddy
 

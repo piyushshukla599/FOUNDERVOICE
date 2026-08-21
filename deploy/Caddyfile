@@ -5,13 +5,16 @@
 # browsers refuse getUserMedia (the microphone) on plain HTTP from a remote
 # origin, so without this the product's one feature does not run.
 #
-#   sudo cp ~/voicecoach/deploy/Caddyfile /etc/caddy/Caddyfile
-#   sudo systemctl reload caddy
+# tls-setup.sh substitutes API_HOST_PLACEHOLDER for the real hostname when it
+# installs this, so the file stays domain-agnostic and moving to another
+# domain is a one-command change:
+#
+#   API_HOST=api.example.com WEB_ORIGIN=https://example.com \n#     bash ~/voicecoach/deploy/tls-setup.sh
 #
 # The A record must already resolve before reloading — Caddy proves ownership
 # over port 80 and will fail loudly if DNS is not live yet.
 
-api-foundervoice.safeedges.in {
+API_HOST_PLACEHOLDER {
 	reverse_proxy 127.0.0.1:8000 {
 		# Transcription is synchronous and CPU-bound; a long recording can hold
 		# the connection for minutes. Caddy's default 30s would cut it off and
