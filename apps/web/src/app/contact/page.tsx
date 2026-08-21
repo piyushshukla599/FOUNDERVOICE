@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     type: "website",
     url: `${siteUrl}/contact`,
     title: "Contact FounderVoice AI",
-    description: "Pro access, support, press and partnerships — one short form, a real reply.",
+    description: "Pro access, support, press and partnerships. One short form, a real reply.",
   },
 };
 

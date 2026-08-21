@@ -1,6 +1,7 @@
 import Link from "next/link";
 
-export const metadata = { title: "Privacy Policy" };
+export const metadata = {
+  alternates: { canonical: "/privacy" }, title: "Privacy Policy" };
 
 export default function PrivacyPage() {
   return (
@@ -40,7 +41,7 @@ export default function PrivacyPage() {
           </li>
         </ul>
         <p>
-          Please do not upload anything confidential — no unreleased financials, no customer
+          Please do not upload anything confidential. No unreleased financials, no customer
           information, nothing you would not post publicly. The demo exists so you can try the
           coaching, not to store your real pitch material.
         </p>

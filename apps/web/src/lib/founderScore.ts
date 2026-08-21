@@ -1,4 +1,4 @@
-/** Local Founder Voice Score — same weights as the API, no network. */
+/** Local Founder Voice Score, same weights as the API, no network. */
 
 export function founderVoiceScore(m: {
   clarity?: number | null;

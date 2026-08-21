@@ -7,7 +7,7 @@ type Props = {
   active: boolean;
 };
 
-/** Idle/simple waveform — canvas paint only, no React bar state. */
+/** Idle/simple waveform, canvas paint only, no React bar state. */
 export function Waveform({ stream, active }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 

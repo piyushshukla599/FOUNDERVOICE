@@ -18,7 +18,7 @@ export class ErrorBoundary extends Component<Props, State> {
         <div className="mx-auto max-w-lg space-y-3 px-4 py-16 text-center">
           <h2 className="font-[family-name:var(--font-display)] text-2xl">Something went wrong</h2>
           <p className="text-sm text-[var(--muted)]">
-            Reload the page. Your recordings stay on this machine — nothing was sent to the cloud.
+            Reload the page. Your recordings stay on this machine, nothing was sent to the cloud.
           </p>
           <button
             type="button"

@@ -1,365 +1,238 @@
-"use client";
-
-import { useEffect, useMemo, useState } from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { ArrowRight, Flame } from "lucide-react";
-import { Divider, ErrorBanner, HeroLink, LoadingState } from "@/components/ui";
-import { DiscoveryNudge } from "@/components/FeatureIntro";
-import { ImmersiveRecorder } from "@/components/ImmersiveRecorder";
-import { ScoreRing } from "@/components/ScoreRing";
-import { VoiceViz } from "@/components/VoiceViz";
-import { usePracticeRecorder } from "@/hooks/usePracticeRecorder";
-import { useJourney } from "@/hooks/useJourney";
-import { api, QuotaError, type QuotaState } from "@/lib/api";
-import { QuotaMeter, UpgradeGate } from "@/components/UpgradeGate";
-import { DAILY_PROMPTS, founderVoiceScore } from "@/lib/founderScore";
-import { memoryDigest, todayFocus } from "@/lib/insight";
-import { goalLabel, usePrefs } from "@/lib/prefs";
+import { PublicFooter, PublicHeader } from "@/components/PublicChrome";
 
-function greeting(hour: number) {
-  if (hour < 12) return "Good morning";
-  if (hour < 18) return "Good afternoon";
-  return "Good evening";
+/**
+ * The public landing page, and the only page most people see before deciding
+ * whether to try this. It is a server component on purpose: the app's own
+ * screens render nothing until they have a person's data, so a crawler
+ * arriving at a client-rendered home found a loading state and left.
+ */
+
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://foundervoice.app";
+
+export const metadata: Metadata = {
+  title: "Free AI Speech Coach: Improve English Communication and Speaking Skills",
+  description:
+    "Record yourself for 60 seconds and get instant feedback on pace, filler words, clarity and confidence. A free AI communication coach for English speakers, with no signup and no card.",
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: "Free AI Speech Coach for Better English Communication",
+    description:
+      "Record 60 seconds. Learn exactly which habit is costing you, and how to fix it. Free, no signup.",
+    url: SITE,
+    type: "website",
+  },
+};
+
+const FAQS = [
+  {
+    q: "Is FounderVoice really free?",
+    a: "Yes. You get ten recordings every 24 hours at no cost, with no account, no card and no trial period. The allowance resets a day after your first recording, so you can keep practising indefinitely.",
+  },
+  {
+    q: "How can I improve my English communication skills?",
+    a: "Improvement comes from hearing what you actually do, not from generic advice. Record yourself answering a real question, then measure four things: your speaking pace in words per minute, how often filler words appear, how long your pauses run, and how clearly each word is articulated. Fix the single worst one, then record again. FounderVoice measures all four automatically and tells you which to work on first.",
+  },
+  {
+    q: "Do I need a good accent to communicate well in English?",
+    a: "No. Clarity, pace and structure carry almost all of how competent you sound, and none of them require changing your accent. FounderVoice never scores you on sounding native. It measures whether you are understandable and whether you sound confident.",
+  },
+  {
+    q: "What is a good speaking pace?",
+    a: "Around 130 to 150 words per minute works for most rooms. Faster than about 170 and listeners stop retaining detail. Slower than about 110 and attention drifts. Nervous speakers usually drift fast without noticing, which is why measuring it matters more than trying to feel it.",
+  },
+  {
+    q: "How do I stop saying um and uh?",
+    a: "Fillers appear where you are thinking and afraid of silence. The fix is not removing them directly but becoming comfortable pausing instead. Record a minute, count your fillers, then record again while deliberately pausing where they appeared. Most people halve their rate within a week.",
+  },
+  {
+    q: "Does it work for accents other than American or British English?",
+    a: "Yes. Transcription handles Indian, African, Australian, Singaporean and other English accents well, and the analysis measures delivery rather than pronunciation against any one standard.",
+  },
+];
+
+function faqSchema() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: FAQS.map((f) => ({
+      "@type": "Question",
+      name: f.q,
+      acceptedAnswer: { "@type": "Answer", text: f.a },
+    })),
+  };
 }
 
-export default function TodayPage() {
-  const router = useRouter();
-  const rec = usePracticeRecorder();
-  const journey = useJourney();
-  const { prefs, ready: prefsReady } = usePrefs();
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [promptIdx, setPromptIdx] = useState(0);
-  const [hour, setHour] = useState(9);
-  const [showCheck, setShowCheck] = useState(false);
-  const [uploadQuota, setUploadQuota] = useState<QuotaState | undefined>(undefined);
+const MEASURES = [
+  {
+    h: "Speaking pace",
+    p: "Words per minute across the whole recording and inside each section, so you can see exactly where you sped up.",
+  },
+  {
+    h: "Filler words",
+    p: "Every um, uh, like, you know and so, counted and timestamped, with the rate per minute you can actually track.",
+  },
+  {
+    h: "Pauses",
+    p: "How long you pause, and whether those pauses land where meaning breaks or in the middle of your own sentences.",
+  },
+  {
+    h: "Clarity",
+    p: "Word-level confidence, showing which words a listener is most likely to have missed entirely.",
+  },
+  {
+    h: "Vocal energy",
+    p: "Pitch range and volume variation, which is most of what people mean when they call a speaker flat or monotone.",
+  },
+  {
+    h: "Voice Memory",
+    p: "Your own history. After three recordings the coaching stops being generic and starts comparing you to you.",
+  },
+];
 
-  useEffect(() => {
-    api
-      .quota()
-      .then((q) => setUploadQuota(q.features?.upload))
-      .catch(() => undefined);
-  }, []);
-
-  useEffect(() => {
-    const now = new Date();
-    setPromptIdx(now.getDate() % DAILY_PROMPTS.length);
-    setHour(now.getHours());
-  }, []);
-
-  /* Anyone who has not been walked through the product gets the guided intro
-     first — including someone who already has recordings from before the
-     onboarding existed. Finishing or skipping it stamps onboardedAt. */
-  useEffect(() => {
-    if (!prefsReady || journey.loading) return;
-    if (!prefs.onboardedAt && !journey.error) router.replace("/onboarding");
-  }, [journey.error, journey.loading, prefs.onboardedAt, prefsReady, router]);
-
-  const memory = journey.memory;
-  const labs = journey.labs;
-  const mission = labs?.mission;
-  const prompt = DAILY_PROMPTS[promptIdx];
-
-  /* This week against the 30-day average — both derived in one pass so the
-     hook has a single, honest dependency. */
-  const { score, delta } = useMemo(() => {
-    const at = (key: string) => {
-      const w = memory?.windows?.[key] || {};
-      if (w.clarity == null && w.wpm == null) return null;
-      return founderVoiceScore({
-        clarity: w.clarity,
-        executive_presence: w.executive_presence,
-        confidence_est: w.confidence_est,
-        pause_quality: w.pause_quality,
-        filler_rate: w.filler_rate,
-        wpm: w.wpm,
-      });
-    };
-    const now = at("7d");
-    const before = at("30d");
-    return { score: now, delta: now != null && before != null ? now - before : null };
-  }, [memory]);
-
-  const focus = useMemo(
-    () => todayFocus(memory, mission, labs?.recommended, prefs),
-    [labs?.recommended, memory, mission, prefs],
-  );
-  const digest = useMemo(() => memoryDigest(memory), [memory]);
-  const wpm7 = memory?.windows?.["7d"]?.wpm ?? null;
-
-  const finishCheck = async () => {
-    if (busy) return;
-    setBusy(true);
-    setError("");
-    try {
-      const result = await rec.stop();
-      if (!result || result.blob.size < 800) {
-        setError("Too short — speak the full prompt, then stop.");
-        setBusy(false);
-        return;
-      }
-      const uploaded = await api.upload(result.blob, `Today · ${prompt.label}`, "exercise", {
-        exercise_key: "one_liner",
-        exercise_title: prompt.label,
-        exercise_category: "daily",
-        exercise_description: prompt.text,
-        focus_note: prompt.text,
-      });
-      try {
-        await api.completeExercise("one_liner");
-        if (mission?.exercise_key === "one_liner" && !mission.completed) await api.completeMission();
-      } catch {
-        /* streak bookkeeping is not worth blocking the report on */
-      }
-      router.push(`/sessions/${uploaded.session_id}`);
-    } catch (e) {
-      // Running out of free recordings is a gate, not a failure to report in red.
-      if (e instanceof QuotaError) {
-        if (e.quota) setUploadQuota(e.quota);
-        setShowCheck(false);
-      } else {
-        setError(e instanceof Error ? e.message : "Upload failed.");
-      }
-      setBusy(false);
-    }
-  };
-
-  if (journey.loading) return <LoadingState label="Reading your Voice Memory…" />;
-
-  const firstRun = journey.stage === "new";
-  const hello = prefs.name ? `${greeting(hour)}, ${prefs.name}.` : `${greeting(hour)}.`;
-
-  /* While recording, everything else disappears. */
-  if (rec.recording || busy) {
-    return (
-      <div className="mx-auto max-w-2xl">
-        <ImmersiveRecorder
-          title={prompt.label}
-          targetSec={60}
-          recording={rec.recording}
-          starting={rec.starting}
-          elapsed={rec.elapsed}
-          stream={rec.stream}
-          liveTranscript={rec.liveTranscript}
-          busy={busy}
-          onStart={() => void rec.start()}
-          onStop={() => void finishCheck()}
-        />
-      </div>
-    );
-  }
-
+export default function LandingPage() {
   return (
-    <div className="mx-auto max-w-2xl pt-2 md:pt-8">
-      {journey.error && (
-        <ErrorBanner
-          message={journey.error}
-          hint="Start the local API on port 8000, then reload this page."
-        />
-      )}
-      {error && <ErrorBanner message={error} />}
-      {rec.error && <ErrorBanner message={rec.error} />}
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema()) }}
+      />
+      <PublicHeader />
 
-      <div className="fv-enter flex items-center justify-between gap-4">
-        <p className="text-[13px] text-[var(--muted)]">{hello}</p>
-        <span className="flex items-center gap-2.5">
-          <QuotaMeter quota={uploadQuota} />
-          {labs?.streak ? (
-            <span className="inline-flex items-center gap-1.5 text-[12.5px] fv-gold">
-              <Flame size={13} /> {labs.streak} day streak
-            </span>
-          ) : null}
-        </span>
-      </div>
-
-      {/* ------------------------------------------------- 1. The score, big */}
-      {!firstRun && (
-        <div className="fv-enter flex justify-center pt-8 pb-2">
-          <ScoreRing value={score} delta={delta} label="Founder presence" />
-        </div>
-      )}
-
-      {/* ----------------------------------------- 2. The opportunity + action */}
-      <section className="fv-enter fv-halo pt-8 text-center">
-        <p className="fv-eyebrow">
-          {firstRun ? "Start here" : "What your voice is doing"}
-        </p>
-        <h1 className="fv-lede mx-auto mt-3">
-          {firstRun
-            ? "Let us hear how you speak."
-            : focus
-              ? focus.headline
-              : "Sound like someone they trust."}
-        </h1>
-        <p className="mx-auto mt-4 max-w-md text-[14px] leading-relaxed text-[var(--muted)]">
-          {firstRun
-            ? "Sixty seconds of natural speech is enough to name the one habit costing you the most."
-            : focus?.why || `Training for ${goalLabel(prefs.goal).toLowerCase()}.`}
-        </p>
-
-        {/* The instruction sits under the observation, and its number sits
-            beside it — a heading should never carry its own spec in brackets. */}
-        {!firstRun && focus?.action && (
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
-            <span className="fv-eyebrow-quiet">Today</span>
-            <span className="text-[15px] leading-snug text-[var(--ink-dim)]">{focus.action}</span>
-            {focus.target && <span className="fv-pill fv-pill-accent">{focus.target}</span>}
-          </div>
-        )}
-
-        {!firstRun && (
-          <div className="mt-7">
-            <VoiceViz active={false} height={72} />
-            {wpm7 != null && (
-              <p className="mt-3 flex flex-wrap items-center justify-center gap-2 text-[12px]">
-                <span className="fv-pill">
-                  <span className="fv-num fv-grad-text text-[14px] font-semibold">
-                    {Math.round(wpm7)}
-                  </span>
-                  <span className="text-[var(--muted)]">WPM, your pace</span>
-                </span>
-                <span className="fv-pill text-[var(--muted)]">130–140 is the room</span>
-              </p>
-            )}
-          </div>
-        )}
-      </section>
-
-      <div className="pt-9">
-        {uploadQuota?.exhausted ? (
-          <UpgradeGate
-            quota={uploadQuota}
-            title="You have used your free recordings"
-            body="Every recording runs a full local transcription and analysis. The free tier covers five — Pro removes the cap."
-          />
-        ) : firstRun || showCheck ? (
-          <ImmersiveRecorder
-            title={prompt.label}
-            subtitle={prompt.text}
-            meta={`60 seconds · ${prompt.label}`}
-            targetSec={60}
-            startLabel="Start speaking"
-            recording={rec.recording}
-            starting={rec.starting}
-            elapsed={rec.elapsed}
-            stream={rec.stream}
-            liveTranscript={rec.liveTranscript}
-            disabled={busy}
-            onStart={() => void rec.start()}
-            onStop={() => void finishCheck()}
-            footer={
-              <button
-                type="button"
-                onClick={() => setPromptIdx((i) => (i + 1) % DAILY_PROMPTS.length)}
-                className="mt-4 text-[12.5px] text-[var(--faint)] transition-colors hover:text-[var(--muted)]"
-              >
-                Try a different prompt
-              </button>
-            }
-          />
-        ) : (
-          <div className="fv-enter flex flex-col items-center">
-            <HeroLink href={focus?.labKey ? `/trainer?lab=${encodeURIComponent(focus.labKey)}` : "/trainer"}>
-              Practice now
-            </HeroLink>
-            <p className="mt-3.5 text-[12.5px] text-[var(--faint)]">
-              {prefs.sessionLength} min · {goalLabel(prefs.goal)}
-            </p>
-            <button
-              type="button"
-              onClick={() => setShowCheck(true)}
-              className="mt-5 text-[13px] text-[var(--muted)] transition-colors hover:text-[var(--ink)]"
+      <main className="mx-auto max-w-5xl px-6">
+        <section className="py-14 text-center md:py-20">
+          <p className="fv-eyebrow">Free, unlimited practice, no signup</p>
+          <h1 className="fv-lede mx-auto mt-4 max-w-3xl text-balance">
+            Improve your English communication by hearing what you actually sound like
+          </h1>
+          <p className="mx-auto mt-5 max-w-2xl text-[15.5px] leading-relaxed text-[var(--muted)]">
+            Record sixty seconds of ordinary speech. FounderVoice measures your pace, filler words,
+            pauses, clarity and vocal energy, then names the one habit costing you the most and
+            gives you a drill to fix it. No account, no card, ten recordings every day.
+          </p>
+          <div className="mt-9 flex flex-wrap items-center justify-center gap-4">
+            <Link
+              href="/onboarding"
+              className="rounded-full bg-[var(--accent)] px-7 py-3.5 text-[15px] font-medium text-white transition-opacity hover:opacity-90"
             >
-              or record a 60-second check
-            </button>
+              Record your first minute
+            </Link>
+            <Link href="/guides" className="text-[14px] text-[var(--violet-bright)]">
+              Read the guides
+            </Link>
           </div>
-        )}
-      </div>
+          <p className="mt-5 text-[12.5px] text-[var(--faint)]">
+            Works in your browser. Nothing to install.
+          </p>
+        </section>
 
-      {/* --------------------------------------------- 3. Progress, quietly */}
-      {!firstRun && (digest.improving.length > 0 || digest.attention.length > 0 || journey.hasTrend) && (
-        <>
-          <Divider />
-          <section className="fv-enter">
-            <div className="flex items-center justify-between gap-4">
-              <p className="fv-eyebrow-quiet">Moving</p>
-              {journey.hasTrend && (
-                <Link
-                  href="/dashboard"
-                  className="inline-flex items-center gap-1.5 text-[12.5px] text-[var(--muted)] transition-colors hover:text-[var(--violet-bright)]"
-                >
-                  Full progress <ArrowRight size={12} />
-                </Link>
-              )}
-            </div>
-            <ul className="mt-3 space-y-1.5 text-[13.5px] leading-relaxed text-[var(--ink-dim)]">
-              {digest.improving.slice(0, 1).map((line) => (
-                <li key={line}>{line}</li>
-              ))}
-              {digest.attention.slice(0, 1).map((line) => (
-                <li key={line} className="text-[var(--muted)]">
-                  {line}
-                </li>
-              ))}
-              {!digest.improving.length && !digest.attention.length && (
-                <li className="text-[var(--muted)]">
-                  {Math.max(0, 3 - journey.readyCount)} more session
-                  {3 - journey.readyCount === 1 ? "" : "s"} and your trend opens up.
-                </li>
-              )}
-            </ul>
-          </section>
-        </>
-      )}
+        <section className="border-t border-[var(--line)] py-14">
+          <h2 className="text-[24px] leading-tight text-[var(--ink)]">
+            What most speaking advice gets wrong
+          </h2>
+          <div className="mt-5 max-w-3xl space-y-4 text-[15px] leading-relaxed text-[var(--muted)]">
+            <p>
+              Being told to slow down, sound confident or stop using filler words is not coaching.
+              It names a symptom you already know about and leaves you with no way to tell whether
+              anything changed.
+            </p>
+            <p>
+              What actually moves a speaker forward is measurement. You rushed to 178 words per
+              minute in the second half. You said like eleven times in ninety seconds, nine of them
+              before a number. Your longest pause was 0.3 seconds, which is why nothing you said had
+              room to land. Those are fixable. Sound more confident is not.
+            </p>
+          </div>
+        </section>
 
-      {(labs?.recommended || []).length > 0 && (
-        <>
-          <Divider />
-          <section className="fv-enter space-y-3">
-            <p className="fv-eyebrow-quiet">Also worth your time</p>
-            <div className="fv-stagger grid gap-2.5 sm:grid-cols-2">
-              {(labs?.recommended || []).slice(0, 2).map((lab) => (
-                <Link
-                  key={lab.key}
-                  href={`/trainer?lab=${encodeURIComponent(lab.key)}`}
-                  className="fv-tile group"
-                >
-                  <p className="text-[14px] leading-relaxed text-[var(--ink-dim)] transition-colors group-hover:text-[var(--ink)]">
-                    {lab.sound || lab.why || lab.description}
-                  </p>
-                  <span className="mt-2.5 inline-flex items-center gap-1.5 text-[12.5px] text-[var(--violet-bright)]">
-                    {lab.title}
-                    <ArrowRight size={13} className="transition-transform group-hover:translate-x-1" />
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </section>
-        </>
-      )}
+        <section className="border-t border-[var(--line)] py-14">
+          <h2 className="text-[24px] leading-tight text-[var(--ink)]">What gets measured</h2>
+          <div className="mt-7 grid gap-x-10 gap-y-7 sm:grid-cols-2 lg:grid-cols-3">
+            {MEASURES.map((m) => (
+              <div key={m.h}>
+                <h3 className="text-[15px] font-medium text-[var(--ink)]">{m.h}</h3>
+                <p className="mt-1.5 text-[14px] leading-relaxed text-[var(--muted)]">{m.p}</p>
+              </div>
+            ))}
+          </div>
+        </section>
 
-      <div className="space-y-2 pt-10">
-        {journey.hasRecorded && !journey.hasLab && (
-          <DiscoveryNudge id="nudge-labs" question="Want to fix the habit we found?" cta="Open Labs" href="/trainer" />
-        )}
-        {journey.hasLab && !journey.hasListen && (
-          <DiscoveryNudge
-            id="nudge-listen"
-            question="Want to see whether this happens in real conversations?"
-            cta="Try Listen"
-            href="/listen"
-          />
-        )}
-        {journey.readyCount >= 3 && !journey.hasPractice && (
-          <DiscoveryNudge
-            id="nudge-practice"
-            question="Ready to test yourself under pressure?"
-            cta="Try Practice"
-            href="/practice"
-          />
-        )}
-      </div>
-    </div>
+        <section className="border-t border-[var(--line)] py-14">
+          <h2 className="text-[24px] leading-tight text-[var(--ink)]">How it works</h2>
+          <ol className="mt-6 max-w-2xl space-y-5 text-[15px] leading-relaxed text-[var(--muted)]">
+            <li>
+              <span className="text-[var(--ink)]">1. Answer one question out loud.</span> You get a
+              prompt like the ones you would face in an interview, a standup or a pitch. Sixty
+              seconds is enough.
+            </li>
+            <li>
+              <span className="text-[var(--ink)]">2. Read the report.</span> Every number comes with
+              the timestamp that produced it, so you can hear the moment rather than trust a score.
+            </li>
+            <li>
+              <span className="text-[var(--ink)]">3. Drill the worst habit.</span> You get one
+              exercise, not a list of twelve, chosen from what your own recording showed.
+            </li>
+            <li>
+              <span className="text-[var(--ink)]">4. Record again tomorrow.</span> After three
+              sessions the coaching compares you against your own history instead of an average.
+            </li>
+          </ol>
+        </section>
+
+        <section className="border-t border-[var(--line)] py-14">
+          <h2 className="text-[24px] leading-tight text-[var(--ink)]">Who it is for</h2>
+          <div className="mt-6 grid max-w-3xl gap-5 text-[15px] leading-relaxed text-[var(--muted)] sm:grid-cols-2">
+            <p>
+              <span className="text-[var(--ink)]">Non-native English speakers</span> who are fluent
+              on paper but rush and lose people in conversation.
+            </p>
+            <p>
+              <span className="text-[var(--ink)]">Founders and job seekers</span> preparing for
+              pitches, interviews and investor calls where delivery decides the outcome.
+            </p>
+            <p>
+              <span className="text-[var(--ink)]">Engineers and analysts</span> who know the
+              material cold and lose the room in the first thirty seconds.
+            </p>
+            <p>
+              <span className="text-[var(--ink)]">Anyone who hates their recorded voice</span> and
+              wants a specific reason why rather than a vague feeling.
+            </p>
+          </div>
+        </section>
+
+        <section className="border-t border-[var(--line)] py-14">
+          <h2 className="text-[24px] leading-tight text-[var(--ink)]">Common questions</h2>
+          <dl className="mt-7 max-w-3xl space-y-7">
+            {FAQS.map((f) => (
+              <div key={f.q}>
+                <dt className="text-[15.5px] font-medium text-[var(--ink)]">{f.q}</dt>
+                <dd className="mt-2 text-[14.5px] leading-relaxed text-[var(--muted)]">{f.a}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+
+        <section className="border-t border-[var(--line)] py-16 text-center">
+          <h2 className="text-[24px] leading-tight text-[var(--ink)]">
+            One minute of speech is enough to start
+          </h2>
+          <p className="mx-auto mt-3 max-w-xl text-[15px] leading-relaxed text-[var(--muted)]">
+            You will know your pace, your filler rate and the one habit to fix before you finish
+            reading this page.
+          </p>
+          <Link
+            href="/onboarding"
+            className="mt-7 inline-block rounded-full bg-[var(--accent)] px-7 py-3.5 text-[15px] font-medium text-white transition-opacity hover:opacity-90"
+          >
+            Start free
+          </Link>
+        </section>
+      </main>
+
+      <PublicFooter />
+    </>
   );
 }

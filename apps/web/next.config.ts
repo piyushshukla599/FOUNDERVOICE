@@ -13,9 +13,34 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   experimental: {
     middlewareClientMaxBodySize: "100mb",
-    proxyClientMaxBodySize: "100mb",
   } as NextConfig["experimental"],
   async headers() {
+    // The browser has to be allowed to reach the API, and that origin is only
+    // known at build time. Getting this wrong blocks every request the app
+    // makes, so it is derived rather than written out by hand.
+    const api = (process.env.NEXT_PUBLIC_API_BASE || "").replace(/\/$/, "");
+    const connect = ["'self'", api].filter(Boolean).join(" ");
+
+    // 'unsafe-inline' for scripts is unavoidable without threading a nonce
+    // through every response: the App Router inlines its hydration payload.
+    // The policy still confines scripts, frames and form posts to this origin,
+    // which is what stops an injected third-party script from exfiltrating.
+    const csp = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline'",
+      "style-src 'self' 'unsafe-inline'",
+      // blob: covers the recorder's own audio; data: covers inlined icons.
+      "img-src 'self' data: blob:",
+      "media-src 'self' blob:",
+      "font-src 'self' data:",
+      `connect-src ${connect}`,
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "frame-ancestors 'self'",
+      "upgrade-insecure-requests",
+    ].join("; ");
+
     return [
       {
         source: "/:path*",
@@ -27,6 +52,11 @@ const nextConfig: NextConfig = {
             key: "Permissions-Policy",
             value: "camera=(), geolocation=(), microphone=(self)",
           },
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=63072000; includeSubDomains; preload",
+          },
+          { key: "Content-Security-Policy", value: csp },
         ],
       },
     ];

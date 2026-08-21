@@ -19,7 +19,7 @@ type Props = {
 export function ProfessionalVoiceReport({ payload, onSeek }: Props) {
   // The professional report is a free-form JSON blob built by the Python
   // pipeline; its shape varies with which analyses ran. Reading it loosely here
-  // is deliberate — every field below is already guarded with a fallback.
+  // is deliberate. Every field below is already guarded with a fallback.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const pro = (payload?.professional || null) as Record<string, any> | null;
   if (!pro) {
@@ -58,7 +58,7 @@ export function ProfessionalVoiceReport({ payload, onSeek }: Props) {
       <Panel className="space-y-3">
         <h3 className="font-[family-name:var(--font-display)] text-xl">How you sound</h3>
         <p className="text-sm text-[var(--muted)]">
-          Estimates from acoustic features — not medical scores. We improve clarity and habits, never
+          Estimates from acoustic features, not medical scores. We improve clarity and habits, never
           your accent.
         </p>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -202,7 +202,7 @@ export function ProfessionalVoiceReport({ payload, onSeek }: Props) {
                 className="text-left text-sm hover:text-[var(--accent)]"
                 onClick={() => onSeek?.(row.t)}
               >
-                <span className="text-[var(--muted)]">{fmtTime(row.t)}</span> — {row.label}
+                <span className="text-[var(--muted)]">{fmtTime(row.t)}</span>{row.label}
               </button>
             </li>
           ))}

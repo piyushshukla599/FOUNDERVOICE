@@ -2,7 +2,7 @@
  * Minimal Web Speech API typings.
  *
  * TypeScript ships no lib definitions for SpeechRecognition, and two hooks were
- * each declaring their own conflicting `Window` augmentation — which broke the
+ * each declaring their own conflicting `Window` augmentation, which broke the
  * production type check. This is the single shared declaration.
  */
 

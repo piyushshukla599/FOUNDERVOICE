@@ -25,7 +25,7 @@ const ROUNDS = [
     id: "standup",
     level: 1,
     label: "Standup",
-    hint: "Warm — no investor heat.",
+    hint: "Warm. No investor heat.",
     context:
       "You are a sharp but friendly team lead in a daily standup. Ask one question at a time about what shipped and what’s blocked. Stay short.",
   },
@@ -33,7 +33,7 @@ const ROUNDS = [
     id: "hard_q",
     level: 2,
     label: "Hard question",
-    hint: "Control — pause before you answer.",
+    hint: "Control, pause before you answer.",
     context:
       "You are a skeptical operator. Ask one hard question: why growth is slow, why this team, or why now. Wait. Push once if they ramble.",
   },
@@ -41,7 +41,7 @@ const ROUNDS = [
     id: "seed",
     level: 3,
     label: "Investor",
-    hint: "Pressure — seed partner, live.",
+    hint: "Pressure, seed partner, live.",
     context:
       "You are a skeptical seed investor. Interrupt naturally. Push on moat, traction, and the ask. After each answer, one sentence of critique.",
   },
@@ -115,7 +115,7 @@ export default function PracticePage() {
       setScores(res.scores);
       if (res.quota) setQuota(res.quota);
     } catch (e) {
-      // A spent allowance is a gate, not an error — swap the screen, do not
+      // A spent allowance is a gate, not an error, swap the screen, do not
       // shout in red.
       if (e instanceof QuotaError) setLocked(e.quota ?? { ...emptyQuota });
       else setError(e instanceof Error ? e.message : "Could not start the round.");
@@ -153,7 +153,7 @@ export default function PracticePage() {
     try {
       const result = await rec.stop();
       if (!result || result.blob.size < 800) {
-        setError("Too short — speak, then stop.");
+        setError("Too short, speak, then stop.");
         setBusy(false);
         return;
       }
@@ -167,7 +167,7 @@ export default function PracticePage() {
       setLastEvalId(uploaded.session_id);
       const spoken = result.transcript.trim();
       if (!spoken) {
-        setError("No live transcript — type a one-line summary to keep the chat going. Recording is saved.");
+        setError("No live transcript, type a one-line summary to keep the chat going. Recording is saved.");
         setBusy(false);
         return;
       }
@@ -253,7 +253,7 @@ export default function PracticePage() {
                         round.id === r.id ? "font-medium text-[var(--ink)]" : "text-[var(--ink-dim)]"
                       }`}
                     >
-                      Level {r.level} — {r.label}
+                      Level {r.level}: {r.label}
                     </span>
                     <span className="mt-0.5 block text-[13px] text-[var(--muted)]">{r.hint}</span>
                   </span>
@@ -297,7 +297,7 @@ export default function PracticePage() {
             </button>
           </div>
 
-          {/* The conversation, as conversation — not a form. */}
+          {/* The conversation, as conversation, not a form. */}
           <div className="fv-scroll max-h-[400px] space-y-6 pt-4">
             {history.map((m, i) => {
               const mine = m.role === "user" || m.role === "founder";

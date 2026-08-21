@@ -8,7 +8,7 @@ type Props = {
   color: string;
 };
 
-/** Canvas-only waveform — no React state, no 60fps re-renders. */
+/** Canvas-only waveform. No React state, no 60fps re-renders. */
 export function LiveWaveform({ stream, active, color }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const colorRef = useRef(color);

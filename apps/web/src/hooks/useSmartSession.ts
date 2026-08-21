@@ -85,7 +85,7 @@ export function useSmartSession() {
     const idx = convIndexRef.current;
     const now = new Date();
     const title = `${now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} · Conversation ${idx}`;
-    setBanner("✓ Conversation Saved — analyzing in background…");
+    setBanner("✓ Conversation Saved, analyzing in background…");
     setConvFlash("saved");
     window.setTimeout(() => setConvFlash(null), 2500);
     try {
@@ -156,7 +156,7 @@ export function useSmartSession() {
         setListeningId(d.listening.id);
         listeningIdRef.current = d.listening.id;
         convIndexRef.current = d.conversations.length;
-        setMessage("Previous session still open — re-arming microphone…");
+        setMessage("Previous session still open, re-arming microphone…");
         try {
           const list = await refreshMics();
           const p = prefsRef.current;
@@ -175,7 +175,7 @@ export function useSmartSession() {
           if (cancelled) return;
           setStatus("listening");
           setMessage("");
-          setBanner("Session resumed — listening for conversations");
+          setBanner("Session resumed, listening for conversations");
         } catch (e) {
           if (cancelled) return;
           setStatus("idle");
@@ -227,7 +227,7 @@ export function useSmartSession() {
     const backup = list.find((m) => m.deviceId === p.backupDeviceId && m.deviceId !== activeMicId);
     const fallback = backup || list.find((m) => m.deviceId !== activeMicId) || list[0];
     if (fallback) {
-      setMessage(`Mic disconnected — switching to ${fallback.label}`);
+      setMessage(`Mic disconnected, switching to ${fallback.label}`);
       try {
         await switchMic(fallback.deviceId, fallback.label);
         setMessage("");
@@ -260,7 +260,7 @@ export function useSmartSession() {
       for (const mic of added) {
         if (p.alwaysUsePreferred && p.preferredDeviceId && mic.deviceId === p.preferredDeviceId) {
           await switchMic(mic.deviceId, mic.label);
-          setBanner(`Preferred mic online — switched to ${mic.label}`);
+          setBanner(`Preferred mic online, switched to ${mic.label}`);
           return;
         }
         setNewMicPrompt({ deviceId: mic.deviceId, label: mic.label });
@@ -336,7 +336,7 @@ export function useSmartSession() {
       listeningIdRef.current = started.id;
       await attachVad(stream);
       setStatus("listening");
-      setBanner("Session active — listening for conversations");
+      setBanner("Session active, listening for conversations");
       const d = await api.listening(started.id);
       setDetail(d);
     } catch (e) {

@@ -59,14 +59,14 @@ export default function OnboardingPage() {
       update({ onboardedAt: new Date().toISOString() });
       router.push(`/sessions/${uploaded.session_id}?first=1`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Upload failed — is the local API running on port 8000?");
+      setError(e instanceof Error ? e.message : "Upload failed. Is the local API running on port 8000?");
       setBusy(false);
     }
   };
 
   const skip = () => {
     update({ goal, focus, name: name.trim(), onboardedAt: new Date().toISOString() });
-    router.push("/");
+    router.push("/today");
   };
 
   return (
@@ -152,7 +152,7 @@ export default function OnboardingPage() {
                 <h1 className="fv-display text-3xl md:text-4xl">One loop, repeated.</h1>
                 <p className="text-[14px] text-[var(--muted)]">
                   Everything in the product serves the same cycle. You&apos;ll meet each part when it
-                  becomes useful — not all at once.
+                  becomes useful, not all at once.
                 </p>
               </div>
 
@@ -160,7 +160,7 @@ export default function OnboardingPage() {
                 {[
                   { t: "Discover", d: "Record or listen. We find the one habit costing you the most." },
                   { t: "Practice", d: "A Lab turns that habit into a short, specific drill." },
-                  { t: "Measure", d: "Every take is compared to your own history — not a generic benchmark." },
+                  { t: "Measure", d: "Every take is compared to your own history, not a generic benchmark." },
                   { t: "Improve", d: "Voice Memory carries what it learns into tomorrow's coaching." },
                 ].map((item) => (
                   <div key={item.t} className="fv-raised p-4">
@@ -272,7 +272,7 @@ export default function OnboardingPage() {
                 <p className="fv-eyebrow">Step 2 of 2</p>
                 <h1 className="fv-display text-3xl md:text-4xl">Speak for 60 seconds.</h1>
                 <p className="text-[14px] text-[var(--muted)]">
-                  Talk the way you normally would. There is no right answer — we&apos;re listening to
+                  Talk the way you normally would. There is no right answer. We&apos;re listening to
                   how you say it, not what you say.
                 </p>
               </div>
@@ -328,7 +328,7 @@ export default function OnboardingPage() {
           {prefs.onboardedAt && (
             <>
               <span aria-hidden>·</span>
-              <LinkButton href="/" variant="ghost" size="sm" className="!px-0 !py-0">
+              <LinkButton href="/today" variant="ghost" size="sm" className="!px-0 !py-0">
                 Today
               </LinkButton>
             </>

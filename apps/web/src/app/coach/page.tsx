@@ -178,7 +178,7 @@ export default function CoachPage() {
   const inverse = new Set(program.profile.inverse_keys || ["monotone_level", "voice_fatigue"]);
   const digest = memoryDigest(memory);
   /* Missions arrive as a headline plus a measurable target. Older rows may
-     still carry the target inline — split it back out either way. */
+     still carry the target inline. Split it back out either way. */
   const missionTitle = splitTarget(program.mission.title);
   const missionTarget = program.mission.target || missionTitle.target;
 
@@ -486,7 +486,7 @@ export default function CoachPage() {
           </div>
         ) : (
           <p className="text-[13px] text-[var(--muted)]">
-            No custom phrases yet — the built-in list still applies.
+            No custom phrases yet. The built-in list still applies.
           </p>
         )}
         <details>

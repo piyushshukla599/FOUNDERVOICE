@@ -1,4 +1,4 @@
-/** Serialized microphone access — overlapping getUserMedia calls hang on Windows. */
+/** Serialized microphone access, overlapping getUserMedia calls hang on Windows. */
 
 let micLock: Promise<unknown> = Promise.resolve();
 
@@ -43,7 +43,7 @@ function withMicTimeout<T>(fn: () => Promise<T>, ms: number): Promise<T> {
     fn()
       .then((v) => {
         if (settled) {
-          // Late success — release immediately so we don't leak a lock.
+          // Late success, release immediately so we don't leak a lock.
           const late = v as unknown as MediaStream | undefined;
           if (late && typeof late === "object" && "getTracks" in late) {
             late.getTracks().forEach((t) => t.stop());
@@ -73,7 +73,7 @@ export async function openMicrophone(deviceId?: string): Promise<MediaStream> {
       ? { deviceId: { ideal: deviceId } }
       : true;
 
-    // Prefer default first — fastest path when permission already granted.
+    // Prefer default first, fastest path when permission already granted.
     try {
       return await withMicTimeout(
         () => navigator.mediaDevices.getUserMedia({ audio }),

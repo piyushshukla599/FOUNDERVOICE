@@ -253,7 +253,7 @@ export function useLiveCoach(opts: {
 
       let wpm = Math.round((wordTimes.current.length / 8) * 60);
       if (wpm === 0 && speaking) {
-        // cheap energy proxy — skip peak scan of full buffer
+        // cheap energy proxy, skip peak scan of full buffer
         wpm = Math.min(190, Math.round(40 + rms * 900));
       }
 
@@ -325,14 +325,14 @@ export function useLiveCoach(opts: {
         const fillers = pats.find((p) => p.key === "filler_overuse");
         const missPause = pats.find((p) => p.key === "missing_pauses");
         if (rushIntro && elapsed < 25 && wpm >= 145) {
-          flashGhost("Remember — pause. You rush intros.");
+          flashGhost("Remember, pause. You rush intros.");
         } else if (missPause && speakingMs.current > 9000) {
           flashGhost("You usually skip pauses here.");
         } else if (
           fillers &&
           /\b(um|uh|like|basically|actually|you know)\b/i.test(interimRef.current)
         ) {
-          flashGhost("Filler habit — swap for silence.");
+          flashGhost("Filler habit, swap for silence.");
         }
       }
     }, TICK_MS);
@@ -365,11 +365,11 @@ function tipForSentence(
   wordCount: number,
   conf: number,
 ): { kind: "great" | "warn"; text: string } {
-  if (wordCount >= 28) return { kind: "warn", text: "⚠ Too long — split that sentence." };
+  if (wordCount >= 28) return { kind: "warn", text: "⚠ Too long. Split that sentence." };
   if (!/[.?!,]/.test(text) && wordCount > 16) {
-    return { kind: "warn", text: "⚠ No pause — breathe between claims." };
+    return { kind: "warn", text: "⚠ No pause, breathe between claims." };
   }
-  if (conf < 0.55) return { kind: "warn", text: "⚠ Unclear — restate that line." };
+  if (conf < 0.55) return { kind: "warn", text: "⚠ Unclear, restate that line." };
   if (wordCount >= 6 && wordCount <= 18 && conf >= 0.7) return { kind: "great", text: "✅ Great" };
   return { kind: "great", text: "✅ Solid" };
 }

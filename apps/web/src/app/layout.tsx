@@ -13,36 +13,40 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "FounderVoice AI — Executive Speech Coach for Founders",
+    default: "FounderVoice AI: Executive Speech Coach for Founders",
     template: "%s · FounderVoice AI",
   },
   description:
-    "100% free AI speech coach for founders and executives. Voice Memory coaches from your own history — not generic tips.",
+    "100% free AI speech coach for founders and executives. Voice Memory coaches from your own history, not generic tips.",
   applicationName: "FounderVoice AI",
   authors: [{ name: "FounderVoice" }],
   keywords: [
-    "speech coach",
-    "founder pitch",
-    "executive presence",
+    "AI speech coach",
+    "improve english communication skills",
+    "public speaking practice",
+    "speaking pace words per minute",
+    "how to stop filler words",
+    "speak with confidence",
     "pitch practice",
-    "public speaking",
-    "voice memory",
+    "communication skills",
   ],
   openGraph: {
     type: "website",
     locale: "en_US",
     url: siteUrl,
     siteName: "FounderVoice AI",
-    title: "FounderVoice AI — Executive Speech Coach for Founders",
+    title: "FounderVoice AI: Executive Speech Coach for Founders",
     description:
-      "Free. Record once — learn why you rushed, and exactly how to fix it.",
+      "Free. Record once, learn why you rushed, and exactly how to fix it.",
   },
   twitter: {
     card: "summary_large_image",
     title: "FounderVoice AI",
     description: "AI executive speech coach. Record once, and learn exactly what to fix.",
   },
-  alternates: { canonical: "/" },
+  // No canonical here on purpose. In the root layout it is inherited by every
+  // page that does not set its own, which declared /contact, /privacy and the
+  // rest duplicates of the homepage and kept them out of the index.
   robots: {
     index: true,
     follow: true,

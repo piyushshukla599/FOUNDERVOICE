@@ -10,7 +10,7 @@ import { api } from "@/lib/api";
    so the page can lead with Pro rather than a generic contact form. */
 const INTERESTS = [
   { key: "pro", label: "Pro access", blurb: "Remove the free caps on recordings and practice." },
-  { key: "support", label: "Something broke", blurb: "Tell us what happened — we will fix it." },
+  { key: "support", label: "Something broke", blurb: "Tell us what happened. We will fix it." },
   { key: "feedback", label: "Feedback", blurb: "What should we build next?" },
   { key: "partnership", label: "Press / partnership", blurb: "Working together." },
 ];
@@ -38,7 +38,7 @@ export function ContactForm() {
     setError("");
     try {
       const res = await api.contact({ name, email, company, message, interest });
-      setDone(res.message || "Thanks — we have your note.");
+      setDone(res.message || "Thanks. We have your note.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not send. Try again.");
     } finally {
@@ -79,7 +79,7 @@ export function ContactForm() {
           <p className="fv-eyebrow-quiet">What Pro changes</p>
           <ul className="fv-stagger space-y-2.5">
             {[
-              "Unlimited recordings — no 5-recording cap.",
+              "Unlimited recordings. No daily cap.",
               "Unlimited investor practice rounds.",
               "Priority on new labs and the deeper report.",
             ].map((line) => (

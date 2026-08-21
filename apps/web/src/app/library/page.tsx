@@ -111,9 +111,9 @@ export default function LibraryPage() {
           body={
             sessions?.length
               ? "Try All, or record something new."
-              : "Record a pitch, finish a Lab, or start a Listen session — every take lands here with its own analysis."
+              : "Record a pitch, finish a Lab, or start a Listen session. Every take lands here with its own analysis."
           }
-          action={<HeroLink href="/">Start your first recording</HeroLink>}
+          action={<HeroLink href="/today">Start your first recording</HeroLink>}
         />
       )}
     </div>

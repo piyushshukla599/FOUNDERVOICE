@@ -59,7 +59,7 @@ export function SessionTimeline({
                 onMouseLeave={() => setHover((h) => (h === i ? null : h))}
                 onFocus={() => setHover(i)}
                 onBlur={() => setHover((h) => (h === i ? null : h))}
-                aria-label={`${fmtTime(e.start)} — ${e.label}`}
+                aria-label={`${fmtTime(e.start)}, ${e.label}`}
                 className="absolute -translate-x-1/2 -translate-y-1/2 p-2.5"
                 style={{ left: `${pct}%`, top: 0 }}
               >
@@ -84,7 +84,7 @@ export function SessionTimeline({
         </div>
       </div>
 
-      {/* One label at a time — the timeline explains itself on hover. */}
+      {/* One label at a time. The timeline explains itself on hover. */}
       <div className="mt-4 min-h-[2.75rem]">
         {active ? (
           <p key={active.start} className="fv-cue text-[13.5px] leading-relaxed">

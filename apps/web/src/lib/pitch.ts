@@ -1,4 +1,4 @@
-/** Fast, downsampled pitch estimate — avoids O(n²) on full buffers. */
+/** Fast, downsampled pitch estimate, avoids O(n²) on full buffers. */
 export function estimatePitch(timeDomain: Float32Array, sampleRate: number): number {
   // Downsample to ~2k samples max for speed
   const step = Math.max(1, Math.floor(timeDomain.length / 512));

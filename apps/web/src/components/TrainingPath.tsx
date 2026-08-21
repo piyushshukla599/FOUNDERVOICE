@@ -5,7 +5,7 @@
  *
  * A rail runs behind the steps with a node on each one; the active node lights
  * up with the spectrum gradient, and steps you have already worked stay filled.
- * Selecting a step is still just filtering the list below — the difference is
+ * Selecting a step is still just filtering the list below. The difference is
  * that it now looks like progression rather than a segmented control.
  */
 export function TrainingPath({

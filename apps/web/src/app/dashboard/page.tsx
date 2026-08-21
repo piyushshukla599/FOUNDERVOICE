@@ -81,7 +81,7 @@ export default function ProgressPage() {
         <EmptyState
           title="Three sessions and this opens up"
           body="Trends need a few recordings before they mean anything. We would rather show you nothing than a line drawn through one point."
-          action={<HeroLink href="/">Record a session</HeroLink>}
+          action={<HeroLink href="/today">Record a session</HeroLink>}
         />
       </div>
     );
@@ -94,7 +94,7 @@ export default function ProgressPage() {
       <FeatureIntro
         id="intro-progress"
         title="Progress shows what is changing over time."
-        body="Not how you did once — the direction across weeks. Everything here is measured against your own history, never a benchmark."
+        body="Not how you did once, but the direction across weeks. Everything here is measured against your own history, never a benchmark."
       />
 
       <div className="flex gap-1.5 pt-2">

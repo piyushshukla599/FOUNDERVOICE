@@ -9,7 +9,7 @@ import type { QuotaState } from "@/lib/api";
  *
  * Deliberately not styled as an error: nothing broke, they reached the end of
  * what the free tier covers. The tone is "here is what is next", and the only
- * action is the one that helps us — telling us they want more.
+ * action is the one that helps us, telling us they want more.
  */
 export function UpgradeGate({
   quota,
@@ -25,6 +25,17 @@ export function UpgradeGate({
   const label = quota?.label || "free runs";
   const limit = quota && quota.limit > 0 ? quota.limit : null;
 
+  /* Running out is only a dead end if you do not know when it ends. Showing
+     the rollover turns "come back with money" into "come back tomorrow". */
+  const resetsIn = quota?.resets_in_seconds ?? null;
+  const resetLabel = (() => {
+    if (resetsIn == null || resetsIn <= 0) return null;
+    const hours = Math.floor(resetsIn / 3600);
+    const mins = Math.round((resetsIn % 3600) / 60);
+    if (hours >= 1) return `${hours} hour${hours === 1 ? "" : "s"}`;
+    return `${Math.max(1, mins)} minute${mins === 1 ? "" : "s"}`;
+  })();
+
   return (
     <section className="fv-enter fv-glow-panel p-6 text-center md:p-8">
       <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-[var(--r-full)] bg-[var(--accent-soft)] text-[var(--violet-bright)]">
@@ -38,7 +49,7 @@ export function UpgradeGate({
       <p className="mx-auto mt-3 max-w-sm text-[14px] leading-relaxed text-[var(--muted)]">
         {body ||
           (limit
-            ? `Every visitor gets ${limit} free ${label}. Yours are spent — Pro removes the cap.`
+            ? `Every visitor gets ${limit} free ${label}. Yours are spent, Pro removes the cap.`
             : `Pro removes the cap on ${label}.`)}
       </p>
 
@@ -50,6 +61,11 @@ export function UpgradeGate({
             </span>
             <span className="text-[var(--muted)]">used</span>
           </span>
+          {resetLabel && (
+            <span className="fv-pill text-[var(--muted)]">
+              resets in {resetLabel}
+            </span>
+          )}
         </p>
       )}
 
@@ -59,7 +75,7 @@ export function UpgradeGate({
           Unlock Pro
         </Link>
         <p className="mt-3.5 text-[12.5px] text-[var(--faint)]">
-          Tell us what you need — we reply personally.
+          Tell us what you need. We reply personally.
         </p>
       </div>
     </section>

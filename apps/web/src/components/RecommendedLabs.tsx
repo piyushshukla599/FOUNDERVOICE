@@ -19,7 +19,7 @@ export type LabRecCard = {
 };
 
 /**
- * What we heard, then the lab that trains it. Each item is one clickable tile —
+ * What we heard, then the lab that trains it. Each item is one clickable tile,
  * the observation is the headline, the instruction sits under it, and anything
  * measurable rides in a pill rather than inside the sentence.
  */

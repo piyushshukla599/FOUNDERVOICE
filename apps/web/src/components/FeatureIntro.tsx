@@ -5,7 +5,7 @@ import { ArrowRight, X } from "lucide-react";
 import { usePrefs } from "@/lib/prefs";
 
 /**
- * Lightweight contextual education. Shown once per feature, then never again —
+ * Lightweight contextual education. Shown once per feature, then never again,
  * dismissal is persisted, so a returning user gets a clean screen.
  */
 export function FeatureIntro({
@@ -56,7 +56,7 @@ export function FeatureIntro({
 }
 
 /**
- * A single forward step in the journey — "you did X, here's the feature that
+ * A single forward step in the journey, "you did X, here's the feature that
  * builds on it". Only render when the user hasn't found that feature yet.
  */
 export function DiscoveryNudge({

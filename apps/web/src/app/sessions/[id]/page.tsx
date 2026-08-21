@@ -160,7 +160,7 @@ function SessionPage() {
             ]}
           />
           <p className="text-[12px] text-[var(--faint)]">
-            This page updates itself — no need to reload.
+            This page updates itself. No need to reload.
           </p>
         </section>
       </div>
@@ -186,7 +186,7 @@ function SessionPage() {
         </section>
       )}
 
-      {/* 1 — The one thing worth acting on. */}
+      {/* 1. The one thing worth acting on. */}
       {opportunity ? (
         <InsightCard
           eyebrow={isLab ? "What this drill showed" : "Your biggest opportunity"}
@@ -217,7 +217,7 @@ function SessionPage() {
           <p className="fv-eyebrow">What your recording showed</p>
           <h2 className="mt-1 fv-display text-2xl">Nothing is standing out as a problem here.</h2>
           <p className="mt-2 text-[14px] text-[var(--ink-dim)]">
-            Keep recording — patterns need a few sessions before we can name one honestly.
+            Keep recording. Patterns need a few sessions before we can name one honestly.
           </p>
         </section>
       )}
@@ -226,7 +226,7 @@ function SessionPage() {
         <p className="text-[13px] text-[var(--emerald)]">What worked: {strength}</p>
       )}
 
-      {/* 2 — Did anything actually change since last time? */}
+      {/* 2. Did anything actually change since last time? */}
       {comparisons.length > 0 && (
         <section>
           <SectionTitle
@@ -253,7 +253,7 @@ function SessionPage() {
         </section>
       )}
 
-      {/* 3 — Evidence: the audio, the timeline, then the words. */}
+      {/* 3. Evidence: the audio, the timeline, then the words. */}
       <section className="fv-enter space-y-6 pt-2">
         <SessionTimeline
           duration={session.duration || 0}
@@ -297,13 +297,13 @@ function SessionPage() {
           })}
           {!(session.transcript?.sentences || []).length && (
             <p className="text-[13px] text-[var(--muted)]">
-              No transcript for this recording — the audio may have been too quiet to read.
+              No transcript for this recording. The audio may have been too quiet to read.
             </p>
           )}
         </div>
       </section>
 
-      {/* 4 — Root cause, in three short beats. */}
+      {/* 4. Root cause, in three short beats. */}
       {opportunity?.event && (
         <section className="fv-enter space-y-4">
           <SectionTitle eyebrow="Root cause" title="What happened, and why" />
@@ -329,7 +329,7 @@ function SessionPage() {
         </section>
       )}
 
-      {/* 5 — Your next practice. */}
+      {/* 5. Your next practice. */}
       {topLab ? (
         <section className="fv-enter fv-halo space-y-4 py-4">
           <SectionTitle eyebrow="Your next practice" title={topLab.title} />
@@ -361,7 +361,7 @@ function SessionPage() {
         <RecommendedLabs items={data.lab_recs || []} heading="More labs like this" />
       )}
 
-      {/* 6 — Everything else, on request. */}
+      {/* 6. Everything else, on request. */}
       <Disclosure
         label="View detailed analysis"
         sub="Every metric, the professional voice report, and all findings."
@@ -384,7 +384,7 @@ function SessionPage() {
           )}
         </div>
         <EstimateNote>
-          Presence, trust and confidence are model estimates from acoustic features — treat them as
+          Presence, trust and confidence are model estimates from acoustic features. Treat them as
           direction, not measurement.
         </EstimateNote>
 
@@ -427,7 +427,7 @@ function SessionPage() {
       <div className="space-y-1 text-[12px] text-[var(--muted)]">
         {isLab && (
           <p>
-            A lab report covers the drill you chose. Other habits wait for their own lab — this is not a
+            A lab report covers the drill you chose. Other habits wait for their own lab. This is not a
             full founder verdict.
           </p>
         )}

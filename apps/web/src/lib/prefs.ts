@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * User preference system (local only — no backend change).
+ * User preference system (local only. No backend change).
  *
  * The one preference the API already owns is the voice goal (`/api/voice-goal`),
  * which drives the training plan. Everything else here shapes the *interface*:
@@ -62,7 +62,7 @@ export const DEFAULT_PREFS: Prefs = {
   seen: {},
 };
 
-/** Goals mirror `training_program.GOALS` on the API — keys must match. */
+/** Goals mirror `training_program.GOALS` on the API, keys must match. */
 export const GOAL_OPTIONS: { key: GoalKey; label: string; blurb: string }[] = [
   {
     key: "investor_pitch",
@@ -87,7 +87,7 @@ export const GOAL_OPTIONS: { key: GoalKey; label: string; blurb: string }[] = [
   {
     key: "public_speaking",
     label: "Public speaking",
-    blurb: "Stage delivery — projection and pauses.",
+    blurb: "Stage delivery, projection and pauses.",
   },
   {
     key: "conference_speaker",
@@ -148,7 +148,7 @@ export const FOCUS_OPTIONS: { key: FocusKey; label: string }[] = [
   { key: "persuasion", label: "Persuasion" },
 ];
 
-/** Metric keys each focus area maps to — used to order what a page shows first. */
+/** Metric keys each focus area maps to, used to order what a page shows first. */
 export const FOCUS_METRICS: Record<FocusKey, string[]> = {
   pace: ["wpm"],
   fillers: ["filler_count", "filler_rate"],
@@ -198,7 +198,7 @@ export function savePrefs(next: Prefs) {
     window.localStorage.setItem(KEY, JSON.stringify(next));
     window.dispatchEvent(new CustomEvent("fv-prefs", { detail: next }));
   } catch {
-    /* storage disabled — preferences stay in memory for this tab */
+    /* storage disabled, preferences stay in memory for this tab */
   }
 }
 

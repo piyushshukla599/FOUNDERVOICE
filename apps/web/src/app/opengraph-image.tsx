@@ -3,7 +3,7 @@ import { ImageResponse } from "next/og";
 /**
  * The social card, drawn rather than shipped as a PNG.
  *
- * Generating it keeps the card in step with the palette in `globals.css` — a
+ * Generating it keeps the card in step with the palette in `globals.css`, a
  * checked-in image silently goes stale the first time the brand moves. Next
  * renders this once at build time and serves a static PNG.
  *
@@ -13,7 +13,7 @@ import { ImageResponse } from "next/og";
  * the blurred light sources the live site uses.
  */
 
-export const alt = "FounderVoice AI — executive speech coach for founders";
+export const alt = "FounderVoice AI: executive speech coach for founders";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -25,7 +25,7 @@ const MUTED = "#8b8aa3";
 const VIOLET_BRIGHT = "#a78bfa";
 const GOLD = "#e9c27b";
 
-/* A waveform, tallest in the middle — the same motif as VoiceViz. */
+/* A waveform, tallest in the middle. The same motif as VoiceViz. */
 const BARS = [
   14, 26, 20, 42, 64, 48, 88, 72, 116, 96, 140, 108, 152, 124, 96, 132, 78, 104,
   60, 84, 46, 62, 32, 44, 22, 30, 16,
@@ -97,7 +97,7 @@ export default function Image() {
               maxWidth: 780,
             }}
           >
-            Record once. Get the one habit costing you the most — and the drill
+            Record once. Get the one habit costing you the most, and the drill
             that fixes it.
           </div>
         </div>

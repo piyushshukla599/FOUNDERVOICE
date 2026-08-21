@@ -1,6 +1,6 @@
 /**
  * Lightweight Voice Activity Detection for Smart Session Listening.
- * Idle path: AnalyserNode + low-rate RMS only — no transcription, no network.
+ * Idle path: AnalyserNode + low-rate RMS only. No transcription, no network.
  * Speech path: PCM ring buffer → conversation buffer → local WAV encode.
  */
 
@@ -261,7 +261,7 @@ export class SmartVad {
     }
     if (speechRatio < this.config.minSpeechRatio) {
       this.phase = "idle";
-      this.cbs.onDiscarded?.("Mostly silence / noise — skipped");
+      this.cbs.onDiscarded?.("Mostly silence / noise, skipped");
       this.emit();
       return;
     }

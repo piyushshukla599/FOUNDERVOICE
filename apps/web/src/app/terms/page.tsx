@@ -1,6 +1,7 @@
 import Link from "next/link";
 
-export const metadata = { title: "Terms of Use" };
+export const metadata = {
+  alternates: { canonical: "/terms" }, title: "Terms of Use" };
 
 export default function TermsPage() {
   return (
@@ -19,7 +20,7 @@ export default function TermsPage() {
         </p>
         <h2 className="text-lg text-[var(--ink)]">Not medical or legal advice</h2>
         <p>
-          Voice quality, emotion, breath, and investor scores are acoustic or model estimates — not
+          Voice quality, emotion, breath, and investor scores are acoustic or model estimates, not
           clinical diagnoses, guaranteed fundraising outcomes, or accent-change services.
         </p>
         <h2 className="text-lg text-[var(--ink)]">Your responsibilities</h2>

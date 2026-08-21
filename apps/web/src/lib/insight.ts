@@ -3,7 +3,7 @@
  *
  * Turns the metrics/events/patterns the API already returns into the four things
  * every screen has to answer: what happened, why it matters, what to do next,
- * and what evidence backs it. No new numbers are invented here — every line is
+ * and what evidence backs it. No new numbers are invented here. Every line is
  * derived from a value the pipeline produced, and estimates stay labelled.
  */
 
@@ -45,7 +45,7 @@ const METRIC_OPPORTUNITIES: {
   {
     test: (m) => (num(m, "wpm") ?? 0) > 165,
     build: (m) => ({
-      title: `You're speaking faster than your ideal pace — ${Math.round(num(m, "wpm")!)} words per minute.`,
+      title: `You're speaking faster than your ideal pace, ${Math.round(num(m, "wpm")!)} words per minute.`,
       why: "Above about 160 WPM listeners stop absorbing detail; the words arrive but the meaning doesn't.",
       fix: "Target 130–145 WPM on explanations. Plan one full second of silence after each main idea.",
       exercise: "Pause control",
@@ -65,7 +65,7 @@ const METRIC_OPPORTUNITIES: {
     build: () => ({
       title: "Your ideas run together without a beat between them.",
       why: "Without pauses the listener never gets a moment to file one idea before the next arrives.",
-      fix: "Pause a full second after each claim — especially before a number or an ask.",
+      fix: "Pause a full second after each claim, especially before a number or an ask.",
       exercise: "Strategic pause",
     }),
   },
@@ -74,7 +74,7 @@ const METRIC_OPPORTUNITIES: {
     build: () => ({
       title: "Word endings are dropping, so parts of the sentence land soft.",
       why: "When endings fade, listeners reconstruct the sentence instead of following the point.",
-      fix: "Finish every consonant — especially t, d, k and s at the end of a phrase.",
+      fix: "Finish every consonant, especially t, d, k and s at the end of a phrase.",
       exercise: "Consonant finish",
     }),
   },
@@ -90,7 +90,7 @@ const METRIC_OPPORTUNITIES: {
   {
     test: (m) => (num(m, "confidence_est") ?? 100) < 58,
     build: () => ({
-      title: "Your delivery wavers — volume and pace drift mid-sentence.",
+      title: "Your delivery wavers, volume and pace drift mid-sentence.",
       why: "Steadiness is what listeners read as certainty, more than the words themselves.",
       fix: "Take one breath before each claim and hold the same volume to the end of the sentence.",
       exercise: "Confidence stance",
@@ -99,7 +99,7 @@ const METRIC_OPPORTUNITIES: {
   {
     test: (m) => (num(m, "wpm") ?? 140) < 105,
     build: (m) => ({
-      title: `You're speaking slowly — about ${Math.round(num(m, "wpm")!)} words per minute.`,
+      title: `You're speaking slowly, about ${Math.round(num(m, "wpm")!)} words per minute.`,
       why: "Under roughly 110 WPM attention drifts between your words.",
       fix: "Keep the pauses, lift the pace inside each sentence. Aim for 130–145 WPM.",
       exercise: "Pace ladder",
@@ -145,19 +145,19 @@ export function sessionOpportunity(
   return null;
 }
 
-/** Anything genuinely good in this recording — used to lead with a strength. */
+/** Anything genuinely good in this recording, used to lead with a strength. */
 export function sessionStrength(metrics: Metrics | null | undefined): string | null {
   const m = metrics || {};
   const wpm = num(m, "wpm");
-  if (wpm != null && wpm >= 125 && wpm <= 150) return `Your pace held at ${Math.round(wpm)} WPM — right in range.`;
+  if (wpm != null && wpm >= 125 && wpm <= 150) return `Your pace held at ${Math.round(wpm)} WPM, right in range.`;
   const clarity = num(m, "clarity");
-  if (clarity != null && clarity >= 78) return `Clarity came in at ${Math.round(clarity)} — words landed fully formed.`;
+  if (clarity != null && clarity >= 78) return `Clarity came in at ${Math.round(clarity)}, words landed fully formed.`;
   const pause = num(m, "pause_quality");
   if (pause != null && pause >= 72) return "Your pauses were doing real work between ideas.";
   const presence = num(m, "executive_presence");
   if (presence != null && presence >= 72) return "Presence read strong across the recording.";
   const fillers = num(m, "filler_count");
-  if (fillers != null && fillers <= 2) return "Almost no fillers — you let silence do the thinking.";
+  if (fillers != null && fillers <= 2) return "Almost no fillers. You let silence do the thinking.";
   return null;
 }
 
@@ -268,8 +268,8 @@ export function memoryDigest(memory: MemoryData | null | undefined): MemoryDiges
     if (now == null) continue;
     const strong = dim.lowerBetter ? now <= dim.strong : now >= dim.strong;
     const weak = dim.lowerBetter ? now >= dim.weak : now <= dim.weak;
-    if (strong) strengths.push(`${dim.label} — holding at ${Math.round(now)}${dim.lowerBetter ? " per session" : ""}.`);
-    else if (weak) attention.push(`${dim.label} — sitting at ${Math.round(now)}. This is the one to work.`);
+    if (strong) strengths.push(`${dim.label}, holding at ${Math.round(now)}${dim.lowerBetter ? " per session" : ""}.`);
+    else if (weak) attention.push(`${dim.label}, sitting at ${Math.round(now)}. This is the one to work.`);
 
     if (before != null) {
       const cmp = compareMetric(dim.key, dim.label, before, now);
@@ -282,8 +282,8 @@ export function memoryDigest(memory: MemoryData | null | undefined): MemoryDiges
   const wpm7 = w7.wpm;
   const wpm30 = w30.wpm;
   if (wpm7 != null) {
-    if (wpm7 > 160) attention.push(`Pace — averaging ${Math.round(wpm7)} WPM over 7 days. Target is 130–145.`);
-    else if (wpm7 >= 125 && wpm7 <= 150) strengths.push(`Pace — steady at ${Math.round(wpm7)} WPM.`);
+    if (wpm7 > 160) attention.push(`Pace, averaging ${Math.round(wpm7)} WPM over 7 days. Target is 130–145.`);
+    else if (wpm7 >= 125 && wpm7 <= 150) strengths.push(`Pace, steady at ${Math.round(wpm7)} WPM.`);
     if (wpm30 != null) {
       const cmp = compareMetric("wpm", "Pace", wpm30, wpm7);
       if (cmp && cmp.improvedPct >= 8) improving.push(`Pace moved ${cmp.improvedPct}% closer to target vs your 30-day average.`);
@@ -292,7 +292,7 @@ export function memoryDigest(memory: MemoryData | null | undefined): MemoryDiges
 
   const recurring = (memory?.top_patterns || [])
     .slice(0, 3)
-    .map((p) => `${p.label} — seen in ${p.frequency} session${p.frequency === 1 ? "" : "s"}.`);
+    .map((p) => `${p.label}, seen in ${p.frequency} session${p.frequency === 1 ? "" : "s"}.`);
 
   return {
     strengths,
@@ -308,12 +308,12 @@ export function memoryDigest(memory: MemoryData | null | undefined): MemoryDiges
 /* -------------------------------------------------------------------------- */
 
 export type TodayFocus = {
-  /** What the voice is doing — an observation, in the user's own terms. */
+  /** What the voice is doing, an observation, in the user's own terms. */
   headline: string;
   why: string;
   /** The instruction for today, phrased as one speakable line. */
   action?: string;
-  /** The measurable half of the instruction — rendered as a pill, never inline. */
+  /** The measurable half of the instruction, rendered as a pill, never inline. */
   target?: string;
   /** Which lab key to send them to, when we know one. */
   labKey?: string;
@@ -359,7 +359,7 @@ export function todayFocus(
   const missionTitle = splitTarget(mission?.title);
   const target = mission?.target || missionTitle.target;
 
-  /* Today leads with the observation, not the instruction — the instruction is
+  /* Today leads with the observation, not the instruction. The instruction is
      the Coach screen's headline, and repeating it verbatim here made every
      screen read like the same sentence pinned twice. */
   const observation =
@@ -465,6 +465,6 @@ export function sessionHeadline(s: SessionRow): string {
   if (s.filler_count != null && s.filler_count >= 6) bits.push(`${s.filler_count} fillers`);
   if (s.clarity != null && s.clarity < 68) bits.push("endings dropped");
   else if (s.clarity != null && s.clarity >= 78) bits.push("clean articulation");
-  if (!bits.length) return s.status === "ready" ? "Analyzed — open for the full read." : "Waiting on analysis.";
+  if (!bits.length) return s.status === "ready" ? "Analyzed, open for the full read." : "Waiting on analysis.";
   return bits.join(" · ");
 }

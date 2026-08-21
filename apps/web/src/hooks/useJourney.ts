@@ -8,7 +8,7 @@ export type JourneyStage = "new" | "learning" | "returning";
 /**
  * What the product knows about where this user is in the journey.
  *
- * Everything is derived from data the API already returns — a user who wipes
+ * Everything is derived from data the API already returns, a user who wipes
  * local storage but has 40 sessions is still a returning user, and a user with
  * a full localStorage but no recordings still gets the guided first run.
  */

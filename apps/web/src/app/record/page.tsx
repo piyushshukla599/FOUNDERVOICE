@@ -34,7 +34,7 @@ export default function RecordPage() {
   const [recording, setRecording] = useState(false);
   const [paused, setPaused] = useState(false);
   const [pushToTalk, setPushToTalk] = useState(false);
-  const [autoStop, setAutoStop] = useState(false); // off by default — it was cutting pitches at natural pauses
+  const [autoStop, setAutoStop] = useState(false); // off by default. It was cutting pitches at natural pauses
   const [liveCoach, setLiveCoach] = useState(true);
   const [coachReady, setCoachReady] = useState(false);
   const [starting, setStarting] = useState(false);
@@ -98,7 +98,7 @@ export default function RecordPage() {
       .then((m) => setPatterns(m.top_patterns || []))
       .catch(() => setPatterns([]));
 
-    // Enumerate only — do NOT open the mic on load (that caused hangs on Windows).
+    // Enumerate only, do NOT open the mic on load (that caused hangs on Windows).
     void listMics()
       .then((list) => {
         setMics(list);
@@ -431,7 +431,7 @@ export default function RecordPage() {
       <PageHeader
         eyebrow="Record"
         title="Record and get a complete communication review"
-        sub="Use this when you want the full read on something you prepared — a pitch, a talk, an answer, or thinking out loud."
+        sub="Use this when you want the full read on something you prepared, a pitch, a talk, an answer, or thinking out loud."
       />
 
       <FeatureIntro
@@ -462,7 +462,7 @@ export default function RecordPage() {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="fv-input mt-1"
-            placeholder="Seed round pitch — v3"
+            placeholder="Seed round pitch, v3"
           />
         </label>
 
@@ -505,7 +505,7 @@ export default function RecordPage() {
         <label className="flex flex-wrap items-center gap-2 text-sm">
           <input type="checkbox" checked={liveCoach} onChange={(e) => setLiveCoach(e.target.checked)} />
           Live coach while I speak
-          <span className="text-[12px] text-[var(--muted)]">— pace and filler hints, on screen</span>
+          <span className="text-[12px] text-[var(--muted)]">pace and filler hints, on screen</span>
         </label>
         <label className="flex flex-wrap items-center gap-2 text-sm">
           <input
@@ -518,7 +518,7 @@ export default function RecordPage() {
             }}
           />
           Stop automatically after long silence
-          <span className="text-[12px] text-[var(--muted)]">— about 6s, never in the first 8s</span>
+          <span className="text-[12px] text-[var(--muted)]">about 6s, never in the first 8s</span>
         </label>
 
         <div className="flex flex-wrap items-center gap-2 pt-1">

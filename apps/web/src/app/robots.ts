@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 /**
  * Generated rather than static, because the `Sitemap:` directive must be an
- * absolute URL — a relative one is invalid per the robots spec and silently
+ * absolute URL, a relative one is invalid per the robots spec and silently
  * ignored by crawlers. Only the deploy knows its own origin, so this reads it
  * from the environment at build time.
  *
@@ -16,8 +16,18 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: ["/", "/onboarding", "/contact", "/privacy", "/terms", "/welcome"],
+        allow: [
+          "/",
+          "/guides",
+          "/guides/",
+          "/onboarding",
+          "/contact",
+          "/privacy",
+          "/terms",
+          "/welcome",
+        ],
         disallow: [
+          "/today",
           "/sessions/",
           "/library",
           "/coach",

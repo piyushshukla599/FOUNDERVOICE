@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 /* -------------------------------------------------------------------------- */
 /* Surfaces                                                                    */
 /*                                                                             */
-/* The default grouping has no border and no fill — whitespace separates it.    */
+/* The default grouping has no border and no fill, whitespace separates it.    */
 /* `raised` is for the rare block that genuinely needs lifting off the page.    */
 /* -------------------------------------------------------------------------- */
 
@@ -187,7 +187,7 @@ export function LinkButton({
 /* Numbers                                                                     */
 /* -------------------------------------------------------------------------- */
 
-/** Counts up on first paint — a score should feel arrived at, not printed. */
+/** Counts up on first paint, a score should feel arrived at, not printed. */
 export function AnimatedNumber({
   value,
   duration = 900,
@@ -223,7 +223,7 @@ export function AnimatedNumber({
     return () => cancelAnimationFrame(raf);
   }, [duration, value]);
 
-  if (value == null || !Number.isFinite(value)) return <span className={className}>—</span>;
+  if (value == null || !Number.isFinite(value)) return <span className={className}></span>;
   return <span className={cn("fv-num", className)}>{shown}</span>;
 }
 

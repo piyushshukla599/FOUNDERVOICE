@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * The voice visualization — this product speaks about speaking, so the waveform
+ * The voice visualization. This product speaks about speaking, so the waveform
  * is the visual identity rather than another card.
  *
  * Idle it breathes gently, so the interface feels alive before you press
@@ -54,7 +54,7 @@ export function VoiceViz({
         analyserRef.current = analyser;
       }
     } catch {
-      /* visualization is decorative — never break recording over it */
+      /* visualization is decorative, never break recording over it */
     }
     return () => {
       cancelled = true;
@@ -165,7 +165,7 @@ export function VoiceViz({
       ctx2d.fill();
       ctx2d.shadowBlur = 0;
 
-      /* Centre line — the resting state of a voice */
+      /* Centre line. The resting state of a voice */
       ctx2d.beginPath();
       ctx2d.moveTo(0, mid);
       ctx2d.lineTo(w, mid);

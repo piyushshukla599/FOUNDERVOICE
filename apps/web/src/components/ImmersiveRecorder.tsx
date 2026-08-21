@@ -12,7 +12,7 @@ import { fmtTime } from "@/lib/utils";
  * Idle it is a single sentence and one action. Recording, the rest of the page
  * gets out of the way: the timer, the waveform, and a live cue that responds to
  * how you are actually speaking. Live figures are derived from the browser
- * transcript we already collect — the real analysis still happens after you stop.
+ * transcript we already collect. The real analysis still happens after you stop.
  */
 
 const FILLERS = [
@@ -44,7 +44,7 @@ function liveStats(transcript: string, elapsed: number) {
   return { wpm, fillers, words: words.length };
 }
 
-/** A short, human cue — never a metric restated as a warning. */
+/** A short, human cue, never a metric restated as a warning. */
 function coachCue(wpm: number, fillers: number, elapsed: number, speaking: boolean) {
   if (elapsed < 4) return "Take your time.";
   if (!speaking && elapsed > 6) return "Nice pause.";

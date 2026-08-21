@@ -18,20 +18,21 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Logo } from "@/components/Logo";
 import { ContactModal } from "@/components/ContactModal";
 
 type NavItem = { href: string; label: string; icon: typeof Mic };
 
 /** What you do. These read first. */
 const PRIMARY: NavItem[] = [
-  { href: "/", label: "Today", icon: Sparkles },
+  { href: "/today", label: "Today", icon: Sparkles },
   { href: "/trainer", label: "Labs", icon: Dumbbell },
   { href: "/record", label: "Record", icon: Mic },
   { href: "/practice", label: "Practice", icon: MessagesSquare },
   { href: "/listen", label: "Listen", icon: Ear },
 ];
 
-/** What you look back at. Quieter — not what you came here to do. */
+/** What you look back at. Quieter, not what you came here to do. */
 const SECONDARY: NavItem[] = [
   { href: "/library", label: "Sessions", icon: Library },
   { href: "/dashboard", label: "Progress", icon: LineChart },
@@ -41,7 +42,10 @@ const SECONDARY: NavItem[] = [
 const MOBILE_PRIMARY = [PRIMARY[0], PRIMARY[1], PRIMARY[2], PRIMARY[4]];
 const MOBILE_MORE = [PRIMARY[3], ...SECONDARY];
 
-const CHROMELESS = ["/welcome", "/privacy", "/terms", "/onboarding"];
+// Public pages carry their own header and footer rather than the app nav.
+const CHROMELESS = ["/", "/welcome", "/privacy", "/terms", "/onboarding"];
+// Matched by prefix, since every guide under this path is public too.
+const CHROMELESS_PREFIXES = ["/guides"];
 
 function isActive(pathname: string, href: string) {
   return pathname === href || (href !== "/" && pathname.startsWith(href));
@@ -52,7 +56,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [contactOpen, setContactOpen] = useState(false);
   const [contactInterest, setContactInterest] = useState<"feedback" | "general">("general");
   const [moreOpen, setMoreOpen] = useState(false);
-  const hideChrome = CHROMELESS.includes(pathname);
+  const hideChrome =
+    CHROMELESS.includes(pathname) || CHROMELESS_PREFIXES.some((p) => pathname.startsWith(p));
 
   useEffect(() => {
     const onOpen = (ev: Event) => {
@@ -82,7 +87,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  /* Active state is a soft glow and a brighter word — never a bordered button. */
+  /* Active state is a soft glow and a brighter word, never a bordered button. */
   const navLink = ({ href, label, icon: Icon }: NavItem, quiet = false) => {
     const active = isActive(pathname, href);
     return (
@@ -125,15 +130,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </a>
 
       <div className="mx-auto flex min-h-screen w-full max-w-6xl gap-8 px-4 py-5 sm:px-6 lg:gap-12 lg:px-8 lg:py-8">
-        {/* Navigation recedes: no border, no panel — just quiet words. */}
+        {/* Navigation recedes: no border, no panel, just quiet words. */}
         <aside
           className="sticky top-8 hidden h-[calc(100vh-4rem)] w-40 shrink-0 flex-col xl:w-48 lg:flex"
           aria-label="Primary"
         >
-          <Link href="/" className="group mb-9 block px-3">
-            <span className="fv-grad-text text-[12px] font-semibold uppercase tracking-[0.22em] transition-opacity group-hover:opacity-80">
-              FounderVoice
-            </span>
+          <Link href="/today" className="group mb-9 block px-3">
+            <Logo size={26} idSuffix="nav" className="transition-opacity group-hover:opacity-80" />
           </Link>
 
           <nav className="flex flex-1 flex-col gap-6 overflow-y-auto" aria-label="App">
@@ -152,7 +155,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               Send feedback
             </button>
             <p className="text-[10.5px] leading-relaxed text-[var(--faint)]">
-              Shared public demo — don&apos;t upload anything confidential.
+              Shared public demo, don&apos;t upload anything confidential.
             </p>
             <div className="flex flex-wrap gap-2 text-[10.5px] text-[var(--faint)]">
               <Link href="/privacy" className="hover:text-[var(--muted)]">

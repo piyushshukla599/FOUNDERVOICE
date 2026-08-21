@@ -193,7 +193,7 @@ export default function ListenPage() {
       <PageHeader
         eyebrow="Listen"
         title="Listen observes your real conversations"
-        sub="Meetings, calls, and everyday talk — the way you actually speak when you are not being graded."
+        sub="Meetings, calls, and everyday talk. The way you actually speak when you are not being graded."
       />
 
       <FeatureIntro
@@ -202,7 +202,7 @@ export default function ListenPage() {
         body="It observes your real conversations instead of a prepared recording. Start it once, talk normally, and end it when you are done."
         steps={[
           "Start Listen and put your headset or earbuds on.",
-          "Talk normally — we capture short clips when you speak.",
+          "Talk normally. We capture short clips when you speak.",
           "End the session when you are finished.",
           "Complete the recommended Lab with the same mic.",
           "Get your real-world Founder Voice Verdict.",
@@ -296,7 +296,7 @@ export default function ListenPage() {
               </h2>
               <p className="text-[13.5px] leading-relaxed text-[var(--ink-dim)]">
                 {verdict?.why ||
-                  "Complete the recommended Lab with the same microphone. We compare your real-world speech against controlled practice — that gap is the insight."}
+                  "Complete the recommended Lab with the same microphone. We compare your real-world speech against controlled practice. That gap is the insight."}
               </p>
               <div className="flex flex-wrap items-center gap-3">
                 <LinkButton href="/trainer">Open recommended Lab</LinkButton>
@@ -439,7 +439,7 @@ export default function ListenPage() {
           </label>
         </div>
         <p className="text-[12px] text-[var(--muted)]">
-          Works with built-in, USB, XLR interfaces, Bluetooth and wireless mics — anything the OS lists
+          Works with built-in, USB, XLR interfaces, Bluetooth and wireless mics, meaning anything the OS lists
           as an audio input.
         </p>
       </Disclosure>

@@ -45,36 +45,36 @@ export function micTips(profile: MicProfile): string[] {
   switch (profile) {
     case "earbuds":
       return [
-        "Keep buds seated — mic is on the stem; don't cover it with hair or a collar.",
+        "Keep buds seated, mic is on the stem; don't cover it with hair or a collar.",
         "Avoid cable rub and wind; stay within arm's length for calls.",
         "Use the same earbuds for Smart Session and Voice Labs so scores compare fairly.",
       ];
     case "headset":
       return [
         "Boom mic ~2 fingers from mouth corner, slightly off-axis to reduce pops.",
-        "Great for long Smart Sessions — stable distance beats laptop built-ins.",
+        "Great for long Smart Sessions, stable distance beats laptop built-ins.",
         "If you switch to earbuds later, re-run a quick drill to recalibrate.",
       ];
     case "builtin":
       return [
-        "Sit closer than you think — built-ins pick up keyboard and fan noise.",
+        "Sit closer than you think, built-ins pick up keyboard and fan noise.",
         "Face the laptop; don't turn away mid-sentence.",
         "Earbuds or a headset will improve clarity a lot for verdict accuracy.",
       ];
     case "bluetooth":
       return [
-        "Watch for dropouts — if level bars freeze, switch to wired backup.",
+        "Watch for dropouts, if level bars freeze, switch to wired backup.",
         "Some BT codecs add latency; pause slightly longer between thoughts.",
         "Set preferred device in settings so reconnects auto-switch.",
       ];
     case "usb":
       return [
-        "USB mics love consistency — same position for listen + drill.",
+        "USB mics love consistency, same position for listen + drill.",
         "Reduce room echo; soft furnishings help executive presence scores.",
       ];
     default:
       return [
-        "Pick one mic for the whole day — Smart Session + drills should match.",
+        "Pick one mic for the whole day, Smart Session + drills should match.",
         "Check input level bars before starting; aim for steady green, not clipping.",
       ];
   }

@@ -1,6 +1,6 @@
 import { assertUploadSize } from "./upload";
 
-/** Browser talks to FastAPI directly — avoids Next.js 10MB proxy buffering on uploads/audio. */
+/** Browser talks to FastAPI directly, avoids Next.js 10MB proxy buffering on uploads/audio. */
 export const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE?.replace(/\/$/, "") || "http://127.0.0.1:8000";
 
@@ -18,6 +18,10 @@ export type QuotaState = {
   remaining: number;
   unlimited: boolean;
   exhausted: boolean;
+  /** ISO timestamp when this counter rolls over, or null when unlimited. */
+  resets_at?: string | null;
+  resets_in_seconds?: number | null;
+  window_hours?: number;
 };
 
 /** The free allowance for this visitor ran out. Rendered as a gate, not an error. */
@@ -33,7 +37,7 @@ export class QuotaError extends Error {
 /**
  * FastAPI reports failures as `{"detail": ...}` where detail is a string for
  * plain aborts and an object for structured ones. Returning the raw body meant
- * users saw a JSON blob — or, worse, a caller replaced it with a guess like
+ * users saw a JSON blob, or, worse, a caller replaced it with a guess like
  * "is the API running?" and hid the real cause.
  */
 function explain(status: number, body: string): Error {
@@ -42,7 +46,7 @@ function explain(status: number, body: string): Error {
     const parsed = JSON.parse(body);
     detail = parsed?.detail ?? parsed;
   } catch {
-    /* not JSON — the raw text is the best we have */
+    /* not JSON. The raw text is the best we have */
   }
 
   if (detail && typeof detail === "object") {
@@ -53,7 +57,7 @@ function explain(status: number, body: string): Error {
     if (d.message) return new Error(d.message);
   }
   if (typeof detail === "string" && detail.trim()) return new Error(detail);
-  if (status === 429) return new Error("Too many requests — wait a moment and try again.");
+  if (status === 429) return new Error("Too many requests, wait a moment and try again.");
   if (status >= 500) return new Error("The server hit an error. Check the API logs.");
   return new Error(`Request failed (${status}).`);
 }
@@ -357,7 +361,7 @@ export type ExercisesData = {
 export type DailyMission = {
   date: string;
   title: string;
-  /** The measurable half of the mission — rendered as a pill, not in the headline. */
+  /** The measurable half of the mission, rendered as a pill, not in the headline. */
   target?: string;
   focus_key?: string;
   exercise_key?: string;

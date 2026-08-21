@@ -6,7 +6,7 @@ import { VoiceViz } from "@/components/VoiceViz";
 import { fmtTime } from "@/lib/utils";
 
 /**
- * Compact recorder for surfaces that keep their surrounding context — a lab
+ * Compact recorder for surfaces that keep their surrounding context, a lab
  * script, a practice question. The waveform still carries the live state, but
  * the screen does not take over the way the full recorder does.
  */

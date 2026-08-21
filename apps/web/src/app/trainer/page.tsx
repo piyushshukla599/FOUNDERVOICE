@@ -74,7 +74,7 @@ function TrainerPage() {
     try {
       const result = await rec.stop();
       if (!result || result.blob.size < 1000) {
-        setError("Too short — speak the line, then stop.");
+        setError("Too short, speak the line, then stop.");
         setBusy(false);
         return;
       }
@@ -108,13 +108,13 @@ function TrainerPage() {
       setActive(null);
       router.push(`/sessions/${uploaded.session_id}`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Upload failed — is the local API running?");
+      setError(e instanceof Error ? e.message : "Upload failed, is the local API running?");
     } finally {
       setBusy(false);
     }
   }, [active, busy, data?.mission, rec, router]);
 
-  /* Drills are timed — stop automatically when the clock runs out. */
+  /* Drills are timed, stop automatically when the clock runs out. */
   useEffect(() => {
     if (!active || !rec.recording) return;
     if (rec.elapsed >= active.duration_sec) void finishDrill();
@@ -235,7 +235,7 @@ function TrainerPage() {
       <FeatureIntro
         id="intro-labs"
         title="Labs turn your weaknesses into exercises."
-        body="One habit, one line to say, a couple of minutes. We review only that skill — not everything about your voice."
+        body="One habit, one line to say, a couple of minutes. We review only that skill, not everything about your voice."
       />
 
       {/* The recommended drill is the page, not a card on it. */}
@@ -248,7 +248,7 @@ function TrainerPage() {
             </p>
           )}
 
-          {/* Target and length as pills — measurable detail a heading should
+          {/* Target and length as pills, measurable detail a heading should
               never have to carry. */}
           <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
             {missionTarget && <span className="fv-pill fv-pill-accent">{missionTarget}</span>}
@@ -295,7 +295,7 @@ function TrainerPage() {
         />
 
         <p className="mb-6 mt-2 text-center text-[11.5px] text-[var(--faint)]">
-          Every level is open — the path shows where you have been working.
+          Every level is open. The path shows where you have been working.
         </p>
 
         <div className="space-y-1">
@@ -331,9 +331,9 @@ function TrainerPage() {
               body={
                 tab === 0
                   ? "Record once and we will choose the drills that match what your voice is actually doing."
-                  : "Try another level — every lab is available."
+                  : "Try another level. Every lab is available."
               }
-              action={tab === 0 ? <HeroLink href="/">Record 60 seconds</HeroLink> : undefined}
+              action={tab === 0 ? <HeroLink href="/today">Record 60 seconds</HeroLink> : undefined}
             />
           )}
         </div>
@@ -341,7 +341,7 @@ function TrainerPage() {
 
       <p className="pt-8 text-[12.5px] text-[var(--faint)]">
         After a drill you get a review of that skill only.{" "}
-        <Link href="/" className="text-[var(--violet-bright)]">
+        <Link href="/today" className="text-[var(--violet-bright)]">
           Back to Today
         </Link>
       </p>

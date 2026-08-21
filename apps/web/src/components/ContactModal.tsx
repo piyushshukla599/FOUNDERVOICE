@@ -55,7 +55,7 @@ export function ContactModal({ open, onClose, interest = "general" }: Props) {
       setCompany("");
       setMessage("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not send — is the API running?");
+      setError(err instanceof Error ? err.message : "Could not send, is the API running?");
     } finally {
       setBusy(false);
     }
@@ -91,8 +91,8 @@ export function ContactModal({ open, onClose, interest = "general" }: Props) {
         </h3>
         <p className="mt-1 text-sm text-[var(--muted)]">
           {isFeedback
-            ? "FounderVoice is 100% free. Tell us what to improve — we read every note."
-            : "Questions, press, or partnerships — leave your details and we’ll reply."}
+            ? "FounderVoice is 100% free. Tell us what to improve. We read every note."
+            : "Questions, press, or partnerships, leave your details and we’ll reply."}
         </p>
 
         <form onSubmit={(e) => void submit(e)} className="mt-4 space-y-3">
