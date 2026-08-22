@@ -34,7 +34,7 @@ export default function ListeningSessionDetailPage() {
   }, [id]);
 
   if (error) return <ErrorBanner message={error} />;
-  if (!data) return <LoadingState label="Opening this Listen session…" />;
+  if (!data) return <LoadingState label="Opening this Listen session…" shape="report" />;
 
   const summary = data.listening.summary;
   const conversations = data.conversations || [];

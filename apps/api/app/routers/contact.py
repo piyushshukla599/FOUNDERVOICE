@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import smtplib
 from email.message import EmailMessage
 from typing import Any
@@ -12,6 +13,8 @@ from pydantic import BaseModel, Field
 from ..config import get_settings
 from ..db import connect_shared, utc_now
 from ..rate_limit import allow
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["contact"])
 
@@ -29,6 +32,7 @@ def _send_email(body: ContactBody) -> bool:
     settings = get_settings()
     to_addr = (settings.contact_to_email or "").strip()
     if not to_addr:
+        logger.warning("contact: CONTACT_TO_EMAIL is empty, so nobody is notified")
         return False
 
     subject = f"[FounderVoice] {body.interest.upper()} — {body.name}"
@@ -54,12 +58,35 @@ def _send_email(body: ContactBody) -> bool:
         leads = settings.data_path / "leads"
         leads.mkdir(parents=True, exist_ok=True)
         stamp = utc_now().replace(":", "-")
-        (leads / f"{stamp}_{body.interest}.txt").write_text(text, encoding="utf-8")
+        path = leads / f"{stamp}_{body.interest}.txt"
+        path.write_text(text, encoding="utf-8")
+        logger.warning(
+            "contact: SMTP_HOST is not set, so no email was sent. "
+            "The lead is in the database and at %s",
+            path,
+        )
         return False
 
     port = int(settings.smtp_port or 587)
     user = settings.smtp_user or ""
     password = settings.smtp_password or ""
+
+    # Two different protocols share this setting, and picking the wrong one
+    # does not fail cleanly - it hangs until the timeout.
+    #
+    #   465 is implicit TLS (SMTPS): the socket is encrypted from the first
+    #        byte, and calling starttls() on it is a protocol error.
+    #   587 is STARTTLS: the session opens in the clear and is upgraded.
+    #
+    # This used to call SMTP() + starttls() unconditionally, so a host
+    # configured for 465 could never deliver.
+    if port == 465:
+        with smtplib.SMTP_SSL(host, port, timeout=30) as smtp:
+            if user and password:
+                smtp.login(user, password)
+            smtp.send_message(msg)
+        return True
+
     with smtplib.SMTP(host, port, timeout=30) as smtp:
         smtp.starttls()
         if user and password:
@@ -107,6 +134,7 @@ def submit_contact(request: Request, body: ContactBody) -> dict[str, Any]:
     try:
         emailed = _send_email(body)
     except Exception:
+        logger.exception("contact: sending the notification email failed")
         return {
             "status": "saved",
             "emailed": False,

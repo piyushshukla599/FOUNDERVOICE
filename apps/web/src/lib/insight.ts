@@ -205,6 +205,105 @@ export function compareMetric(
   return { key, label, from, to, improvedPct: Math.round(improvedPct), unit };
 }
 
+/**
+ * Which metric the headline insight is actually about, described so it can be
+ * drawn on a scale.
+ *
+ * The result page leads with one measured figure, and it has to be the figure
+ * the coaching is talking about - showing pace while the insight is about
+ * fillers is worse than showing nothing. The kind of the source finding decides
+ * it where there is one; otherwise the same thresholds sessionOpportunity()
+ * uses pick it, in the same order, so the two can never disagree.
+ *
+ * Returns null when the metric behind the insight is not something with a
+ * meaningful scale, in which case the page simply omits the visualisation.
+ */
+export type PrimaryMetric = {
+  label: string;
+  value: number;
+  unit?: string;
+  min: number;
+  max: number;
+  ideal?: [number, number];
+  previous?: number | null;
+  goal?: "higher" | "lower";
+};
+
+export function primaryMetricFor(
+  metrics: Metrics | null | undefined,
+  opportunity: Opportunity | null,
+  previous?: SessionRow | null,
+): PrimaryMetric | null {
+  if (!metrics) return null;
+  const kind = opportunity?.event?.kind || "";
+  const wpm = num(metrics, "wpm");
+  const fillers = num(metrics, "filler_count");
+  const clarity = num(metrics, "clarity");
+  const pauseQuality = num(metrics, "pause_quality");
+
+  const wantsPace = kind.includes("pace") || kind.includes("rush") || kind.includes("speed");
+  const wantsFiller = kind === "filler" || kind.includes("filler");
+  const wantsClarity = kind.includes("clarity") || kind.includes("articul");
+  const wantsPause = kind.includes("pause");
+
+  if ((wantsPace || (!kind && wpm != null && wpm > 165)) && wpm != null) {
+    return {
+      label: "Your pace",
+      value: Math.round(wpm),
+      unit: "WPM",
+      min: 80,
+      max: 220,
+      ideal: [130, 145],
+      previous: previous?.wpm ?? null,
+    };
+  }
+  if ((wantsFiller || (!kind && fillers != null && fillers >= 8)) && fillers != null) {
+    return {
+      label: "Filler words",
+      value: Math.round(fillers),
+      min: 0,
+      max: Math.max(20, Math.round(fillers) + 4),
+      previous: previous?.filler_count ?? null,
+      goal: "lower",
+    };
+  }
+  if (wantsClarity && clarity != null) {
+    return {
+      label: "Clarity",
+      value: Math.round(clarity),
+      unit: "/ 100",
+      min: 0,
+      max: 100,
+      previous: previous?.clarity ?? null,
+      goal: "higher",
+    };
+  }
+  if (wantsPause && pauseQuality != null) {
+    return {
+      label: "Pause quality",
+      value: Math.round(pauseQuality),
+      unit: "/ 100",
+      min: 0,
+      max: 100,
+      goal: "higher",
+    };
+  }
+  // No finding to follow: lead with pace when it is off target, since that is
+  // the metric with a real band to be outside of.
+  if (wpm != null && (wpm > 160 || wpm < 115)) {
+    return {
+      label: "Your pace",
+      value: Math.round(wpm),
+      unit: "WPM",
+      min: 80,
+      max: 220,
+      ideal: [130, 145],
+      previous: previous?.wpm ?? null,
+    };
+  }
+  return null;
+}
+
 /** Session-vs-previous-session comparisons, ordered by size of the change. */
 export function compareSessions(
   current: Metrics | null | undefined,

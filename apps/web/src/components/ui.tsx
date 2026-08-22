@@ -131,10 +131,12 @@ type Size = "sm" | "md" | "lg";
 export function btnClass(variant: Variant = "primary", size: Size = "md", className?: string) {
   const variants: Record<Variant, string> = {
     primary: "fv-hero !h-auto !text-[14px]",
-    accent: "bg-[var(--emerald)] text-white font-medium hover:brightness-110 rounded-[var(--r-full)]",
+    // White on --emerald measured 1.86:1 and on --danger 3.10:1. Both are
+    // bright fills; they take dark ink, which reads 10.75:1 and 6.44:1.
+    accent: "bg-[var(--emerald)] text-[var(--accent-ink)] font-medium hover:brightness-110 rounded-[var(--r-full)]",
     secondary: "fv-ghost !h-auto",
     ghost: "text-[var(--muted)] hover:text-[var(--ink)] rounded-[var(--r-full)]",
-    danger: "bg-[var(--danger)] text-white font-medium hover:brightness-110 rounded-[var(--r-full)]",
+    danger: "bg-[var(--danger)] text-[var(--accent-ink)] font-medium hover:brightness-110 rounded-[var(--r-full)]",
   };
   const sizes: Record<Size, string> = {
     sm: "px-3.5 py-1.5 text-[13px]",
@@ -246,9 +248,11 @@ export function Stat({
   return (
     <div>
       <div className="text-[10px] uppercase tracking-[0.16em] text-[var(--muted)]">{label}</div>
+      {/* fv-display and fv-num both set a family, so the pair was a coin toss
+          decided by source order. A metric is data: it takes the mono face. */}
       <div
         className={cn(
-          "mt-1 fv-display fv-num text-[1.45rem]",
+          "mt-1 fv-num text-[1.45rem]",
           tone === "accent" ? "text-[var(--accent)]" : "text-[var(--ink)]",
         )}
       >
@@ -259,18 +263,30 @@ export function Stat({
   );
 }
 
+/**
+ * A change, with its direction stated twice.
+ *
+ * `good` deliberately does not track the sign - fewer filler words is a fall
+ * and an improvement - so green could sit on a negative number with nothing but
+ * hue to say which it was. Anyone who cannot separate the two hues, and every
+ * screen reader, got no signal at all. The arrow carries direction and the
+ * visually hidden word carries the judgement.
+ */
 export function DeltaBadge({ value, suffix = "%", good }: { value: number; suffix?: string; good?: boolean }) {
-  const positive = good ?? value >= 0;
+  const improved = good ?? value >= 0;
+  const rising = value > 0;
   return (
     <span
       className={cn(
-        "fv-num text-[12px] font-medium",
-        positive ? "text-[var(--emerald)]" : "text-[var(--danger)]",
+        "fv-num inline-flex items-center gap-1 text-[12px] font-medium",
+        improved ? "text-[var(--emerald)]" : "text-[var(--danger)]",
       )}
     >
-      {value > 0 ? "+" : ""}
+      <span aria-hidden>{rising ? "▲" : value < 0 ? "▼" : "—"}</span>
+      {rising ? "+" : ""}
       {value}
       {suffix}
+      <span className="sr-only">{improved ? " — better" : " — worse"}</span>
     </span>
   );
 }
@@ -535,19 +551,115 @@ export function EmptyState({
   );
 }
 
-export function LoadingState({ label = "Loading…" }: { label?: string }) {
+/**
+ * A placeholder shaped like the thing that is coming.
+ *
+ * Every screen used to wait behind the same three 48px bars, so a score ring, a
+ * list of sessions and a full report all arrived by pushing the layout around.
+ * `shape` reserves roughly the right space instead, which is the difference
+ * between a load that settles and one that jumps.
+ */
+export function LoadingState({
+  label = "Loading…",
+  shape = "rows",
+}: {
+  label?: string;
+  shape?: "rows" | "page" | "list" | "report" | "metric";
+}) {
+  /* `key` is optional because most calls are literal siblings in JSX, which
+     need none. It is required at the call sites inside a .map(), and passing it
+     is what this signature exists to allow. */
+  const bar = (className: string, key?: React.Key) => (
+    <div key={key} className={cn("fv-skel", className)} />
+  );
+
+  /* A switch rather than an object indexed by `shape`: the object literal built
+     the JSX for all five shapes on every render and discarded four of them. */
+  const renderShape = () => {
+    switch (shape) {
+      case "page":
+        return (
+          <div className="space-y-6">
+            <div className="space-y-2.5">
+              {bar("h-8 w-2/3 max-w-sm")}
+              {bar("h-4 w-1/2 max-w-xs opacity-70")}
+            </div>
+            <div className="space-y-3">
+              {[0, 1, 2].map((i) => bar(`h-24 ${i ? "opacity-60" : ""}`, i))}
+            </div>
+          </div>
+        );
+
+      case "list":
+        return (
+          <div className="divide-y divide-[var(--line)] border-t border-[var(--line)]">
+            {[0, 1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className="flex items-center gap-4 py-4"
+                style={{ opacity: 1 - i * 0.15 }}
+              >
+                <div className="fv-skel fv-skel-circle h-9 w-9 shrink-0" />
+                <div className="min-w-0 flex-1 space-y-2">
+                  {bar("h-4 w-3/5")}
+                  {bar("h-3 w-2/5 opacity-70")}
+                </div>
+                {bar("h-3 w-14 shrink-0 opacity-70")}
+              </div>
+            ))}
+          </div>
+        );
+
+      case "report":
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center gap-6">
+              <div className="fv-skel fv-skel-circle h-24 w-24 shrink-0" />
+              <div className="min-w-0 flex-1 space-y-2.5">
+                {bar("h-5 w-2/3")}
+                {bar("h-4 w-1/2 opacity-70")}
+              </div>
+            </div>
+            {bar("h-20")}
+            <div className="grid gap-3 sm:grid-cols-3">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="fv-skel h-16" style={{ opacity: 1 - i * 0.12 }} />
+              ))}
+            </div>
+          </div>
+        );
+
+      case "metric":
+        return (
+          <div className="space-y-6">
+            <div className="flex flex-wrap items-end gap-8">
+              <div className="space-y-2">
+                {bar("h-10 w-28")}
+                {bar("h-3 w-20 opacity-70")}
+              </div>
+              <div className="space-y-2">
+                {bar("h-10 w-24 opacity-80")}
+                {bar("h-3 w-16 opacity-60")}
+              </div>
+            </div>
+            {bar("h-40")}
+          </div>
+        );
+
+      case "rows":
+      default:
+        return (
+          <div className="space-y-3">
+            {[0, 1, 2].map((i) => bar(`h-12 ${i ? "opacity-70" : ""}`, i))}
+          </div>
+        );
+    }
+  };
+
   return (
-    <div className="space-y-5 py-8" role="status" aria-live="polite">
+    <div className="space-y-5 py-8" role="status" aria-busy="true" aria-live="polite">
       <p className="text-[13px] text-[var(--muted)]">{label}</p>
-      <div className="space-y-3">
-        {[0, 1, 2].map((i) => (
-          <div
-            key={i}
-            className="h-12 animate-pulse rounded-[var(--r-md)] bg-[rgba(244,243,251,0.04)]"
-            style={{ opacity: 1 - i * 0.28 }}
-          />
-        ))}
-      </div>
+      {renderShape()}
     </div>
   );
 }

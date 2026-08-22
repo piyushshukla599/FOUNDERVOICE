@@ -1,16 +1,54 @@
 import type { Metadata, Viewport } from "next";
+import localFont from "next/font/local";
 import { AnalyticsBridge } from "@/components/AnalyticsBridge";
 import { AppShell } from "@/components/AppShell";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { BRAND, ORG_ID, organizationNode, webSiteNode } from "@/lib/schema";
+import { BRAND, ORG_ID, SITE_URL, organizationNode, webSiteNode } from "@/lib/schema";
 import "./globals.css";
 
-// No next/font/google here on purpose. This product is local-first and has to
-// build and run offline or behind a proxy; fetching Inter at build time made
-// every heading fall back to Times New Roman whenever that fetch failed.
-// Typefaces are resolved from the OS in globals.css instead.
+/*
+ * Still no next/font/google. This product is local-first and has to build and
+ * run offline or behind a proxy; fetching a webfont at build time made every
+ * heading fall back to Times New Roman whenever that fetch failed.
+ *
+ * These are next/font/local instead, pointed at woff2 files that ship inside
+ * the @fontsource-variable packages in node_modules. There is no network call
+ * at build or at runtime, so the offline guarantee holds, and we still get the
+ * things next/font does for us: preloading, a size-adjusted fallback so
+ * swapping in the real face does not shift layout, and no FOUT.
+ *
+ * Three faces, three jobs. Display carries headlines and the one number that
+ * matters; Instrument Sans carries everything you read; JetBrains Mono carries
+ * everything measured, because tabular figures keep columns still while a
+ * value updates.
+ */
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+const display = localFont({
+  src: "../../node_modules/@fontsource-variable/bricolage-grotesque/files/bricolage-grotesque-latin-standard-normal.woff2",
+  weight: "200 800",
+  display: "swap",
+  variable: "--font-display",
+  fallback: ["Segoe UI Variable Display", "Segoe UI", "system-ui", "sans-serif"],
+});
+
+const sans = localFont({
+  src: "../../node_modules/@fontsource-variable/instrument-sans/files/instrument-sans-latin-wght-normal.woff2",
+  weight: "400 700",
+  display: "swap",
+  variable: "--font-sans",
+  fallback: ["Segoe UI Variable Text", "Segoe UI", "system-ui", "sans-serif"],
+});
+
+const mono = localFont({
+  src: "../../node_modules/@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2",
+  weight: "100 800",
+  display: "swap",
+  variable: "--font-mono",
+  fallback: ["Cascadia Mono", "Consolas", "ui-monospace", "monospace"],
+});
+
+// One definition of the origin, in lib/schema.ts. See the note there.
+const siteUrl = SITE_URL;
 
 // One spelling of the name, everywhere. "FounderVoice AI", "Founder Voice" and
 // "FounderVoice" competing across titles, schema and footer split the brand
@@ -123,7 +161,7 @@ const jsonLd = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${display.variable} ${sans.variable} ${mono.variable}`}>
       <head>
         <script
           type="application/ld+json"

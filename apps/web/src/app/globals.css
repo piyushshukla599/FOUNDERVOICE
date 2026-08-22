@@ -22,7 +22,11 @@
   --ink: #f4f3fb;
   --ink-dim: #c2c1d6;
   --muted: #8b8aa3;
-  --faint: #5c5b74;
+  /* Was #5c5b74, which measured 3.05:1 on --bg and 2.45:1 on --surface-3 —
+     under AA on every surface in the system, while carrying helper text,
+     captions, units and placeholders. This clears 4.5:1 on all four and is
+     still unmistakably the quietest tier. */
+  --faint: #8a89a6;
 
   /* Lines — hairlines only */
   --line: rgba(244, 243, 251, 0.07);
@@ -70,11 +74,11 @@
 @theme inline {
   --color-background: var(--bg);
   --color-foreground: var(--ink);
-  /* Resolved from the OS — no webfont fetch, so the app looks right offline. */
-  --font-sans: Inter, "Inter var", "Segoe UI Variable Text", "Segoe UI", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --font-display: Inter, "Inter var", "Segoe UI Variable Display", "Segoe UI", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --font-body: Inter, "Inter var", "Segoe UI Variable Text", "Segoe UI", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --font-mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  /* next/font/local sets --font-display / --font-sans / --font-mono on <html>
+     from woff2 shipped in node_modules. No fetch, so this still builds and runs
+     offline; see the note in app/layout.tsx. --font-body stays as an alias
+     because components across the app already reference it. */
+  --font-body: var(--font-sans);
 }
 
 * {
@@ -102,7 +106,7 @@ body {
   margin: 0;
   color: var(--ink);
   background: var(--bg);
-  font-family: var(--font-body);
+  font-family: var(--font-sans);
   line-height: 1.55;
   letter-spacing: -0.011em;
 }
@@ -146,8 +150,9 @@ body::after {
 h1,
 h2,
 h3 {
-  letter-spacing: -0.032em;
-  line-height: 1.15;
+  font-family: var(--font-display);
+  letter-spacing: -0.028em;
+  line-height: 1.13;
   font-weight: 600;
 }
 
@@ -245,22 +250,28 @@ button:disabled {
 }
 
 .fv-eyebrow {
-  font-size: 11px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
   text-transform: uppercase;
   letter-spacing: 0.2em;
   color: var(--violet-bright);
 }
 
 .fv-eyebrow-quiet {
-  font-size: 11px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
   text-transform: uppercase;
   letter-spacing: 0.2em;
   color: var(--muted);
 }
 
+/* Every measured figure. Mono and tabular so a value that updates live does
+   not shift the words next to it, and so columns of numbers line up. */
 .fv-num {
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.03em;
+  font-feature-settings: "zero" 1;
+  letter-spacing: -0.02em;
 }
 
 /* --- Surfaces ---------------------------------------------------------- */
@@ -321,7 +332,11 @@ button:disabled {
   border-radius: var(--r-full);
   font-size: 15px;
   font-weight: 600;
-  color: #fff;
+  /* Was #fff, which measured 4.23:1 at the violet stop and 3.50:1 at the
+     magenta one — below AA for 15px text, on the primary action of every
+     screen. Dark ink is the direction a bright gradient actually wants, and
+     it clears 4.5:1 across all three stops. */
+  color: var(--accent-ink);
   background: var(--grad);
   box-shadow:
     0 0 0 1px rgba(167, 139, 250, 0.3),
@@ -680,4 +695,207 @@ select.fv-input option {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* --- Scroll reveal ------------------------------------------------------ */
+
+/* The landing page is long enough that .fv-enter's load-in cascade is over
+   before anyone has scrolled to the second section, which is the same as
+   having no motion at all. This ties the reveal to the scroller instead.
+   Browsers without scroll-driven animations ignore animation-timeline and run
+   the keyframes once on load, so the degraded case is the old behaviour rather
+   than a section stuck at opacity 0. */
+.fv-reveal {
+  animation: fv-fade-up 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-timeline: view();
+  animation-range: entry 6% cover 24%;
+}
+
+/* --- Sweep: the one perpetual motion on the page ------------------------ */
+
+/* A light source crossing the sample waveform, so the hero reads as something
+   listening rather than a screenshot. Transform only, and it sits on a fixed
+   region rather than over a scrolling container, so it never forces a repaint
+   of anything but itself. */
+.fv-sweep {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.fv-sweep::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 44%,
+    rgba(167, 139, 250, 0.45) 50%,
+    transparent 56%
+  );
+  animation: fv-sweep-x 5.2s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  will-change: transform;
+}
+
+@keyframes fv-sweep-x {
+  from {
+    transform: translate3d(-100%, 0, 0);
+  }
+  to {
+    transform: translate3d(100%, 0, 0);
+  }
+}
+
+/* --- Disclosure: FAQ ---------------------------------------------------- */
+
+/* Native <details>, so the answers are in the DOM for a crawler and the
+   interaction costs no JavaScript on a page that is deliberately server-only. */
+.fv-faq {
+  border-top: 1px solid var(--line);
+}
+
+.fv-faq summary {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 1.15rem 0;
+  cursor: pointer;
+  list-style: none;
+  color: var(--ink-dim);
+  transition: color 0.18s ease;
+}
+.fv-faq summary::-webkit-details-marker {
+  display: none;
+}
+.fv-faq summary:hover,
+.fv-faq[open] summary {
+  color: var(--ink);
+}
+
+/* Drawn rather than iconised, so it inherits the colour transition above and
+   stays a hairline at every size. Plus closed, minus open. */
+.fv-faq-mark {
+  position: relative;
+  flex: none;
+  width: 11px;
+  height: 11px;
+  margin-top: 0.4rem;
+}
+.fv-faq-mark::before,
+.fv-faq-mark::after {
+  content: "";
+  position: absolute;
+  top: 5px;
+  left: 0;
+  width: 11px;
+  height: 1px;
+  background: currentColor;
+}
+.fv-faq-mark::after {
+  transform: rotate(90deg);
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.fv-faq[open] .fv-faq-mark::after {
+  transform: rotate(0deg);
+}
+
+.fv-faq[open] .fv-faq-a {
+  animation: fv-fade-up 0.34s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* --- Rail: a horizontal run of items that scrolls itself ---------------- */
+
+/* Used where a list is long enough that a grid would turn into equal boxes.
+   The overflow lives here, never on the page body. */
+.fv-rail {
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+  margin-inline: -1.5rem;
+  padding-inline: 1.5rem;
+}
+.fv-rail > * {
+  flex: none;
+  width: 15.5rem;
+  scroll-snap-align: start;
+  padding: 0 1.6rem;
+  border-left: 1px solid var(--line);
+}
+.fv-rail > *:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+
+/* --- The front-door headline -------------------------------------------- */
+
+/* .fv-lede is measured for a column: 22ch is what keeps a lede readable beside
+   other content. The landing headline is not in a column, it is the opening of
+   the page, and at 22ch the same 75 characters wrapped to three tight lines
+   inside the hero's left half. Given the container's full width it lands in
+   two. The clamp is tuned so that stays true from 375px up, because the type
+   grows with the viewport at roughly the rate the measure does. */
+.fv-hero-lede {
+  font-family: var(--font-display);
+  font-weight: 500;
+  /* Trimmed from 3.4rem when the display face changed: Bricolage Grotesque
+     sets wider than Inter at the same size, and the ceiling is what keeps the
+     75-character headline at two lines across the full container. */
+  font-size: clamp(1.6rem, 1rem + 2.45vw, 3.15rem);
+  line-height: 1.06;
+  letter-spacing: -0.034em;
+}
+
+/* --- Scrub: opacity tied to scroll position ----------------------------- */
+
+/* Text that reads in as it arrives rather than fading on a timer. It carries
+   no duration on purpose: where view() is unsupported the animation runs for
+   0s with fill both, so the paragraph simply renders at full opacity rather
+   than animating at the wrong moment. */
+.fv-scrub {
+  animation-name: fv-scrub-in;
+  animation-timing-function: linear;
+  animation-fill-mode: both;
+  animation-timeline: view();
+  animation-range: entry 12% cover 42%;
+}
+
+@keyframes fv-scrub-in {
+  from {
+    opacity: 0.32;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* --- Skeletons ---------------------------------------------------------- */
+
+/* A placeholder that shimmers rather than blinks. The pulse the app used
+   before drew the eye to the fact that nothing had arrived; a slow sweep in
+   the reading direction reads as "on its way". */
+.fv-skel {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--r-md);
+  background: rgba(244, 243, 251, 0.045);
+}
+.fv-skel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 20%,
+    rgba(244, 243, 251, 0.055) 50%,
+    transparent 80%
+  );
+  animation: fv-sweep-x 1.9s ease-in-out infinite;
+}
+.fv-skel-circle {
+  border-radius: var(--r-full);
 }

@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { ContactForm } from "./ContactForm";
 import { PublicFooter, PublicHeader } from "@/components/PublicChrome";
-import { BRAND, OG_IMAGE, ORG_ID } from "@/lib/schema";
+import { BRAND, OG_IMAGE, ORG_ID, SITE_URL } from "@/lib/schema";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+const siteUrl = SITE_URL;
 
 export const metadata: Metadata = {
   title: "Contact & Pro access",

@@ -171,7 +171,7 @@ export default function CoachPage() {
   };
 
   if (error && !program) return <ErrorBanner message={error} />;
-  if (!memory || !program) return <LoadingState label="Opening your coach…" />;
+  if (!memory || !program) return <LoadingState label="Opening your coach…" shape="page" />;
 
   const scores = program.profile.scores || {};
   const deltas = program.profile.deltas || {};

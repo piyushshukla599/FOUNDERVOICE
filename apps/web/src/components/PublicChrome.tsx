@@ -19,10 +19,11 @@ export function PublicHeader() {
         <Link href="/contact" className="text-[var(--muted)] transition-colors hover:text-[var(--ink)]">
           Contact
         </Link>
-        <Link
-          href="/onboarding"
-          className="rounded-full bg-[var(--accent)] px-4 py-2 text-[13px] font-medium text-white transition-opacity hover:opacity-90"
-        >
+        {/* Was white on --accent, which measures 4.23:1 and fails AA for text
+            this size. .fv-hero carries the corrected dark-on-gradient ink plus
+            the press and lift states, so the header CTA and the in-page ones
+            are finally the same control. */}
+        <Link href="/onboarding" className="fv-hero !h-9 !px-4 !text-[13px]">
           Start free
         </Link>
       </nav>

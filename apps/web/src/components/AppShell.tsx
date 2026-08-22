@@ -22,25 +22,47 @@ import { Logo } from "@/components/Logo";
 import { ContactModal } from "@/components/ContactModal";
 
 type NavItem = { href: string; label: string; icon: typeof Mic };
+type NavGroup = NavItem & {
+  /** Routes that belong to this group. The first is the group's own landing. */
+  items?: NavItem[];
+  /** Extra path prefixes that should light this group up. */
+  owns?: string[];
+};
 
-/** What you do. These read first. */
-const PRIMARY: NavItem[] = [
+/**
+ * Four destinations, grouped by what someone is trying to do rather than by
+ * which pipeline serves them.
+ *
+ * This replaces five primary plus three secondary entries. Every route keeps
+ * its URL - the change is navigational, not structural - but two things get
+ * fixed. Record, Labs, Practice and Listen are all "make a recording" from the
+ * user's side of the screen and now sit together. And the mobile bar fits all
+ * four without an overflow sheet, which is where Practice used to be buried.
+ */
+const NAV: NavGroup[] = [
   { href: "/today", label: "Today", icon: Sparkles },
-  { href: "/trainer", label: "Labs", icon: Dumbbell },
-  { href: "/record", label: "Record", icon: Mic },
-  { href: "/practice", label: "Practice", icon: MessagesSquare },
-  { href: "/listen", label: "Listen", icon: Ear },
+  {
+    href: "/record",
+    label: "Speak",
+    icon: Mic,
+    items: [
+      { href: "/record", label: "Record", icon: Mic },
+      { href: "/trainer", label: "Labs", icon: Dumbbell },
+      { href: "/practice", label: "Practice", icon: MessagesSquare },
+      { href: "/listen", label: "Listen", icon: Ear },
+    ],
+  },
+  { href: "/library", label: "Sessions", icon: Library, owns: ["/sessions"] },
+  {
+    href: "/dashboard",
+    label: "Progress",
+    icon: LineChart,
+    items: [
+      { href: "/dashboard", label: "Progress", icon: LineChart },
+      { href: "/coach", label: "Coach", icon: Brain },
+    ],
+  },
 ];
-
-/** What you look back at. Quieter, not what you came here to do. */
-const SECONDARY: NavItem[] = [
-  { href: "/library", label: "Sessions", icon: Library },
-  { href: "/dashboard", label: "Progress", icon: LineChart },
-  { href: "/coach", label: "Coach", icon: Brain },
-];
-
-const MOBILE_PRIMARY = [PRIMARY[0], PRIMARY[1], PRIMARY[2], PRIMARY[4]];
-const MOBILE_MORE = [PRIMARY[3], ...SECONDARY];
 
 // Public pages carry their own header and footer rather than the app nav.
 const CHROMELESS = ["/", "/welcome", "/privacy", "/terms", "/onboarding", "/contact"];
@@ -49,6 +71,15 @@ const CHROMELESS_PREFIXES = ["/guides"];
 
 function isActive(pathname: string, href: string) {
   return pathname === href || (href !== "/" && pathname.startsWith(href));
+}
+
+/** Every path a group is responsible for lighting up. */
+function groupPaths(g: NavGroup) {
+  return [g.href, ...(g.items?.map((i) => i.href) ?? []), ...(g.owns ?? [])];
+}
+
+function groupActive(pathname: string, g: NavGroup) {
+  return groupPaths(g).some((p) => isActive(pathname, p));
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -73,6 +104,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     setMoreOpen(false);
   }, [pathname]);
 
+  const activeGroup = NAV.find((g) => groupActive(pathname, g));
+
   const openFeedback = () => {
     setContactInterest("feedback");
     setContactOpen(true);
@@ -87,8 +120,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  /* Active state is a soft glow and a brighter word, never a bordered button. */
-  const navLink = ({ href, label, icon: Icon }: NavItem, quiet = false) => {
+  /* Active state is a soft glow and a brighter word, never a bordered button.
+     `glow` is off for a group header whose child is already carrying the
+     indicator: two elements sharing one layoutId at the same time makes Framer
+     tween the marker between them forever. */
+  const navLink = ({ href, label, icon: Icon }: NavItem, quiet = false, glow = true) => {
     const active = isActive(pathname, href);
     return (
       <Link
@@ -103,7 +139,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             : "text-[var(--muted)] hover:translate-x-0.5 hover:text-[var(--ink)]",
         )}
       >
-        {active && (
+        {active && glow && (
           <motion.span
             layoutId="nav-glow"
             className="absolute inset-0 rounded-[var(--r-md)] bg-[var(--accent-soft)] shadow-[inset_0_0_0_1px_var(--accent-line),0_0_24px_-8px_var(--accent-glow)]"
@@ -139,38 +175,54 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Logo size={26} idSuffix="nav" className="transition-opacity group-hover:opacity-80" />
           </Link>
 
-          <nav className="flex flex-1 flex-col gap-6 overflow-y-auto" aria-label="App">
-            <div className="space-y-0.5">{PRIMARY.map((item) => navLink(item))}</div>
-            <div className="space-y-0.5 border-t border-[var(--line)] pt-5">
-              {SECONDARY.map((item) => navLink(item, true))}
-            </div>
+          {/* Groups, with their members nested underneath. Nothing is hidden on
+              desktop: everything is still one click, it is just organised by
+              intent instead of by a primary/secondary split. */}
+          <nav className="flex flex-col gap-5 overflow-y-auto" aria-label="App">
+            {NAV.map((group) => {
+              const open = groupActive(pathname, group);
+              return (
+                <div key={group.href} className="space-y-0.5">
+                  {navLink(group, false, !(group.items && open))}
+                  {group.items && open && (
+                    <div className="ml-[1.45rem] space-y-0.5 border-l border-[var(--line)] pl-2">
+                      {group.items.map((item) => navLink(item, true))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </nav>
 
-          <div className="space-y-3 px-3 pt-5">
+          {/* The nav above is flex-1, so on a tall screen this footer was pushed
+              to the bottom with a large void above it. It now sits directly
+              under the navigation and the empty space falls below, which reads
+              as breathing room rather than a gap. */}
+          <div className="mt-6 space-y-3 border-t border-[var(--line)] px-3 pt-5">
             <button
               type="button"
               onClick={openFeedback}
-              className="block text-[12.5px] text-[var(--muted)] transition-colors hover:text-[var(--accent)]"
+              className="block text-[12.5px] text-[var(--ink-dim)] transition-colors hover:text-[var(--accent)]"
             >
               Send feedback
             </button>
             <p className="text-[10.5px] leading-relaxed text-[var(--faint)]">
               Your recordings stay in this browser&apos;s workspace.
             </p>
-            <div className="flex flex-wrap gap-2 text-[10.5px] text-[var(--faint)]">
-              <Link href="/privacy" className="hover:text-[var(--muted)]">
+            <div className="flex flex-wrap gap-x-2 gap-y-1 text-[10.5px] text-[var(--faint)]">
+              <Link href="/privacy" className="transition-colors hover:text-[var(--muted)]">
                 Privacy
               </Link>
               <span aria-hidden>·</span>
-              <Link href="/terms" className="hover:text-[var(--muted)]">
+              <Link href="/terms" className="transition-colors hover:text-[var(--muted)]">
                 Terms
               </Link>
               <span aria-hidden>·</span>
-              <Link href="/onboarding" className="hover:text-[var(--muted)]">
+              <Link href="/onboarding" className="transition-colors hover:text-[var(--muted)]">
                 How it works
               </Link>
               <span aria-hidden>·</span>
-              <Link href="/contact" className="hover:text-[var(--muted)]">
+              <Link href="/contact" className="transition-colors hover:text-[var(--muted)]">
                 Contact
               </Link>
             </div>
@@ -178,6 +230,54 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </aside>
 
         <main id="main-content" className="min-w-0 flex-1 pb-28 lg:pb-4">
+          {/* Mobile had no header at all: the logo lived in a sidebar that is
+              hidden below lg, so on a phone there was nothing identifying the
+              product and no way back to Today from a detail screen except the
+              bottom bar. Sticky, compact, and it never covers content because
+              it participates in flow rather than overlaying it. */}
+          <div className="sticky top-0 z-30 -mx-4 mb-5 flex items-center justify-between border-b border-[var(--line)] bg-[rgba(7,8,13,0.82)] px-4 py-3 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:hidden">
+            <Link href="/today" aria-label="FounderVoice home" className="flex items-center">
+              <Logo size={22} idSuffix="mob" />
+            </Link>
+            <button
+              type="button"
+              onClick={() => setMoreOpen(true)}
+              aria-haspopup="dialog"
+              aria-expanded={moreOpen}
+              className="-mr-2 flex h-11 w-11 items-center justify-center rounded-[var(--r-md)] text-[var(--muted)] transition-colors hover:text-[var(--ink)]"
+            >
+              <MoreHorizontal size={19} aria-hidden />
+              <span className="sr-only">More</span>
+            </button>
+          </div>
+
+          {/* On mobile the bottom bar carries the four groups, so the members of
+              the active group need somewhere to live. This rail is that place.
+              It is why the overflow sheet could go: Practice used to be
+              reachable on a phone only by opening a "More" dialog. */}
+          {activeGroup?.items && (
+            <nav
+              className="fv-scroll -mt-1 mb-6 flex gap-2 overflow-x-auto pb-1 lg:hidden" aria-label={`${activeGroup.label} sections`}>
+              {activeGroup.items.map(({ href, label }) => {
+                const on = isActive(pathname, href);
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    aria-current={on ? "page" : undefined}
+                    className={cn(
+                      "shrink-0 rounded-[var(--r-full)] px-3.5 py-2 text-[13px] transition-colors",
+                      on
+                        ? "bg-[var(--accent-soft)] text-[var(--ink)] shadow-[inset_0_0_0_1px_var(--accent-line)]"
+                        : "text-[var(--muted)] hover:text-[var(--ink)]",
+                    )}
+                  >
+                    {label}
+                  </Link>
+                );
+              })}
+            </nav>
+          )}
           {children}
         </main>
       </div>
@@ -186,15 +286,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         className="fixed inset-x-0 bottom-0 z-40 flex justify-around border-t border-[var(--line)] bg-[rgba(7,8,13,0.88)] px-2 pb-[max(0.625rem,env(safe-area-inset-bottom))] pt-2.5 backdrop-blur-xl lg:hidden"
         aria-label="Mobile"
       >
-        {MOBILE_PRIMARY.map(({ href, label, icon: Icon }) => {
-          const active = isActive(pathname, href);
+        {/* The four groups, all of them. A destination is highlighted whenever
+            any route inside it is open, so Labs lights "Speak" rather than
+            leaving the bar looking like nowhere is selected. */}
+        {NAV.map((group) => {
+          const { href, label, icon: Icon } = group;
+          const active = groupActive(pathname, group);
           return (
             <Link
               key={href}
               href={href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex flex-col items-center gap-1 rounded-[var(--r-md)] px-3 py-1 text-[10px]",
+                "flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-1 rounded-[var(--r-md)] px-3 py-1 text-[10px] transition-colors",
                 active ? "text-[var(--accent)]" : "text-[var(--muted)]",
               )}
             >
@@ -203,16 +307,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Link>
           );
         })}
-        <button
-          type="button"
-          onClick={() => setMoreOpen(true)}
-          aria-haspopup="dialog"
-          aria-expanded={moreOpen}
-          className="flex flex-col items-center gap-1 rounded-[var(--r-md)] px-3 py-1 text-[10px] text-[var(--muted)]"
-        >
-          <MoreHorizontal size={18} aria-hidden />
-          More
-        </button>
+        {/* No fifth "More" here on purpose. It moved to the top header, which
+            leaves the bar as exactly the four destinations and nothing that
+            looks like a destination but is not one. */}
       </nav>
 
       <AnimatePresence>
@@ -234,23 +331,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               onClick={(e) => e.stopPropagation()}
               className="w-full rounded-t-[var(--r-lg)] bg-[var(--surface)] p-5 pb-[max(2.25rem,env(safe-area-inset-bottom))]"
             >
+              {/* This sheet no longer holds navigation. Practice, Labs, Listen
+                  and Coach were all in here, which put core features behind a
+                  disclosure on the only device where that hurts. What is left
+                  is the utility that has nowhere else to sit on a phone, since
+                  app screens have no footer. */}
               <div className="mb-4 flex items-center justify-between">
                 <span className="fv-eyebrow-quiet">More</span>
-                <button type="button" onClick={() => setMoreOpen(false)} aria-label="Close">
+                <button
+                  type="button"
+                  onClick={() => setMoreOpen(false)}
+                  aria-label="Close"
+                  className="-m-2 flex h-11 w-11 items-center justify-center"
+                >
                   <X size={17} className="text-[var(--muted)]" />
                 </button>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                {MOBILE_MORE.map(({ href, label, icon: Icon }) => (
-                  <Link
-                    key={href}
-                    href={href}
-                    className="fv-lift rounded-[var(--r-md)] bg-[rgba(244,243,251,0.03)] px-4 py-3.5"
-                  >
-                    <Icon size={16} className="text-[var(--accent)]" aria-hidden />
-                    <div className="mt-2 text-[14px]">{label}</div>
-                  </Link>
-                ))}
               </div>
               <button
                 type="button"
@@ -258,10 +353,28 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   setMoreOpen(false);
                   openFeedback();
                 }}
-                className="mt-4 inline-flex w-full items-center justify-center gap-2 py-2.5 text-[13px] text-[var(--accent)]"
+                className="fv-lift flex w-full items-center gap-3 rounded-[var(--r-md)] bg-[rgba(244,243,251,0.03)] px-4 py-3.5 text-left text-[14px]"
               >
-                <MessageCircle size={15} /> Send feedback
+                <MessageCircle size={16} className="text-[var(--accent)]" aria-hidden />
+                Send feedback
               </button>
+              <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 px-1 text-[12.5px] text-[var(--muted)]">
+                <Link href="/onboarding" className="fv-quiet-link">
+                  How it works
+                </Link>
+                <Link href="/contact" className="fv-quiet-link">
+                  Contact
+                </Link>
+                <Link href="/privacy" className="fv-quiet-link">
+                  Privacy
+                </Link>
+                <Link href="/terms" className="fv-quiet-link">
+                  Terms
+                </Link>
+              </div>
+              <p className="mt-4 px-1 text-[11px] leading-relaxed text-[var(--faint)]">
+                Your recordings stay in this browser&apos;s workspace.
+              </p>
             </motion.div>
           </motion.div>
         )}

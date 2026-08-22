@@ -125,7 +125,7 @@ export default function TodayPage() {
     }
   };
 
-  if (journey.loading) return <LoadingState label="Reading your Voice Memory…" />;
+  if (journey.loading) return <LoadingState label="Reading your Voice Memory…" shape="page" />;
 
   const firstRun = journey.stage === "new";
   const hello = prefs.name ? `${greeting(hour)}, ${prefs.name}.` : `${greeting(hour)}.`;

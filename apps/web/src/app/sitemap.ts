@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { GUIDES } from "@/lib/guides";
+import { SITE_URL } from "@/lib/schema";
 
 /**
  * Only the public, indexable surfaces belong here. The app's own screens
@@ -28,7 +29,7 @@ const STATIC_UPDATED = {
 } as const;
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const base = SITE_URL;
   return [
     {
       url: base,

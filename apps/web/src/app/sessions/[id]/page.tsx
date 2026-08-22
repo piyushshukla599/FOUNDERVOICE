@@ -3,14 +3,13 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
-import { ArrowRight, Download, Headphones, Play } from "lucide-react";
+import { ArrowRight, Check, Download, Headphones, Play } from "lucide-react";
 import {
   BeforeAfter,
   Button,
   Disclosure,
   EstimateNote,
   ErrorBanner,
-  InsightCard,
   LinkButton,
   LoadingState,
   SectionTitle,
@@ -22,13 +21,21 @@ import { CoachSummary } from "@/components/CoachSummary";
 import { SessionTimeline } from "@/components/SessionTimeline";
 import { ProfessionalVoiceReport, RootCauseFinding } from "@/components/ProfessionalVoiceReport";
 import { RecommendedLabs } from "@/components/RecommendedLabs";
+import { MetricRange } from "@/components/MetricRange";
+import { FillerBreakdown } from "@/components/FillerBreakdown";
 import { api, apiUrl, type Finding, type SessionDetail, type SessionRow } from "@/lib/api";
-import { compareSessions, num, sessionOpportunity, sessionStrength } from "@/lib/insight";
+import {
+  compareSessions,
+  num,
+  primaryMetricFor,
+  sessionOpportunity,
+  sessionStrength,
+} from "@/lib/insight";
 import { fmtTime } from "@/lib/utils";
 
 export default function SessionPageRoute() {
   return (
-    <Suspense fallback={<LoadingState label="Opening your report…" />}>
+    <Suspense fallback={<LoadingState label="Opening your report…" shape="report" />}>
       <SessionPage />
     </Suspense>
   );
@@ -107,7 +114,7 @@ function SessionPage() {
   };
 
   if (error) return <ErrorBanner message={error} />;
-  if (!data) return <LoadingState label="Opening your report…" />;
+  if (!data) return <LoadingState label="Opening your report…" shape="report" />;
 
   const session = data.session;
   const m = (data.metrics || {}) as Record<string, unknown>;
@@ -121,6 +128,51 @@ function SessionPage() {
   const comparisons = compareSessions(m, previous);
   const opportunity = sessionOpportunity(m, data.events);
   const strength = sessionStrength(m);
+  const primaryMetric = primaryMetricFor(m, opportunity, previous);
+
+  /* The overview grid. Only dimensions with a real measured value appear; a
+     metric the analyser did not produce is left out rather than rendered as a
+     dash, and the headline metric is skipped here so it is not stated twice. */
+  const fillerEvents = data.events.filter((e) => e.kind === "filler");
+  const hasFillerData = num(m, "filler_count") != null;
+  const performance = (
+    [
+      num(m, "wpm") != null && {
+        label: "Pace",
+        value: Math.round(num(m, "wpm")!),
+        unit: "WPM",
+        min: 80,
+        max: 220,
+        ideal: [130, 145] as [number, number],
+        previous: previous?.wpm ?? null,
+      },
+      num(m, "clarity") != null && {
+        label: "Clarity",
+        value: Math.round(num(m, "clarity")!),
+        unit: "/ 100",
+        min: 0,
+        max: 100,
+        previous: previous?.clarity ?? null,
+        goal: "higher" as const,
+      },
+      num(m, "pause_quality") != null && {
+        label: "Pause quality",
+        value: Math.round(num(m, "pause_quality")!),
+        unit: "/ 100",
+        min: 0,
+        max: 100,
+        goal: "higher" as const,
+      },
+      hasFillerData && {
+        label: "Fillers",
+        value: Math.round(num(m, "filler_count")!),
+        min: 0,
+        max: Math.max(20, Math.round(num(m, "filler_count")!) + 4),
+        previous: previous?.filler_count ?? null,
+        goal: "lower" as const,
+      },
+    ].filter(Boolean) as import("@/components/MetricRange").MetricRangeProps[]
+  ).filter((x) => x.label !== primaryMetric?.label.replace("Your ", ""));
   const topLab = (data.lab_recs || [])[0];
   const labHref = topLab ? `/trainer?lab=${encodeURIComponent(topLab.key)}` : "/trainer";
 
@@ -186,47 +238,111 @@ function SessionPage() {
         </section>
       )}
 
-      {/* 1. The one thing worth acting on. */}
+      {/* ------------------------------------------------------------------
+          1. INSIGHT -> EVIDENCE -> WHY -> COACHING -> PRACTICE.
+
+          This block used to be a single InsightCard: title, why and fix all at
+          one visual weight inside a box, with the practice button as a small
+          trailing action. The order was right and the hierarchy was not, so a
+          reader had to read all of it to find the one thing to do.
+
+          Now the claim leads at display size, the measured evidence sits
+          underneath it as a drawn range, and the fix is a section of its own
+          ending in the practice CTA. Same data, same source - `opportunity` is
+          still built by sessionOpportunity() from the real analysis.
+      ------------------------------------------------------------------- */}
       {opportunity ? (
-        <InsightCard
-          eyebrow={isLab ? "What this drill showed" : "Your biggest opportunity"}
-          title={opportunity.title}
-          why={opportunity.why}
-          action={
-            <LinkButton href={labHref}>
-              <Play size={15} /> Practice this
-            </LinkButton>
-          }
-          secondary={
-            opportunity.at != null ? (
-              <Button variant="secondary" onClick={() => playAt(opportunity.at!)}>
-                <Headphones size={15} /> Listen to the moment
-              </Button>
-            ) : undefined
-          }
-          meta={
-            <p className="rounded-[var(--r-md)] border border-[var(--line)] bg-[var(--bg)] px-3.5 py-2.5 text-[13px] leading-relaxed">
-              <span className="text-[var(--emerald)]">How to fix it: </span>
+        <section className="fv-enter fv-halo space-y-8 py-4">
+          <div>
+            <p className="fv-eyebrow">{isLab ? "What this drill showed" : "Your biggest opportunity"}</p>
+            <h2 className="fv-hero-lede mt-3 max-w-[20ch] text-balance">{opportunity.title}</h2>
+          </div>
+
+          {primaryMetric && (
+            <MetricRange {...primaryMetric} className="max-w-md" />
+          )}
+
+          <div className="max-w-[62ch] space-y-2">
+            <h3 className="text-[15px] font-medium text-[var(--ink)]">Why this matters</h3>
+            <p className="text-[14.5px] leading-relaxed text-[var(--muted)]">{opportunity.why}</p>
+          </div>
+
+          <div className="max-w-[62ch] space-y-2 border-l-2 border-[var(--emerald)] pl-5">
+            <h3 className="text-[15px] font-medium text-[var(--ink)]">Your next move</h3>
+            <p className="text-[15px] leading-relaxed text-[var(--ink-dim)]">
               {opportunity.fix}
-              {opportunity.exercise ? ` (${opportunity.exercise})` : ""}
             </p>
-          }
-        />
+            {opportunity.exercise && (
+              <p className="fv-num text-[12px] text-[var(--faint)]">Drill: {opportunity.exercise}</p>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <LinkButton href={labHref}>
+              <Play size={15} aria-hidden /> Practice this
+            </LinkButton>
+            {opportunity.at != null && (
+              <Button variant="secondary" onClick={() => playAt(opportunity.at!)}>
+                <Headphones size={15} aria-hidden /> Hear the moment
+              </Button>
+            )}
+          </div>
+        </section>
       ) : (
         <section className="fv-enter fv-halo py-4">
           <p className="fv-eyebrow">What your recording showed</p>
-          <h2 className="mt-1 fv-display text-2xl">Nothing is standing out as a problem here.</h2>
-          <p className="mt-2 text-[14px] text-[var(--ink-dim)]">
+          <h2 className="fv-hero-lede mt-3 max-w-[20ch] text-balance">
+            Nothing is standing out as a problem here.
+          </h2>
+          <p className="mt-4 max-w-[58ch] text-[14.5px] leading-relaxed text-[var(--muted)]">
             Keep recording. Patterns need a few sessions before we can name one honestly.
           </p>
         </section>
       )}
 
+      {/* What worked. Never let a report be entirely negative. */}
       {strength && (
-        <p className="text-[13px] text-[var(--emerald)]">What worked: {strength}</p>
+        <section className="fv-enter border-t border-[var(--line)] pt-6">
+          <h2 className="fv-eyebrow-quiet">What worked</h2>
+          <p className="mt-3 flex items-start gap-2.5 text-[14.5px] leading-relaxed text-[var(--ink-dim)]">
+            <Check size={16} className="mt-0.5 shrink-0 text-[var(--emerald)]" aria-hidden />
+            {strength}
+          </p>
+        </section>
       )}
 
-      {/* 2. Did anything actually change since last time? */}
+      {/* ------------------------------------------------------------------
+          2. PERFORMANCE OVERVIEW.
+
+          The dimensions that have real values, each drawn against what good
+          looks like for that dimension rather than all forced into one card
+          shape. A metric with no value is omitted rather than shown as an
+          em dash, because a missing measurement is not a measurement of zero.
+      ------------------------------------------------------------------- */}
+      {performance.length > 0 && (
+        <section className="fv-enter border-t border-[var(--line)] pt-8">
+          <h2 className="text-[21px] leading-snug text-[var(--ink)]">Your performance</h2>
+          <div className="mt-7 grid gap-x-12 gap-y-9 sm:grid-cols-2">
+            {performance.map((p) => (
+              <MetricRange key={p.label} {...p} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Fillers, by the phrase actually said, each one anchored in the audio.
+          Carries the lexicon editor: this is where someone notices the word
+          they overuse is not on the list. */}
+      {(hasFillerData || fillerEvents.length > 0) && (
+        <section className="fv-enter border-t border-[var(--line)] pt-8">
+          <h2 className="text-[21px] leading-snug text-[var(--ink)]">Filler words</h2>
+          <div className="mt-6 max-w-[62ch]">
+            <FillerBreakdown events={data.events} onSeek={playAt} />
+          </div>
+        </section>
+      )}
+
+      {/* 3. Did anything actually change since last time? */}
       {comparisons.length > 0 && (
         <section>
           <SectionTitle
@@ -337,10 +453,20 @@ function SessionPage() {
         </section>
       )}
 
-      {/* 5. Your next practice. */}
+      {/* ------------------------------------------------------------------
+          Practice. The loop this product runs on is speak -> analyse ->
+          understand -> practice -> speak again, and the step that closes it
+          used to be a text-sized link at the bottom of the page. It is now the
+          heaviest thing below the insight. Same destination, same lab data.
+      ------------------------------------------------------------------- */}
       {topLab ? (
-        <section className="fv-enter fv-halo space-y-4 py-4">
-          <SectionTitle eyebrow="Your next practice" title={topLab.title} />
+        <section className="fv-enter fv-glow-panel space-y-5 p-7 md:p-9">
+          <div>
+            <p className="fv-eyebrow">Practice this</p>
+            <h2 className="mt-2 text-[22px] leading-snug text-balance text-[var(--ink)]">
+              {topLab.title}
+            </h2>
+          </div>
           {topLab.speak && (
             <div className="rounded-[var(--r-md)] border border-[var(--accent-line)] bg-[var(--bg)] px-4 py-3">
               <p className="fv-eyebrow">Speak this</p>
@@ -361,8 +487,9 @@ function SessionPage() {
               </div>
             )}
           </div>
-          <LinkButton href={labHref}>
-            Open Lab <ArrowRight size={15} />
+          <LinkButton href={labHref} size="lg">
+            <Play size={16} aria-hidden /> Start this practice
+            <ArrowRight size={15} aria-hidden />
           </LinkButton>
         </section>
       ) : (

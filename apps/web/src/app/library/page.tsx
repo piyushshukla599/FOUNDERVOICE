@@ -50,7 +50,7 @@ export default function LibraryPage() {
     return [...map.entries()];
   }, [visible]);
 
-  if (!sessions && !error) return <LoadingState label="Opening your sessions…" />;
+  if (!sessions && !error) return <LoadingState label="Opening your sessions…" shape="list" />;
 
   return (
     <div className="mx-auto max-w-3xl space-y-8 pt-4 md:pt-8">

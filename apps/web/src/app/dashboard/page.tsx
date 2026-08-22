@@ -63,7 +63,7 @@ export default function ProgressPage() {
   };
 
   if (error) return <ErrorBanner message={error} />;
-  if (!data) return <LoadingState label="Reading your trend…" />;
+  if (!data) return <LoadingState label="Reading your trend…" shape="metric" />;
 
   const current = scoreFor(win);
   const baseline = scoreFor(win === "7d" ? "30d" : "60d");

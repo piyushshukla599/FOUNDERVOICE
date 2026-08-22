@@ -22,7 +22,7 @@ const LEVELS = [
 
 export default function TrainerRoute() {
   return (
-    <Suspense fallback={<LoadingState label="Loading Labs…" />}>
+    <Suspense fallback={<LoadingState label="Loading Labs…" shape="page" />}>
       <TrainerPage />
     </Suspense>
   );
@@ -120,7 +120,7 @@ function TrainerPage() {
     if (rec.elapsed >= active.duration_sec) void finishDrill();
   }, [active, finishDrill, rec.elapsed, rec.recording]);
 
-  if (!data && !error) return <LoadingState label="Loading Labs…" />;
+  if (!data && !error) return <LoadingState label="Loading Labs…" shape="page" />;
 
   const list = tab === 0 ? data?.recommended || [] : (data?.exercises || []).filter((e) => (e.level || 1) === tab);
   const topPick = (data?.recommended || [])[0];

@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { SITE_URL } from "@/lib/schema";
 
 /**
  * Generated rather than static, because the `Sitemap:` directive must be an
@@ -19,7 +20,7 @@ import type { MetadataRoute } from "next";
  * carry a meta tag if it did.
  */
 export default function robots(): MetadataRoute.Robots {
-  const base = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const base = SITE_URL;
   return {
     rules: [
       {

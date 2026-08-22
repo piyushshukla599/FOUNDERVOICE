@@ -29,7 +29,7 @@ export default function NotFound() {
     <>
       <main className="mx-auto max-w-3xl px-6 py-16">
         <p className="fv-eyebrow">404</p>
-        <h1 className="fv-lede mt-4 max-w-2xl text-balance">
+        <h1 className="fv-hero-lede mt-4 text-balance">
           That page is not here any more
         </h1>
         <p className="mt-5 max-w-xl text-[15.5px] leading-relaxed text-[var(--muted)]">
@@ -38,21 +38,18 @@ export default function NotFound() {
         </p>
 
         <div className="mt-9 flex flex-wrap items-center gap-4">
-          <Link
-            href="/onboarding"
-            className="rounded-full bg-[var(--accent)] px-7 py-3.5 text-[15px] font-medium text-white transition-opacity hover:opacity-90"
-          >
+          {/* Same corrected control as everywhere else: white on --accent
+              measured 4.23:1, under AA for text this size. */}
+          <Link href="/onboarding" className="fv-hero">
             Record your first minute
           </Link>
-          <Link href="/" className="text-[14px] text-[var(--violet-bright)]">
+          <Link href="/" className="fv-quiet-link text-[14px]">
             Back to the home page
           </Link>
         </div>
 
         <section className="mt-16 border-t border-[var(--line)] pt-8">
-          <h2 className="text-[13px] uppercase tracking-[0.16em] text-[var(--faint)]">
-            Popular guides
-          </h2>
+          <h2 className="fv-eyebrow-quiet">Popular guides</h2>
           <ul className="mt-5 space-y-4">
             {guides.map((g) => (
               <li key={g.slug}>

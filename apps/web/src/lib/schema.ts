@@ -13,6 +13,20 @@
  * any of them is both a policy violation and trivially checkable.
  */
 
+/**
+ * The site origin, defined once.
+ *
+ * This was duplicated across seven files, and six of them fell back to
+ * http://localhost:3000. A production deploy that lost NEXT_PUBLIC_SITE_URL
+ * therefore published a robots.txt pointing Google at a sitemap on localhost,
+ * a sitemap listing seventeen localhost URLs, and canonicals contradicting the
+ * structured data on the same page. Defaulting to the live origin makes a
+ * missing variable harmless, and localhost is now opt-in for local work.
+ */
+export const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  (process.env.NODE_ENV === "development" ? "http://localhost:3000" : "https://foundervoice.app");
+
 export const ORG_ID = (site: string) => `${site}/#organization`;
 export const SITE_ID = (site: string) => `${site}/#website`;
 

@@ -88,7 +88,7 @@ function LiveCoachPanelInner({
             </div>
           </div>
           {metrics.risingSpeed && (
-            <div className="absolute -top-3 rounded-full bg-[var(--danger)] px-2 py-0.5 text-[10px] font-bold text-white">
+            <div className="absolute -top-3 rounded-full bg-[var(--danger)] px-2 py-0.5 text-[10px] font-bold text-[var(--accent-ink)]">
               Speed rising
             </div>
           )}

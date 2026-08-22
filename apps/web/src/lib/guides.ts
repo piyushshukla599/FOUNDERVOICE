@@ -42,6 +42,12 @@ export type Guide = {
   primaryKeyword: string;
   secondaryKeywords: string[];
   cluster: "speaking" | "founder";
+  /**
+   * A hub page for its cluster. Pillars carry the head term and link down to
+   * every spoke; spokes link back up. Exactly one per cluster - a second would
+   * split the cluster rather than anchor it.
+   */
+  pillar?: true;
   sections: Section[];
   faqs: { q: string; a: string }[];
   /** Slugs, most relevant first. Falls back to cluster siblings if empty. */
@@ -95,6 +101,208 @@ const CTA = {
 } as const;
 
 export const GUIDES: Guide[] = [
+  /* ---------------------------------------------------------------- pillars
+     Two hub pages, one per cluster. Each carries the head term for its cluster
+     and links down to every spoke in it; the spokes link back up through
+     `related`. They sit first in the array because the index renders in order
+     and the hub should open its section. */
+  {
+    slug: "how-to-communicate-as-a-founder",
+    title: "How to Communicate as a Founder",
+    metaTitle: "How to Communicate as a Founder",
+    description:
+      "The delivery habits that decide whether a founder is believed: pace, filler words, pauses, clarity and energy. What each one costs you, and how to measure your own.",
+    intro:
+      "Founders are judged on delivery long before anyone evaluates the business. In a first meeting the listener has no data on you, so they read the only signal available - how you sound while you explain something you know better than they do. Five habits carry almost all of that signal: how fast you speak, how often you fill silence, where your pauses land, how clearly each word arrives, and how much your voice moves. None of them are personality. All five are measurable, and all five move within a couple of weeks once you can see them.",
+    updated: "2026-08-22",
+    readMinutes: 11,
+    primaryKeyword: "how to communicate as a founder",
+    secondaryKeywords: [
+      "founder communication skills",
+      "how founders should speak",
+      "communication for startup founders",
+    ],
+    cluster: "speaking",
+    pillar: true,
+    sections: [
+      {
+        h: "Why delivery outweighs content in a first meeting",
+        p: [
+          "An investor hearing your company for the first time cannot check anything you say. They cannot verify the market size, test the product or call your customers, not in the thirty minutes they have given you. What they can assess immediately is whether you sound like someone who has thought this through, and that assessment is made from delivery rather than substance.",
+          "This is not a flaw in how investors think. It is a reasonable response to missing information. When the content cannot be evaluated in the room, the manner of its delivery becomes the proxy, and it is a proxy people apply confidently whether or not it deserves that confidence.",
+          "The practical consequence is that a founder with a strong business and rushed, filler-heavy delivery loses to a founder with a weaker business and controlled delivery, in the specific window where the decision to continue gets made. That window is usually the first sixty to ninety seconds.",
+        ],
+      },
+      {
+        h: "The five habits that carry the signal",
+        p: [
+          "Speaking pace is the first. Most founders sit between 120 and 200 words per minute, and the comfortable band for explaining something unfamiliar is roughly 130 to 150. Above about 170 listeners stop retaining detail even while they follow individual words, which is the worst possible failure - they cannot tell you they are lost, because nothing sounded wrong.",
+          "Filler words are the second. Um, uh, like, you know and so appear at the exact points where you are thinking, so their distribution maps your uncertainty for the listener whether you want it to or not. The count matters less than where they cluster: fillers before every number read as a founder unsure of their own figures.",
+          "Pauses are the third, and the one most founders have backwards. The problem is almost never pausing too long. It is pausing in the wrong place - mid-sentence, while searching for a word - and never pausing at the boundaries where a listener needs a moment to file what you just said.",
+          "Clarity is the fourth: whether each word actually arrives intact. Word endings are the first thing to go under pressure, and a listener who misses a word does not stop you to ask. They reconstruct it, get it wrong, and quietly lose the thread. Vocal energy is the fifth - pitch and volume variation, which is most of what people mean when they call someone flat or unconvincing.",
+        ],
+      },
+      {
+        h: "Why self-assessment does not work here",
+        p: [
+          "Every one of these habits is invisible from the inside, and for a structural reason. Your speaking pace is coupled to your arousal, and so is your internal sense of tempo. When you speed up under pressure, your reference clock speeds up with it, so fast speech feels normal in the moment and only sounds fast on playback.",
+          "Fillers are worse. They are produced pre-consciously, in the gap where the next phrase is still being assembled, which means the part of you that would notice them is busy doing the thing that causes them. Asking a founder how many times they said um is asking them to remember something they were never aware of.",
+          "This is why generic advice fails. Being told to slow down, sound confident or cut the fillers names a symptom you already suspected and gives you no way to tell whether anything changed. Measurement replaces that with a number that moves, and a number that moves is something you can actually train against.",
+        ],
+      },
+      {
+        h: "Fix one habit at a time, in this order",
+        p: [
+          "Pace first, because it is upstream of the others. When you slow into the 130 to 150 band you create the gaps where pauses can land, and you give yourself enough processing time that fillers stop being necessary. Founders who fix pace often find their filler rate falls without ever working on fillers directly.",
+          "Pauses second, because the mechanism that lowers pace is pausing at boundaries rather than drawling the words. Deliberately slowing your articulation is exhausting and never survives past the first sentence. Stopping fully for half a second to a second and a half at the end of each thought drops the average without changing how the words themselves sound.",
+          "Fillers third, and only if they are still there. Then clarity, then energy. Working on all five at once produces no measurable movement on any of them, which is the most common reason founders conclude that speaking practice does not work for them.",
+        ],
+      },
+      {
+        h: "What to measure, and how often",
+        p: [
+          "Record sixty seconds answering an unrehearsed question. Not a script - reading aloud produces a pace and a filler rate unlike anything you use in a real meeting, and it will tell you nothing useful about how you sound in the room you are worried about.",
+          "Take the reading twice where you can: once relaxed, once immediately after something stressful. The gap between the two numbers is more informative than either one, because it predicts what your delivery will do under the conditions that actually matter.",
+          "Then repeat weekly rather than daily. Delivery habits move on a scale of weeks, and measuring daily produces noise that looks like regression and discourages people who are in fact improving. Three recordings is roughly the point where a trend becomes separable from a bad morning.",
+        ],
+      },
+      {
+        h: "The situations worth practising specifically",
+        p: [
+          "General speaking practice transfers less than founders expect. The pitch, the investor question you did not anticipate, the demo to someone seeing the product cold and the board update are four different problems, and being good at one does not make you good at the next.",
+          "The pitch rewards compression and structure. Investor questions reward composure and the willingness to pause before answering. The demo rewards ruthless removal of internal vocabulary. The board update rewards saying the number first and the explanation second.",
+          "Practise the one that is coming up. The guides below cover each situation on its own terms, and each one names the specific delivery habit that situation punishes hardest.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "How long does it take to change how you sound?",
+        a: "Filler rate is the fastest to move - most people halve it within a week or two once they can see the count, because the fix is simply becoming comfortable with silence. Pace takes longer, usually three to four weeks, because it is tied to your arousal response rather than to a habit you can decide to stop. Vocal energy is the slowest and the least worth chasing directly; it tends to improve on its own once pace and pauses are under control.",
+      },
+      {
+        q: "Do I need to change my accent to be taken seriously?",
+        a: "No. Clarity, pace and structure carry almost all of how competent you sound, and none of them require changing your accent. The measurable question is whether each word arrives intact and whether your pace gives the listener room to process, not whether you sound native to any particular place.",
+      },
+      {
+        q: "Is this different from public speaking training?",
+        a: "Yes, in the situations it targets. Public speaking training is built around prepared delivery to a room. Founder communication is mostly unprepared: the question you did not expect, the demo that goes off script, the update where someone interrupts with a harder question. The habits overlap, but the pressure that produces them is different, and so is the practice that fixes them.",
+      },
+    ],
+    related: [
+      "how-to-stop-talking-too-fast",
+      "how-to-stop-using-filler-words",
+      "how-to-use-pauses-when-speaking",
+      "how-to-speak-with-confidence",
+      "how-to-stop-rambling",
+      "ideal-speaking-pace-words-per-minute",
+    ],
+    cta: {
+      h: "Measure all five in one recording",
+      p: "Record sixty seconds and get your pace, filler rate, pause placement, clarity and vocal energy measured together, with the one habit costing you the most named first.",
+      label: "Measure my delivery",
+      href: "/onboarding",
+    },
+  },
+  {
+    slug: "investor-pitch-delivery",
+    title: "Investor Pitch Delivery",
+    metaTitle: "Investor Pitch Delivery: How to Sound Fundable",
+    description:
+      "The delivery side of raising: what the first sixty seconds decide, how pace and pauses change under investor pressure, and how to practise the questions rather than the script.",
+    intro:
+      "Pitch delivery is judged in the first sixty to ninety seconds, before the deck reaches the market slide. In that window an investor is not evaluating the business - they do not have enough information to - they are deciding whether to keep listening properly or to start half-listening while they think about their next meeting. What tips that decision is almost entirely delivery: whether you open with the thing itself or with preamble, whether your pace leaves room to follow you, and whether you sound like someone answering a question rather than performing a rehearsal.",
+    updated: "2026-08-22",
+    readMinutes: 10,
+    primaryKeyword: "investor pitch delivery",
+    secondaryKeywords: [
+      "how to deliver a pitch to investors",
+      "pitch delivery tips founders",
+      "how to sound fundable",
+    ],
+    cluster: "founder",
+    pillar: true,
+    sections: [
+      {
+        h: "What the first sixty seconds actually decide",
+        p: [
+          "The opening does not decide whether you get funded. It decides whether the rest of the meeting is a real evaluation or a polite one, and those two meetings look identical from the front of the room. The second one ends with a warm email and no follow-up.",
+          "Investors hear a large number of pitches, which means they have a well-developed shortcut for triage. The shortcut is not cynical, it is necessary: they are listening for whether this founder can explain their own company to someone who does not already understand it. A founder who cannot do that in a pitch will not do it with a customer, a hire or a journalist either.",
+          "The most common way to fail this in the opening is preamble. Thanking everyone, explaining the agenda, describing how you came to be in the room - all of it spends the window on material that carries no information about the company.",
+        ],
+      },
+      {
+        h: "Open with the thing itself",
+        p: [
+          "Say what the company does in one sentence a non-expert could repeat afterwards. Not the category, not the mission, not the market - the thing. If your first sentence contains the words platform, solution, ecosystem or leverage, it is describing a shape rather than a business.",
+          "The test is repeatability. After the meeting, the person you pitched has to be able to describe your company to a partner who was not there. Whatever they say in that moment is what your company is, as far as the decision is concerned, and it will be their compressed version rather than your careful one.",
+          "This is why the sentence has to survive compression. Write it, say it out loud to someone outside your industry, and ask them to repeat it back an hour later. The gap between what you said and what comes back is the part that needs rewriting.",
+        ],
+      },
+      {
+        h: "What pressure does to your pace",
+        p: [
+          "Pitch delivery is where speaking pace fails most reliably, because the arousal that drives it is highest. Founders who sit comfortably at 140 words per minute in conversation routinely hit 180 or more once the meeting is real, and they do not notice, because their internal sense of tempo rose with their heart rate.",
+          "The signature is consistent: the first thirty seconds sit near normal and the back half accelerates as the pressure accumulates. That is exactly the wrong shape, because the back half is where the detail lives - the numbers, the traction, the thing you most need them to retain.",
+          "The fix is not slowing the words. It is stopping fully at the end of each idea for half a second to a second and a half. The words keep their normal tempo, the average across the minute lands in the 130 to 150 band, and the listener gets the processing time the detail requires.",
+        ],
+      },
+      {
+        h: "Practise the questions, not the script",
+        p: [
+          "Most founders rehearse the pitch and neglect what follows it, which is backwards. The pitch is the part you control and the part you will have said a hundred times. The questions are unrehearsed by definition, and they are where the meeting is actually decided.",
+          "Under an unexpected question the failure mode is answering immediately. The answer starts before the thought is finished, which produces a filler at the front, a wandering middle and a recovery at the end that contradicts the opening. A full second of silence before answering costs nothing and reads as consideration rather than hesitation.",
+          "Practise by having someone ask you the four questions you least want to be asked, and record it. The recording matters more here than for the pitch itself, because the pitch you can hear in your head and the answers you genuinely cannot.",
+        ],
+      },
+      {
+        h: "The habits that read as unfundable",
+        p: [
+          "Fillers immediately before numbers. Um and uh cluster where you are least certain, so a founder who fills before every figure signals doubt about their own metrics even when the metrics are solid and they simply have not said them out loud enough times.",
+          "Rising intonation at the end of statements, which turns your traction into a question. This one is unconscious and common in founders pitching a round they are not sure they deserve, and it undoes the content of the sentence entirely.",
+          "Speeding up when challenged. The instinct under a hard question is to produce more words faster, which reads as defensiveness. Slowing down under challenge is the single most reliable delivery signal of someone who has thought about the objection before.",
+        ],
+      },
+      {
+        h: "How to rehearse without sounding rehearsed",
+        p: [
+          "Rehearse the structure, not the wording. A founder who has memorised sentences sounds like a founder reciting, and the moment a question breaks the sequence they cannot recover, because there is no underlying map - only a script that has lost its place.",
+          "Say it out loud rather than reading it. Silent rehearsal builds none of the motor patterns you will use in the room and gives you no information about pace, fillers or where you run out of breath. Ten out-loud repetitions are worth more than fifty read-throughs.",
+          "Record at least a few of them. What you remember about a rehearsal and what actually happened in it diverge quickly, and the divergence is always in the same direction: you remember the version you intended to deliver.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "How long should the opening pitch be?",
+        a: "Sixty seconds is the useful unit, because it is roughly how long you have before the listener decides how carefully to listen. It also forces the compression that makes the pitch repeatable. A longer version is worth having for when it is invited, but it should be an expansion of the sixty-second one rather than a different pitch.",
+      },
+      {
+        q: "Should I memorise my pitch word for word?",
+        a: "No. Memorised wording sounds recited, and it collapses the moment a question breaks the sequence, because there is no structure underneath to fall back on. Memorise the order of the ideas and the one sentence that says what the company does. Everything between those can be different every time and should be.",
+      },
+      {
+        q: "What is a good speaking pace for a pitch?",
+        a: "Around 130 to 150 words per minute. Faster than about 170 and listeners stop retaining detail, which matters most in the second half of a pitch where the numbers live. The band is not achieved by slowing the words down but by pausing fully at the end of each idea.",
+      },
+      {
+        q: "How do I stop sounding nervous?",
+        a: "Nervousness is read from three specific things rather than from a general impression: pace that climbs through the answer, fillers clustering before figures, and pauses that fall mid-sentence instead of at boundaries. All three are measurable, and fixing the pauses tends to move the other two on its own.",
+      },
+    ],
+    related: [
+      "pitch-practice-for-founders",
+      "how-to-prepare-for-investor-qa",
+      "how-to-sound-confident-in-an-investor-pitch",
+      "how-to-explain-your-startup-clearly",
+    ],
+    cta: {
+      h: "Practise the pitch out loud",
+      p: "Record your sixty-second version and get pace, fillers, pauses and vocal energy measured, plus the one habit costing you the most in the room.",
+      label: "Record my pitch",
+      href: "/onboarding",
+    },
+  },
   {
     slug: "how-to-stop-using-filler-words",
     title: "How to Stop Saying Um, Uh and Like",
@@ -1054,11 +1262,20 @@ export function getGuide(slug: string): Guide | undefined {
  * guide names fewer than three. Returning objects rather than slugs keeps the
  * template from having to know that a slug might not resolve.
  */
+/** The hub for a cluster, if one has been designated. */
+export function pillarFor(cluster: Guide["cluster"]): Guide | undefined {
+  return GUIDES.find((g) => g.cluster === cluster && g.pillar);
+}
+
 export function relatedGuides(guide: Guide, count = 3): Guide[] {
   const picked: Guide[] = [];
   const take = (g: Guide | undefined) => {
     if (g && g.slug !== guide.slug && !picked.some((p) => p.slug === g.slug)) picked.push(g);
   };
+  /* The cluster hub first, for every spoke. A cluster only works as a cluster
+     if the links point up as well as down, and leaving that to each guide's
+     hand-written related list meant a new guide silently joined nothing. */
+  if (!guide.pillar) take(pillarFor(guide.cluster));
   guide.related.forEach((slug) => take(getGuide(slug)));
   GUIDES.filter((g) => g.cluster === guide.cluster).forEach(take);
   GUIDES.forEach(take);
