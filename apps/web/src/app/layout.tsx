@@ -76,6 +76,10 @@ export const metadata: Metadata = {
     "how to stop filler words",
     "how to speak with confidence",
     "presentation practice",
+    "free ai communication coach",
+    "free ai tool for communication skills",
+    "free ai for public speaking",
+    "ai speaking partner",
   ],
   openGraph: {
     type: "website",

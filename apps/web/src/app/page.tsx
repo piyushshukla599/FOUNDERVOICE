@@ -48,6 +48,11 @@ const FEATURED_GUIDES = [
   "how-to-stop-talking-too-fast",
   "pitch-practice-for-founders",
   "how-to-prepare-for-investor-qa",
+  // The tools cluster gets one link from the front door rather than none. A
+  // hub with no inbound link from the highest-authority page on the site is a
+  // hub in name only.
+  "free-ai-communication-tools",
+  "free-ai-public-speaking-practice",
 ];
 
 /** Where founders actually use this. Named because search intent lives here. */

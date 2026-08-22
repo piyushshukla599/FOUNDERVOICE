@@ -9,13 +9,13 @@ const SITE = SITE_URL;
 export const metadata: Metadata = {
   title: "Guides to Speaking and Founder Communication",
   description:
-    "Practical, measurable guides to delivery: filler words, speaking pace, pauses, rambling, investor pitches and Q&A. Free to read, no signup.",
+    "Free, measurable guides to delivery: filler words, speaking pace, pauses, rambling, investor pitches and Q&A, plus what free AI speech tools actually measure. No signup.",
   alternates: { canonical: "/guides" },
   openGraph: {
     type: "website",
     title: "Guides to Speaking and Founder Communication",
     description:
-      "Measurable guides to delivery: filler words, pace, pauses, pitching and investor Q&A.",
+      "Measurable guides to delivery: filler words, pace, pauses, pitching, investor Q&A and free AI speech tools.",
     url: `${SITE}/guides`,
     images: [OG_IMAGE],
   },
@@ -43,6 +43,15 @@ const CLUSTERS: { key: Guide["cluster"]; h: string; p: string }[] = [
     key: "founder",
     h: "Founder communication",
     p: "The situations where delivery decides the outcome - the pitch, the investor questions, and explaining the company to someone who has never heard of it.",
+  },
+  /* An acquisition cluster, not a statement of what this product is. People
+     searching for a free AI tool are asking a real question with a lot of bad
+     answers in front of it, and these pages answer it on its own terms -
+     including where this one is the wrong choice. */
+  {
+    key: "tools",
+    h: "Free AI tools",
+    p: "What AI speech tools actually measure, where a free tier stops being free, and how to pick one for the situation you are preparing for.",
   },
 ];
 

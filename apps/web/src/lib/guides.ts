@@ -41,7 +41,7 @@ export type Guide = {
   /** One guide, one primary intent. Asserted unique across the set. */
   primaryKeyword: string;
   secondaryKeywords: string[];
-  cluster: "speaking" | "founder";
+  cluster: "speaking" | "founder" | "tools";
   /**
    * A hub page for its cluster. Pillars carry the head term and link down to
    * every spoke; spokes link back up. Exactly one per cluster - a second would
@@ -96,6 +96,14 @@ const CTA = {
     h: "Hear how long you actually took",
     p: "Record an answer and get its length, pace and pause pattern - the fastest way to see a ninety-second reply you were sure was thirty.",
     label: "Record an answer",
+    href: "/onboarding",
+  },
+  /* For the tools cluster. Those readers arrived on the word "free", so the
+     panel has to answer that word first and name the allowance, not bury it. */
+  free: {
+    h: "Use the free one now",
+    p: "Record sixty seconds in the browser and get pace, filler rate, pause length, clarity and vocal range, each with the timestamp behind it. Ten recordings every 24 hours, no account and no card.",
+    label: "Measure my delivery free",
     href: "/onboarding",
   },
 } as const;
@@ -302,6 +310,118 @@ export const GUIDES: Guide[] = [
       label: "Record my pitch",
       href: "/onboarding",
     },
+  },
+  {
+    slug: "free-ai-communication-tools",
+    title: "Free AI Communication Tools, and What They Actually Measure",
+    metaTitle: "Free AI Tools for Communication Skills",
+    description:
+      "What free AI communication tools measure, where the free tier usually stops, and how to tell a tool that hands you evidence from one that hands you a score.",
+    intro:
+      "Almost every AI communication tool does one of four jobs: it analyses a recording you made, it sits inside a live meeting, it talks back to you so you can practise, or it turns speech into text. Only the first three change how you speak, and each measures the same small set of things - speaking pace, filler words, pause length, word-level clarity and vocal range. Nothing free, and nothing paid, can tell you whether the point you made was worth making. Knowing which of the four you need takes a minute, and it saves signing up for three tools that do the same job badly.",
+    updated: "2026-08-22",
+    readMinutes: 10,
+    primaryKeyword: "free ai tool for communication skills",
+    secondaryKeywords: [
+      "free ai communication app",
+      "ai communication tools",
+      "best free ai tool for communication skills",
+      "free app to improve communication skills",
+      "free websites to improve communication skills",
+      "ai for communication skills",
+      "tools to improve communication skills",
+      "best ai tools for communications professionals",
+    ],
+    cluster: "tools",
+    pillar: true,
+    sections: [
+      {
+        h: "The five things an AI can measure",
+        p: [
+          "Speaking pace, in words per minute, over the whole recording and inside each section. The section figure is the one that matters: almost nobody speaks at a constant rate, and the useful finding is not that you averaged 155 but that you hit 190 the moment you reached the number you were nervous about.",
+          "Filler rate, in fillers per minute rather than a raw count. A count depends on how long you spoke, so it cannot be compared week to week. Under about 3 per minute reads as ordinary speech; above 8 becomes the thing a listener remembers instead of the point.",
+          "Pause length and placement. A tool that reports an average pause tells you almost nothing. What you need is the longest pause in the clip and where each one fell, because a pause at the end of a thought does a completely different job from a pause in the middle of your own sentence.",
+          "Word-level clarity, meaning which specific words came out too soft, too fast or too swallowed to survive the trip to a listener. This is the measurement people most often mistake for an accent score, and it is not one: it is about whether the word arrived.",
+          "Vocal range, meaning how much your pitch and volume move. Flat delivery is the most common reason a technically correct explanation loses a room, and it is one of the few habits that shows clearly in the audio and not at all in a transcript.",
+        ],
+      },
+      {
+        h: "What none of them can measure",
+        p: [
+          "Whether your argument holds. Whether the person across the table believed you. Whether the thing you said was true. Those are the parts that decide most meetings, and no amount of signal processing reaches them.",
+          "This matters when you are comparing tools, because the ones that overreach are easy to spot. A single confidence score out of 100 has taken the five measurements above, thrown away the timestamps, and handed you back a number you cannot act on. A charisma rating is worse: it rates nothing in particular, and it moves when you change microphone.",
+          "The honest version of what these tools do is narrower and more useful. They tell you what happened in the recording, precisely enough that you can go and hear the moment for yourself. Everything after that is your judgement.",
+        ],
+      },
+      {
+        h: "Four categories, and which one you need",
+        p: [
+          "Recording analysers. You record on your own and the tool returns measurements with timestamps. Best for building a habit, because you control the prompt, the length and the pressure, and because you can repeat the same sixty seconds a week later and see whether anything moved. This is the category with the most genuinely free options.",
+          "Live meeting coaches. Something joins your Zoom, Meet or Teams call and coaches during it or immediately after. Best when the problem only appears with real people in the room and you cannot reproduce it alone. The trade-off is real: something has to be in the meeting, which usually means a visible participant and a conversation with whoever else is on the call.",
+          "Conversational practice partners. You talk out loud and an AI asks questions back, so you are answering something you did not write. Best for the specific failure of knowing your material perfectly and losing it the moment someone interrupts. Free tiers here are usually the tightest, because every turn costs the provider money.",
+          "Transcription and writing assistants. Genuinely useful, and not coaching. A transcript shows you your sentence structure and how long you took to reach the point, which is worth having, but it is blind to everything the audio carried. If rambling is your problem a transcript helps; if pace, pauses or flatness are the problem it cannot see them at all.",
+        ],
+      },
+      {
+        h: "What free usually means",
+        p: [
+          "Free comes in three shapes, and the difference decides whether a tool is any use to you. A lifetime allowance gives you a handful of sessions ever, which is enough to evaluate the product and not enough to change a habit. A recurring allowance gives you a number of sessions per day or per week, which is what daily practice actually needs. A trial gives you everything for a fortnight and then stops, which suits a specific deadline and nothing else.",
+          "Check three things before signing up. Whether a card is required, because a free tier that takes card details is a trial wearing a different word. What happens to your recordings, since audio of you rehearsing a fundraise is not neutral material and the answer belongs in the privacy policy rather than the marketing page. And whether an account is required at all, because for a recording analyser it usually does not need to be.",
+          "Be suspicious of any tool whose free tier withholds the timestamps. Locating the moment behind a number is the part that costs almost nothing to compute and everything to act on, and putting it behind the paywall tells you the product is sold on the score rather than the evidence.",
+        ],
+      },
+      {
+        h: "How to tell evidence from a score",
+        p: [
+          "A number with a timestamp is evidence. A number without one is a horoscope. If a tool says you used eleven fillers it should let you jump to each of the eleven, and you should be able to hear that nine of them landed just before a figure you were unsure of. That pattern is the actual finding; the count was only how you found it.",
+          "It should compare you against your own history rather than an average. Population averages are close to useless for delivery, because the question is never whether you are near the mean but whether this week differs from last week. A tool that cannot show a trend across your own sessions is measuring you in isolation every time.",
+          "It should name one thing to fix, not twelve. A report listing every habit you have is a report you will read once. Working on pace, fillers and articulation simultaneously produces stilted speech that helps none of them, which is why the single worst number is the only one worth acting on this week.",
+          "It should measure delivery rather than pronunciation against one standard. A tool that marks you down for an Indian, Nigerian or Singaporean accent is scoring the thing with almost no effect on whether you are understood, while ignoring the word endings that decide it. Test this directly: record a clip you know is clear and see whether the tool agrees.",
+        ],
+      },
+      {
+        h: "A free stack that covers the whole job",
+        p: [
+          "One recording analyser, used daily for sixty seconds, to establish where you are and to catch drift. This is the anchor, because it is the only part that produces comparable numbers over time.",
+          "One conversational partner, twice a week, for the pressure that solo recording cannot manufacture. You need at least one format where the next question is not yours to choose.",
+          "One transcript of a longer answer, read back once a fortnight, for structure. Seeing your own words on a page makes a buried point obvious in a way that hearing it does not.",
+          "That is the whole stack, it costs nothing, and it takes about fifteen minutes a day. The common failure is collecting six tools and using none of them past the first week, which is a scheduling problem rather than a tooling one.",
+        ],
+      },
+      {
+        h: "The two-week routine that makes any of them work",
+        p: [
+          "Days 1 to 3: record one minute daily and change nothing. You need a baseline, and you need to get past hating your own recorded voice, which takes most people about three sessions.",
+          "Days 4 to 7: take the single worst number and work only on it. If it is pace, pause deliberately at every full stop rather than trying to say words more slowly. If it is fillers, replace each one with silence instead of a different word.",
+          "Days 8 to 14: keep the first habit, add the second, and bring in questions you did not write. At the end, re-record the day 1 prompt and compare. The gap is usually obvious enough that other people notice before you do.",
+          "Re-record immediately after listening rather than tomorrow. The correction happens in the gap between hearing the defect and speaking again, and a day is long enough to lose most of it.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "What is the best free AI tool for communication skills?",
+        a: "There is no single best one, because the four categories solve different problems. If you want to change a habit, use a recording analyser daily. If you freeze when interrupted, use a conversational practice partner. If the problem only appears in real meetings, use a live meeting coach. Picking the category first narrows the choice more than any review can.",
+      },
+      {
+        q: "Are free AI communication apps genuinely free?",
+        a: "Some are. The distinction that matters is whether the free tier is a lifetime allowance, a recurring daily or weekly allowance, or a time-limited trial. Only the second supports the repeated practice that actually changes delivery, and a free tier that requires card details is a trial regardless of what it is called.",
+      },
+      {
+        q: "Can an AI replace a communication coach?",
+        a: "Not for judgement. A coach can tell you that your second point was the interesting one and you buried it, and no current tool can. What an AI replaces is the measurement and the repetition, which is what the first several sessions with a coach are largely spent on, and it does that part at any hour for nothing.",
+      },
+      {
+        q: "Do these tools work if English is not my first language?",
+        a: "The ones worth using do, because they measure delivery rather than pronunciation against a single standard. Pace, pause placement, filler rate and word endings decide whether you are understood, and none of them is an accent. Avoid anything that scores you on sounding native, since that is the variable with the least effect on the outcome.",
+      },
+      {
+        q: "Which tools suit communications professionals rather than beginners?",
+        a: "Ones that expose the raw measurements and the timestamps rather than a summary score, and that let you compare sessions over months. If you already know what a filler word is, the value is entirely in the evidence trail and the trend line, and a product built around a single readout gives you neither.",
+      },
+    ],
+    related: ["free-ai-public-speaking-practice", "ai-speaking-partner", "yoodli-alternatives"],
+    cta: CTA.free,
   },
   {
     slug: "how-to-stop-using-filler-words",
@@ -915,6 +1035,7 @@ export const GUIDES: Guide[] = [
       },
     ],
     related: [
+      "free-ai-communication-tools",
       "how-to-stop-using-filler-words",
       "how-to-speak-with-confidence",
       "how-to-stop-talking-too-fast",
@@ -1250,6 +1371,296 @@ export const GUIDES: Guide[] = [
       "how-to-prepare-for-investor-qa",
     ],
     cta: CTA.answer,
+  },
+  {
+    slug: "free-ai-public-speaking-practice",
+    title: "Free AI for Public Speaking Practice",
+    metaTitle: "Free AI for Public Speaking Practice",
+    description:
+      "What AI can and cannot do for public speaking, the numbers that matter for a talk rather than a pitch, and a free rehearsal routine that fits in fifteen minutes a day.",
+    intro:
+      "AI does not cure stage fright. What it removes is the part of rehearsal that used to require another person: an honest account of what you actually did, rather than what it felt like you did. Record a rehearsal and you get your pace across the whole talk and inside each section, your filler rate, where your pauses fell, and which words a listener would have missed. That is most of what a speaking coach spends the first three sessions telling you, and it costs nothing.",
+    updated: "2026-08-22",
+    readMinutes: 9,
+    primaryKeyword: "free ai for public speaking",
+    secondaryKeywords: [
+      "public speaking apps free",
+      "free ai communication coach",
+      "free ai speech coach",
+      "free presentation practice app",
+    ],
+    cluster: "tools",
+    sections: [
+      {
+        h: "What AI is good for, and what it is not",
+        p: [
+          "It is good at the things that are true of the recording and invisible to you while speaking. You do not know that you sped up by thirty words per minute in the last two minutes, that your longest pause was under half a second, or that the word you built the whole talk around came out too soft to hear four times. All three are measurable and all three are fixable within a week.",
+          "It is not good at whether the talk was worth giving. Structure, the choice of examples, whether the ending earned the applause - a competent human audience judges those in a way nothing automated approaches. If your problem is that the material is thin, no measurement will find it.",
+          "It is also not an audience. Rehearsing alone into a laptop trains you for rehearsing alone into a laptop, which is why the last rehearsal before a real talk should have at least one person in the room even if the previous ten did not.",
+        ],
+      },
+      {
+        h: "A talk is not a pitch, and the numbers move",
+        p: [
+          "A sixty-second pitch is short enough that one pace figure describes it. A ten-minute talk is not. What you want from a longer rehearsal is pace per section, because the failure mode is drift: most speakers open at a reasonable rate and finish thirty to forty words per minute faster, usually starting from the slide they were least sure of.",
+          "Filler rate behaves differently too. In a short pitch fillers cluster before numbers. In a talk they cluster at transitions, in the two or three seconds after one section ends and before the next begins, which is exactly where a rehearsed pause would have done the work instead.",
+          "Overrun is its own measurement and the one most talks fail on. Time each rehearsal end to end rather than trusting the slide count. A talk that runs to eleven minutes in rehearsal runs to thirteen in the room, because nerves add words rather than removing them.",
+          "The comfortable band is the same as anywhere else: roughly 130 to 150 words per minute, dropping toward 120 for material the audience has never heard before. Above about 170 people follow the words and stop retaining the point.",
+        ],
+      },
+      {
+        h: "Rehearse the parts that actually fail",
+        p: [
+          "The first thirty seconds. This is where nerves are highest, where pace is least controlled, and where an audience decides how much attention to give the remaining nine minutes. It is worth rehearsing this section more times than the rest of the talk combined.",
+          "The transitions. Almost nobody rehearses the sentence that gets from section three to section four, which is why it is where fillers and lost pace concentrate. Write the transition sentences down and say them aloud on their own until they are automatic.",
+          "The ending. Talks that trail off do it because the speaker rehearsed the middle and improvised the last twenty seconds. Know your final sentence exactly, and rehearse stopping after it.",
+          "The questions afterwards. Q&A is unrehearsable as a script and very rehearsable as a format: answer in about thirty seconds, take a beat before you start, stop when you have made the point. Practising that shape matters more than predicting the questions.",
+        ],
+      },
+      {
+        h: "Stage fright is physical, and it shows up in the numbers",
+        p: [
+          "Nerves do not usually announce themselves as fear. They announce themselves as a faster heart rate, shallower breathing and a shorter fuse for silence, and those three produce exactly the delivery pattern you can measure: pace up, pauses gone, word endings dropped.",
+          "This is useful because the symptom is more tractable than the cause. Telling yourself to be less nervous does nothing. Deliberately holding a one-second pause at every full stop does something immediately, and it works even while the nerves are still there.",
+          "The other half is exposure, and exposure requires repetition rather than intensity. Ten one-minute recordings across ten days moves the physical response more than one long panicked rehearsal the night before.",
+        ],
+      },
+      {
+        h: "A free rehearsal schedule for a two-week runway",
+        p: [
+          "Days 1 to 3: record the opening ninety seconds only, once a day. Do not rehearse the whole talk yet. You are establishing pace and a baseline for the section that carries the most risk.",
+          "Days 4 to 8: run the talk in halves, timing each half. Fix the worst single number after each run - usually pace drift in the second half, occasionally a filler cluster at one specific transition.",
+          "Days 9 to 12: full run-throughs, timed, standing up, at the volume you will actually use. Volume changes pace, so a seated murmured rehearsal does not predict the real thing.",
+          "Days 13 and 14: one run in front of a person, and one recorded run of the opening and closing only. Do not add new material in the last two days; the marginal value of a better example is lower than the cost of rehearsing it twice.",
+        ],
+      },
+      {
+        h: "Where a free tier will stop",
+        p: [
+          "Most free tiers cap either the length of a recording or the number per day. For a ten-minute talk this matters, and the workaround is to rehearse in sections rather than fighting the cap - which is better practice anyway, since section-level rehearsal is where the fixes happen.",
+          "Free tiers rarely include video, so eye contact, gesture and where you stand are outside what any of this measures. Those are real parts of public speaking and a phone camera propped on a shelf covers them adequately.",
+          "Nothing free will give you an audience, room acoustics, or the specific feeling of a microphone that is louder than you expected. Book five minutes in the actual room if you possibly can; it is worth more than another rehearsal.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Is there a genuinely free AI for public speaking practice?",
+        a: "Yes, several, though the free tiers differ enormously. What to check is whether the allowance recurs daily or weekly rather than being a lifetime handful, because rehearsing a talk takes ten or more sessions and a five-session lifetime cap runs out before the useful part begins.",
+      },
+      {
+        q: "Can an app help with stage fright?",
+        a: "Indirectly, and more than you would expect. It cannot lower your heart rate, but nerves express themselves as measurable delivery changes - faster pace, vanished pauses, dropped word endings - and correcting those directly makes you sound composed while you are still nervous. The composure usually follows.",
+      },
+      {
+        q: "How many times should I rehearse a talk?",
+        a: "Around ten runs for a ten-minute talk, weighted heavily toward the opening and the transitions rather than distributed evenly. Full run-throughs matter less than most people think; sectional rehearsal is where the fixes actually happen.",
+      },
+      {
+        q: "Does rehearsing alone into a laptop transfer to a real audience?",
+        a: "Partly. Pace, pauses and filler rate transfer well because they are motor habits. Nerve tolerance transfers poorly, which is why the last rehearsal should have at least one live person in the room and, if possible, take place standing in the actual space.",
+      },
+    ],
+    related: [
+      "free-ai-communication-tools",
+      "how-to-speak-with-confidence",
+      "how-to-use-pauses-when-speaking",
+    ],
+    cta: CTA.pace,
+  },
+  {
+    slug: "ai-speaking-partner",
+    title: "Practising by Talking to an AI",
+    metaTitle: "Free AI Speaking Partner: Does It Work?",
+    description:
+      "Talking to an AI is genuinely useful for one thing and useless for another. What a free AI speaking partner is good for, what it cannot give you, and how to run a session.",
+    intro:
+      "An AI speaking partner is good at one thing that matters and bad at one thing people expect from it. It is good at making you speak out loud, unscripted, to a question you did not write, as often as you like and without the social cost of using up someone else's afternoon. It is bad at judging you the way a person would: it does not get bored, it does not misunderstand you in the specific way a distracted investor does, and it accepts a vague answer far more readily than a human ever would. Used for the first and not the second, it is the cheapest speaking practice available.",
+    updated: "2026-08-22",
+    readMinutes: 9,
+    primaryKeyword: "best free ai english speaking partner",
+    secondaryKeywords: [
+      "apps to talk to ai",
+      "ai voice chat free",
+      "english communication ai app free",
+      "free ai app to improve communication skills",
+      "chat bot online free",
+    ],
+    cluster: "tools",
+    sections: [
+      {
+        h: "Why talking to an AI works at all",
+        p: [
+          "The gap most people have is not knowledge, it is retrieval under load. You know the answer, and something about being asked out loud, in real time, by someone who is waiting, makes it come out worse than it does in your head. Closing that gap requires reps of the exact thing - being asked and answering - and reps are what an AI partner supplies without limit.",
+          "It also removes the social cost. A colleague will do this twice before it becomes an imposition. An AI will do it forty times, at midnight, and ask the same uncomfortable question again after you fumbled it, which is precisely the repetition the fumble needed.",
+          "And it produces the one thing rehearsing in your head cannot: an actual spoken answer, with a real length, real pace and real hesitations. Almost everyone underestimates how long their answers run, usually by a factor of two, and no amount of mental rehearsal reveals that.",
+        ],
+      },
+      {
+        h: "Typing to a chatbot is not speaking practice",
+        p: [
+          "Text chat trains writing. It gives you unlimited time to compose, a backspace key, and no pressure to fill silence - the three things that are absent from every real conversation you were trying to prepare for.",
+          "If a tool is going to help your speaking, the practice has to be spoken out loud, in one take, with the clock running. That is the only version that engages the machinery that fails you in the room.",
+          "This is worth checking before you commit to a tool, because a lot of products described as speaking partners are text products with a play button. The test is simple: can you answer without touching the keyboard, and does it hold you to a length.",
+        ],
+      },
+      {
+        h: "What to look for in a free one",
+        p: [
+          "It should ask one question at a time and then wait. A partner that delivers three questions in a paragraph has turned a conversation into a reading exercise, and you will answer the last one and forget the first two - which is also what happens with human interviewers, but you cannot practise recovering from it if the format never creates it.",
+          "It should follow up on the weakest part of your answer rather than moving on politely. The value is concentrated in the second question, because the first one you were ready for.",
+          "It should measure something. A partner that only talks back leaves you with an impression of how it went, and impressions are exactly what recording exists to replace. Pace, length and filler rate for each answer are the minimum worth having.",
+          "It should let you pick the pressure. Practising a friendly standup and practising a hostile investor are different exercises, and doing only the friendly one builds a confidence that does not survive contact.",
+        ],
+      },
+      {
+        h: "What it cannot give you",
+        p: [
+          "Stakes. Nothing is at risk, and part of what breaks people in real meetings is knowing that something is. Practice narrows the gap without closing it.",
+          "A face. Most of what you read from a listener - the moment they stop following, the small frown at the number you glossed - comes through an expression, and answering into a text box or a voice with no face trains none of that.",
+          "Genuine standards. An AI will accept an answer that a person would have pushed back on, so you have to supply the discipline it will not. Set your own rules before the session and hold to them: thirty seconds a question, no restarting a sentence, no answering a question you were not asked.",
+          "Silence that costs something. A human pause is uncomfortable and that discomfort is the thing you are training against. An AI pause is free, which makes pause practice easier than it will be on the day.",
+        ],
+      },
+      {
+        h: "How to run a twenty-minute session",
+        p: [
+          "Pick one scenario and stay in it. Mixing an interview, a pitch and a standup in one session gives you three shallow reps instead of six useful ones.",
+          "Answer in about thirty seconds: a claim, one piece of evidence, then stop. The stopping is the part being practised. Most people keep talking past the point because the silence afterwards feels like a failure, and it is not.",
+          "Do not restart. When an answer goes wrong, finish it anyway, because finishing badly is a skill and it is the one you will need. Restarting trains you to restart, and you cannot restart in a real meeting.",
+          "Take the worst two answers and do those questions again at the end. That is the whole session: fifteen minutes of reps and five minutes on the two that failed.",
+        ],
+      },
+      {
+        h: "When to stop talking and start recording",
+        p: [
+          "A conversational partner is the right tool for retrieval under pressure. It is the wrong tool for measuring a habit, because every session has different questions and different lengths, so nothing is comparable week to week.",
+          "For habit work you want the opposite: the same prompt, the same length, recorded solo, so the only variable is you. That is the exercise that shows a filler rate falling from nine per minute to four across a fortnight.",
+          "Most people need both, in roughly a two to one ratio - daily solo recording to establish and track the habit, a conversational session twice a week to make sure it survives being interrupted. Doing only the second is how you end up comfortable talking and unable to say why nothing changed.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Is there a free AI I can just talk to for practice?",
+        a: "Yes, though free tiers on voice are tighter than on text because each spoken turn costs the provider more to run. Check two things: whether it is genuinely voice rather than a text chatbot with audio playback, and how many turns or sessions the free allowance covers per day.",
+      },
+      {
+        q: "Can an AI speaking partner improve my spoken English?",
+        a: "For fluency under pressure, yes, because the limiting factor past intermediate level is retrieval rather than vocabulary and retrieval improves with reps. For pronunciation it is weaker, and for whether your answer was actually good it is unreliable, since it will accept a vague answer a person would have challenged.",
+      },
+      {
+        q: "How is this different from talking to myself?",
+        a: "The question is not yours. Talking to yourself means you choose what to answer, which quietly removes the exact difficulty you are training for. A partner that asks a follow-up you were not ready for reproduces the part of a real conversation that goes wrong.",
+      },
+      {
+        q: "How long should a practice session be?",
+        a: "Twenty minutes, and no more than one scenario. Attention for this kind of practice falls off sharply after about that long, and a second scenario in the same session usually produces worse reps than stopping and coming back tomorrow.",
+      },
+    ],
+    related: [
+      "free-ai-communication-tools",
+      "how-to-prepare-for-investor-qa",
+      "how-to-improve-english-communication-skills",
+    ],
+    cta: CTA.answer,
+  },
+  {
+    slug: "yoodli-alternatives",
+    title: "Free Alternatives to Yoodli and Poised",
+    metaTitle: "Free Yoodli and Poised Alternatives",
+    description:
+      "How Yoodli, Poised and recording-based coaches differ, where each free tier stops, and how to choose by the situation you are preparing for rather than the feature list.",
+    intro:
+      "AI speech coaches come in three shapes, and most comparison articles list them as if they competed. They mostly do not. A recording analyser measures a rehearsal you made on purpose. A meeting copilot sits in a real call and coaches you inside it. A roleplay simulator asks you questions so you can practise answering. Yoodli is mainly the first and third, Poised is the second, and which one is worth your time depends entirely on whether your problem shows up when you rehearse or only when someone else is in the room. Details below were accurate in August 2026; pricing and packaging on any of these products change, so check the vendor before you commit.",
+    updated: "2026-08-22",
+    readMinutes: 9,
+    primaryKeyword: "yoodli alternatives",
+    secondaryKeywords: [
+      "yoodli ai",
+      "poised ai",
+      "free alternative to yoodli",
+      "best ai tools for communications professionals",
+      "ai speech coach comparison",
+    ],
+    cluster: "tools",
+    sections: [
+      {
+        h: "The three shapes of AI speech coach",
+        p: [
+          "Recording analysers. You record deliberately, alone, and get measurements back with the timestamps that produced them. The strength is repeatability: the same prompt at the same length a week later is the only setup where a change in your filler rate means anything. The weakness is that rehearsal pressure is not meeting pressure.",
+          "Meeting copilots. Something joins your live calls and coaches you during or immediately after them. The strength is that it sees the real thing, including the moment you talked over someone. The weakness is that a bot in the meeting is a decision involving everyone else on the call, and that you cannot practise a call you are not having.",
+          "Roleplay simulators. An AI plays an interviewer, a customer or an investor and asks questions. The strength is pressure on demand. The weakness is that it will accept an answer a real counterpart would have pushed on, and that no two sessions are comparable, so it measures nothing over time.",
+          "Most people need the first plus one of the others. Almost nobody needs all three, and buying all three is the most common way this category gets abandoned in week two.",
+        ],
+      },
+      {
+        h: "Yoodli, briefly",
+        p: [
+          "Yoodli analyses speech and runs AI roleplays, reporting on filler words, pacing and word choice, with interview and sales-conversation practice as a headline use case. It is a mature product with a large feature surface, and it is aimed at a broad audience rather than one situation.",
+          "The free tier, as of August 2026, is a small lifetime allowance - on the order of five roleplays - rather than a recurring one, with paid plans starting around eight dollars a month billed annually and a higher tier for unlimited practice. That shape is worth understanding before you start: a lifetime handful is sized for evaluating the product, not for the two weeks of repetition that changes a habit.",
+          "If you want breadth, an established product, and you expect to pay, it is a reasonable default. If you want to record every day for a fortnight without a card, the free tier will run out before the useful part starts.",
+        ],
+      },
+      {
+        h: "Poised, briefly",
+        p: [
+          "Poised is the meeting copilot of the group. It coaches communication inside live calls across the usual platforms, which puts it in a genuinely different category from anything you use to rehearse alone.",
+          "Poised was acquired by Deepgram in June 2024 and has continued as a product since. As with any acquired tool, confirm current availability and packaging on the vendor site rather than from a comparison article, this one included.",
+          "It answers a question the others cannot: what you actually do in a real meeting, as opposed to what you do when you know you are rehearsing. That is worth a lot if the two differ for you. It is worth much less if your problem is a talk you are giving in ten days, since there is no live call to sit in.",
+        ],
+      },
+      {
+        h: "Choosing by situation rather than by feature list",
+        p: [
+          "You have a pitch, a talk or an interview on a date. You need a recording analyser and a daily habit, because the whole point is repetition against a fixed deadline. A meeting copilot has nothing to attach to.",
+          "You are fine one-to-one and lose the room in group calls. You need a meeting copilot, because the failure does not reproduce when you rehearse and no amount of solo recording will surface it.",
+          "You know your material and freeze when interrupted. You need roleplay, and specifically roleplay that follows up on the weak half of your answer rather than moving politely to the next question.",
+          "You do not know which of the three describes you. Record sixty seconds answering a hard question about your own work. If the recording is already bad, the problem is delivery and rehearsal fixes it. If it is fine and meetings still go badly, the problem is what happens with other people present, and that is a different tool.",
+        ],
+      },
+      {
+        h: "Where FounderVoice sits, and where it does not",
+        p: [
+          "FounderVoice is a recording analyser first. You record sixty seconds in the browser and get pace overall and per section, filler count and rate with timestamps, pause length and placement, word-level clarity, and pitch range - with the moment behind each number, so you can hear it rather than trust it. The free allowance is ten recordings every 24 hours with no account and no card, which is deliberately the recurring shape rather than a lifetime handful, because a habit needs two weeks and not five attempts.",
+          "It also has a practice mode, where an AI plays a standup lead, a sceptical operator or a seed investor and pushes back on what you said. The free allowance there is smaller than for recording, which is honest about what each costs to run.",
+          "After several sessions it compares you against your own history rather than an average, which is the part that turns a set of numbers into a trend you can act on.",
+          "What it is not: there is no meeting bot, so it will not sit in your calls; there is no video, so eye contact, gesture and posture are outside what it measures; and it is aimed at founder situations - the pitch, the investor questions, the demo, the interview - rather than at general-purpose sales enablement. If you need a copilot inside live meetings, Poised is the category and this is not it.",
+        ],
+      },
+      {
+        h: "Evaluating any of them in one afternoon",
+        p: [
+          "Record the same sixty seconds into each candidate. Use a question you find genuinely uncomfortable about your own work, not a scripted paragraph, because a scripted paragraph hides every problem you are trying to find.",
+          "Then check four things. Does it give you the timestamp behind each number, or only the number. Does it name one thing to fix, or list twelve. Can it compare this session to your last one. And does it penalise your accent, which you can test by recording something you know was perfectly clear.",
+          "A tool that fails the first check is selling a score. A tool that fails the third is measuring you in isolation every time, which is the same as not measuring you at all. Those two eliminate most of the field in about twenty minutes.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Is Yoodli free?",
+        a: "It has a free tier, but as of August 2026 it is a small lifetime allowance of roleplays rather than a recurring daily or weekly one, with paid plans above it. That is enough to evaluate the product and not enough for the sustained repetition that changes a delivery habit. Check their pricing page for current terms.",
+      },
+      {
+        q: "Is Poised still available?",
+        a: "Poised was acquired by Deepgram in June 2024 and has continued as a live-meeting coaching product since. Availability and packaging after an acquisition are worth confirming on the vendor site rather than from any comparison article.",
+      },
+      {
+        q: "What is the best AI communication tool for communications professionals?",
+        a: "Whichever exposes the raw measurements and the timestamps instead of a summary score, and lets you compare sessions over months. If you already know what a filler word is, the value is entirely in the evidence trail and the trend line, and a product built around one readout gives you neither.",
+      },
+      {
+        q: "Do I need a paid plan to actually improve?",
+        a: "No, if the free tier recurs. What changes delivery is one minute a day for two weeks with the same prompt, and that fits inside a recurring free allowance. Paid tiers buy breadth - unlimited roleplay, team features, meeting integration - rather than a better measurement of the four numbers that matter.",
+      },
+    ],
+    related: [
+      "free-ai-communication-tools",
+      "free-ai-public-speaking-practice",
+      "pitch-practice-for-founders",
+    ],
+    cta: CTA.free,
   },
 ];
 

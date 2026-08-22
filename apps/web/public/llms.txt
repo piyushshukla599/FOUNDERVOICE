@@ -46,6 +46,13 @@ the working targets the product coaches toward, not results of a study:
 - [How to Prepare for Investor Q&A](https://foundervoice.app/guides/how-to-prepare-for-investor-qa): Building a question bank from what you are dreading, and answering in 30 seconds.
 - [How to Explain Your Startup Clearly](https://foundervoice.app/guides/how-to-explain-your-startup-clearly): The one-liner, how to test whether it works, and the delivery half nobody rehearses.
 
+## Guides: free AI speech tools
+
+- [Free AI Tools for Communication Skills](https://foundervoice.app/guides/free-ai-communication-tools): The four categories of AI speech tool, what each measures, and what free actually means.
+- [Free AI for Public Speaking Practice](https://foundervoice.app/guides/free-ai-public-speaking-practice): What AI can and cannot do for a talk, and a two-week rehearsal schedule.
+- [Free AI Speaking Partner](https://foundervoice.app/guides/ai-speaking-partner): What talking to an AI is good for, what it cannot give you, and how to run a session.
+- [Free Yoodli and Poised Alternatives](https://foundervoice.app/guides/yoodli-alternatives): Recording analysers, meeting copilots and roleplay simulators compared by situation.
+
 ## Product
 
 - [Start free](https://foundervoice.app/onboarding): Record your first minute. No signup.
