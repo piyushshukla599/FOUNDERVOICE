@@ -1,4 +1,4 @@
-import { assertUploadSize } from "./upload";
+import { assertUploadSize, uploadName } from "./upload";
 
 /** Browser talks to FastAPI directly, avoids Next.js 10MB proxy buffering on uploads/audio. */
 const CONFIGURED_BASE =
@@ -200,7 +200,7 @@ export const api = {
   ) => {
     assertUploadSize(file);
     const fd = new FormData();
-    fd.append("file", file, (file as File).name || "recording.webm");
+    fd.append("file", file, uploadName(file, "recording"));
     fd.append("title", title);
     fd.append("mode", mode);
     if (meta?.exercise_key) fd.append("exercise_key", meta.exercise_key);
@@ -247,8 +247,7 @@ export const api = {
   ) => {
     assertUploadSize(file);
     const fd = new FormData();
-    const name = file.type.includes("wav") ? "conversation.wav" : "conversation.webm";
-    fd.append("file", file, name);
+    fd.append("file", file, uploadName(file, "conversation"));
     fd.append("title", opts.title);
     fd.append("conversation_index", String(opts.conversation_index));
     fd.append("duration_hint", String(opts.duration_hint));

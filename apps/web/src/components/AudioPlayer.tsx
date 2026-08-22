@@ -29,6 +29,8 @@ export const AudioPlayer = forwardRef<AudioHandle, {
   onProgress?: (seconds: number) => void;
 }>(function AudioPlayer({ src, fallbackDuration = 0, onProgress }, ref) {
   const el = useRef<HTMLAudioElement>(null);
+  /** A seek asked for before the header arrived, applied once it does. */
+  const pendingSeek = useRef<number | null>(null);
   const [playing, setPlaying] = useState(false);
   const [current, setCurrent] = useState(0);
   const [reported, setReported] = useState(0);
@@ -39,14 +41,21 @@ export const AudioPlayer = forwardRef<AudioHandle, {
   const seek = useCallback((seconds: number) => {
     const a = el.current;
     if (!a) return;
-    const go = () => {
-      a.currentTime = Math.max(0, seconds);
-      void a.play().catch(() => undefined);
-    };
+    const target = Math.max(0, seconds);
     // Assigning currentTime before the browser has the header is a no-op, and
     // silently doing nothing is exactly how "click the moment" appeared broken.
-    if (a.readyState >= 1) go();
-    else a.addEventListener("loadedmetadata", go, { once: true });
+    if (a.readyState >= 1) a.currentTime = target;
+    else pendingSeek.current = target;
+    /* play() is called here, from the tap itself, rather than after the header
+       lands. iOS ignores preload="metadata" and loads nothing until playback
+       is asked for, so readyState sits at 0 and the deferred branch is the
+       only one ever taken on a phone - and it used to wait on a loadedmetadata
+       event that nothing had asked the browser to produce, so every "jump to
+       this moment" was a silent no-op. Even once it fired, the play() inside
+       it was no longer inside the gesture, and iOS rejects that into the catch
+       below. Calling it now both keeps the gesture and starts the load the
+       pending seek is waiting on. */
+    void a.play().catch(() => undefined);
   }, []);
 
   const toggle = useCallback(() => {
@@ -62,6 +71,7 @@ export const AudioPlayer = forwardRef<AudioHandle, {
     setFailed(false);
     setReported(0);
     setCurrent(0);
+    pendingSeek.current = null;
   }, [src]);
 
   const pct = total > 0 ? Math.min(100, (current / total) * 100) : 0;
@@ -87,6 +97,10 @@ export const AudioPlayer = forwardRef<AudioHandle, {
         setFailed(false);
         const d = e.currentTarget.duration;
         if (Number.isFinite(d) && d > 0) setReported(d);
+        if (pendingSeek.current !== null) {
+          e.currentTarget.currentTime = pendingSeek.current;
+          pendingSeek.current = null;
+        }
       }}
       onTimeUpdate={(e) => {
         const t = e.currentTarget.currentTime;

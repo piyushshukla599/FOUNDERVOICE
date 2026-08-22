@@ -94,6 +94,19 @@ html {
   font-size: 15px;
   scroll-behavior: smooth;
   -webkit-tap-highlight-color: transparent;
+  /* The decorative glows are meant to bleed past the column they sit behind -
+     .fv-halo::before is 135% of its section and then breathes out to 1.13 of
+     that. On a wide screen it spills into the empty margin beside the centred
+     max-w-5xl column and no one notices. On a phone there is no margin, so it
+     spilled past the viewport and gave every public page a horizontal scroll
+     of about 35px, which reads as a broken header because the whole page can
+     be dragged sideways under it.
+
+     clip, not hidden: hidden turns this into a scroll container and kills
+     every `position: sticky` in AppShell. clip does the same clipping with no
+     scroll container, and a browser too old to know it simply behaves as it
+     does today. */
+  overflow-x: clip;
 }
 
 @media (prefers-reduced-motion: reduce) {

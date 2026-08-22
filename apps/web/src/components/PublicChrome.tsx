@@ -8,11 +8,23 @@ import { Logo } from "@/components/Logo";
  */
 export function PublicHeader() {
   return (
-    <header className="mx-auto flex max-w-5xl items-center justify-between px-6 py-6">
+    /* The row needs 405px to stand up - a 134px wordmark, a 223px nav and two
+       24px gutters - and it carried no responsive class at all, so on every
+       iPhone narrower than a Pro Max it simply overflowed: flex items default
+       to min-width:auto, nothing shrank, nothing wrapped, and the whole
+       landing page picked up a horizontal scrollbar with "Start free" hanging
+       off the right edge. Wrapping puts the nav on its own line below the
+       wordmark instead, which costs one line of height and loses nothing. At
+       sm and up the nav is w-auto again and this is the same single row it
+       always was. */
+    <header className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-y-4 px-5 py-5 sm:px-6 sm:py-6">
       <Link href="/" aria-label="FounderVoice home">
         <Logo size={28} idSuffix="hdr" />
       </Link>
-      <nav className="flex items-center gap-6 text-[13.5px]" aria-label="Main">
+      <nav
+        className="flex w-full items-center justify-between gap-6 text-[13.5px] sm:w-auto sm:justify-end"
+        aria-label="Main"
+      >
         <Link href="/guides" className="text-[var(--muted)] transition-colors hover:text-[var(--ink)]">
           Guides
         </Link>
