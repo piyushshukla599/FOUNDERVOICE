@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import { Analytics } from "@vercel/analytics/next";
 import { AnalyticsBridge } from "@/components/AnalyticsBridge";
 import { AppShell } from "@/components/AppShell";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -177,6 +178,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <ErrorBoundary>
           <AppShell>{children}</AppShell>
         </ErrorBoundary>
+        <Analytics />
       </body>
     </html>
   );
