@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { GUIDES } from "@/lib/guides";
 import { SITE_URL } from "@/lib/schema";
+import { TOOLS } from "@/lib/tools";
 
 /**
  * Only the public, indexable surfaces belong here. The app's own screens
@@ -21,7 +22,8 @@ import { SITE_URL } from "@/lib/schema";
 /** Bump when the static marketing pages are meaningfully edited. */
 const STATIC_UPDATED = {
   home: "2026-08-21",
-  guidesIndex: "2026-08-21",
+  guidesIndex: "2026-08-24",
+  toolsIndex: "2026-08-24",
   onboarding: "2026-08-21",
   contact: "2026-08-21",
   privacy: "2026-06-01",
@@ -48,6 +50,22 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date(g.updated),
       changeFrequency: "monthly" as const,
       priority: 0.8,
+    })),
+    /* The tool pages sit above the guides in priority, not below. They carry
+       the commercial intent - "filler word counter", "speaking pace test" -
+       which is the traffic that converts, and until they existed every one of
+       those searches had only the homepage pointed at it. */
+    {
+      url: `${base}/tools`,
+      lastModified: new Date(STATIC_UPDATED.toolsIndex),
+      changeFrequency: "weekly",
+      priority: 0.9,
+    },
+    ...TOOLS.map((t) => ({
+      url: `${base}/tools/${t.slug}`,
+      lastModified: new Date(t.updated),
+      changeFrequency: "monthly" as const,
+      priority: 0.85,
     })),
     {
       url: `${base}/onboarding`,

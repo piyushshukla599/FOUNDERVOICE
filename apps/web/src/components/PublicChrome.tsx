@@ -25,6 +25,13 @@ export function PublicHeader() {
         className="flex w-full items-center justify-between gap-6 text-[13.5px] sm:w-auto sm:justify-end"
         aria-label="Main"
       >
+        {/* Tools before Guides. The tool pages carry the commercial intent
+            and every internal link into them is worth more than one into an
+            article, so they get the earlier position in the nav that every
+            page on the site renders. */}
+        <Link href="/tools" className="text-[var(--muted)] transition-colors hover:text-[var(--ink)]">
+          Tools
+        </Link>
         <Link href="/guides" className="text-[var(--muted)] transition-colors hover:text-[var(--ink)]">
           Guides
         </Link>
@@ -50,6 +57,7 @@ export function PublicFooter() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <Logo size={22} idSuffix="ftr" />
           <nav className="flex flex-wrap gap-5" aria-label="Footer">
+            <Link href="/tools" className="transition-colors hover:text-[var(--ink)]">Tools</Link>
             <Link href="/guides" className="transition-colors hover:text-[var(--ink)]">Guides</Link>
             <Link href="/onboarding" className="transition-colors hover:text-[var(--ink)]">Start free</Link>
             <Link href="/contact" className="transition-colors hover:text-[var(--ink)]">Contact</Link>

@@ -29,8 +29,19 @@ the working targets the product coaches toward, not results of a study:
 - Accent has little effect on perceived competence; pace, pauses and clarity
   carry most of it.
 
+## Tools
+
+Each runs in the browser on a sixty-second recording and returns the timestamp
+behind every number. Ten recordings every 24 hours, no account.
+
+- [Free Filler Word Counter](https://foundervoice.app/tools/filler-word-counter): Counts um, uh, like, you know, so, actually and basically, with a rate per minute and a timestamp on each.
+- [Speaking Pace Test (Words Per Minute)](https://foundervoice.app/tools/speaking-pace-test): Words per minute for the whole clip and per section, so the point where you sped up is visible.
+- [AI Pitch Practice for Founders](https://foundervoice.app/tools/pitch-practice): All five delivery measurements on a rehearsed pitch, plus practice rounds against a sceptical counterpart.
+- [All tools](https://foundervoice.app/tools): The index.
+
 ## Guides: delivery
 
+- [How to Communicate as a Founder](https://foundervoice.app/guides/how-to-communicate-as-a-founder): The hub for delivery - the five habits that carry the signal, and the order to fix them in.
 - [How to Stop Using Filler Words](https://foundervoice.app/guides/how-to-stop-using-filler-words): Why um appears, and the replace-with-silence method that reduces it.
 - [How to Stop Talking Too Fast](https://foundervoice.app/guides/how-to-stop-talking-too-fast): Add pauses rather than slowing words, with drills that survive pressure.
 - [Ideal Speaking Pace (Words Per Minute)](https://foundervoice.app/guides/ideal-speaking-pace-words-per-minute): What pace to target, how to measure it, and why the target moves.
@@ -41,6 +52,7 @@ the working targets the product coaches toward, not results of a study:
 
 ## Guides: founder communication
 
+- [Investor Pitch Delivery](https://foundervoice.app/guides/investor-pitch-delivery): The hub for the founder cluster - what the first sixty seconds decide, and how to rehearse for them.
 - [How to Practise a Startup Pitch](https://foundervoice.app/guides/pitch-practice-for-founders): Rehearsing delivery rather than slides, and the numbers investors respond to.
 - [How to Sound Confident in an Investor Pitch](https://foundervoice.app/guides/how-to-sound-confident-in-an-investor-pitch): Where founders lose composure, and the pre-answer pause that prevents it.
 - [How to Prepare for Investor Q&A](https://foundervoice.app/guides/how-to-prepare-for-investor-qa): Building a question bank from what you are dreading, and answering in 30 seconds.
@@ -56,7 +68,7 @@ the working targets the product coaches toward, not results of a study:
 ## Product
 
 - [Start free](https://foundervoice.app/onboarding): Record your first minute. No signup.
-- [All guides](https://foundervoice.app/guides): The full index, split by delivery and founder communication.
+- [All guides](https://foundervoice.app/guides): The full index, split by delivery, founder communication and free AI tools.
 - [Contact](https://foundervoice.app/contact): info@foundervoice.app
 
 ## Optional

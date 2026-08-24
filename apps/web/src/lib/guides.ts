@@ -18,7 +18,27 @@
  * load below rather than left to whoever notices the ranking drop.
  */
 
-export type Section = { h: string; p: string[] };
+/**
+ * A section is prose plus, optionally, one extractable block.
+ *
+ * Prose-only was the single biggest thing wrong with these pages. A featured
+ * snippet, an AI Overview citation and a People-Also-Ask answer are all
+ * extractions, and what gets extracted is a list, a table or a short direct
+ * answer - never a well-written paragraph. Seventeen guides of unbroken prose
+ * gave Google nothing to lift, so they could rank on relevance and still lose
+ * every result that actually gets clicked.
+ *
+ * One extractable block per section, placed after the paragraphs that set it
+ * up rather than in place of them.
+ */
+export type Section = {
+  h: string;
+  p: string[];
+  /** A steps list (ordered) or a criteria list (unordered). */
+  list?: { ordered?: true; intro?: string; items: string[] };
+  /** Comparison and threshold data. Tables win their own SERP treatment. */
+  table?: { caption: string; head: string[]; rows: string[][] };
+};
 
 export type GuideCta = {
   /** Names the measurement the reader came for, not the product. */
@@ -34,8 +54,25 @@ export type Guide = {
   /** Under 60 characters where possible, since Google truncates past that. */
   metaTitle: string;
   description: string;
+  /**
+   * The extractable answer: one self-contained paragraph, 40-55 words, that
+   * answers `primaryKeyword` with no pronoun pointing at anything off-screen.
+   * Rendered in its own block under the H1 and reused verbatim as the
+   * Question/Answer pair a featured snippet is lifted from.
+   *
+   * Deliberately not the same sentences as `intro`. The answer is what a
+   * machine lifts; the intro is what a person reads next.
+   */
+  answer: string;
   /** Answers the query in the first paragraph, before any preamble. */
   intro: string;
+  /**
+   * First publication, distinct from `updated`. They used to be one field, so
+   * every guide told Google it was published and last modified on the same
+   * day - which reads as a page nobody has revisited, and throws away the
+   * freshness signal an actual revision earns.
+   */
+  published: string;
   updated: string;
   readMinutes: number;
   /** One guide, one primary intent. Asserted unique across the set. */
@@ -120,9 +157,12 @@ export const GUIDES: Guide[] = [
     metaTitle: "How to Communicate as a Founder",
     description:
       "The delivery habits that decide whether a founder is believed: pace, filler words, pauses, clarity and energy. What each one costs you, and how to measure your own.",
+    answer:
+      "Communicate as a founder by fixing delivery before content. Five measurable habits carry almost all of the signal a listener reads: speaking pace, filler rate, pause placement, word-level clarity and vocal energy. Record sixty seconds, measure all five, and work on the single habit furthest from its target range.",
     intro:
       "Founders are judged on delivery long before anyone evaluates the business. In a first meeting the listener has no data on you, so they read the only signal available - how you sound while you explain something you know better than they do. Five habits carry almost all of that signal: how fast you speak, how often you fill silence, where your pauses land, how clearly each word arrives, and how much your voice moves. None of them are personality. All five are measurable, and all five move within a couple of weeks once you can see them.",
-    updated: "2026-08-22",
+    published: "2026-08-22",
+    updated: "2026-08-24",
     readMinutes: 11,
     primaryKeyword: "how to communicate as a founder",
     secondaryKeywords: [
@@ -144,27 +184,71 @@ export const GUIDES: Guide[] = [
       {
         h: "The five habits that carry the signal",
         p: [
-          "Speaking pace is the first. Most founders sit between 120 and 200 words per minute, and the comfortable band for explaining something unfamiliar is roughly 130 to 150. Above about 170 listeners stop retaining detail even while they follow individual words, which is the worst possible failure - they cannot tell you they are lost, because nothing sounded wrong.",
+          "Speaking pace is the first. Most founders sit between 120 and 200 [words per minute](/guides/ideal-speaking-pace-words-per-minute), and the comfortable band for explaining something unfamiliar is roughly 130 to 150. Above about 170 listeners stop retaining detail even while they follow individual words, which is the worst possible failure - they cannot tell you they are lost, because nothing sounded wrong.",
           "Filler words are the second. Um, uh, like, you know and so appear at the exact points where you are thinking, so their distribution maps your uncertainty for the listener whether you want it to or not. The count matters less than where they cluster: fillers before every number read as a founder unsure of their own figures.",
           "Pauses are the third, and the one most founders have backwards. The problem is almost never pausing too long. It is pausing in the wrong place - mid-sentence, while searching for a word - and never pausing at the boundaries where a listener needs a moment to file what you just said.",
           "Clarity is the fourth: whether each word actually arrives intact. Word endings are the first thing to go under pressure, and a listener who misses a word does not stop you to ask. They reconstruct it, get it wrong, and quietly lose the thread. Vocal energy is the fifth - pitch and volume variation, which is most of what people mean when they call someone flat or unconvincing.",
         ],
+        table: {
+          caption:
+            "The five delivery habits, what each one signals, and the range to aim for",
+          head: ["Habit", "What a listener reads from it", "Target"],
+          rows: [
+            [
+              "Speaking pace",
+              "Whether you are in control or escaping the room",
+              "130-150 words per minute",
+            ],
+            [
+              "Filler words",
+              "Whether you have thought this through",
+              "Under 3 per minute",
+            ],
+            [
+              "Pauses",
+              "Whether you mean what you just said",
+              "0.5-1.5s, at the end of thoughts",
+            ],
+            [
+              "Clarity",
+              "How much of it they can actually use",
+              "Under 5% of words unclear",
+            ],
+            [
+              "Vocal energy",
+              "Whether you believe it yourself",
+              "Pitch range that does not flatten",
+            ],
+          ],
+        },
       },
       {
         h: "Why self-assessment does not work here",
         p: [
-          "Every one of these habits is invisible from the inside, and for a structural reason. Your speaking pace is coupled to your arousal, and so is your internal sense of tempo. When you speed up under pressure, your reference clock speeds up with it, so fast speech feels normal in the moment and only sounds fast on playback.",
+          "Every one of these habits is invisible from the inside, and for a structural reason. Your [speaking pace](/guides/how-to-stop-talking-too-fast) is coupled to your arousal, and so is your internal sense of tempo. When you speed up under pressure, your reference clock speeds up with it, so fast speech feels normal in the moment and only sounds fast on playback.",
           "Fillers are worse. They are produced pre-consciously, in the gap where the next phrase is still being assembled, which means the part of you that would notice them is busy doing the thing that causes them. Asking a founder how many times they said um is asking them to remember something they were never aware of.",
-          "This is why generic advice fails. Being told to slow down, sound confident or cut the fillers names a symptom you already suspected and gives you no way to tell whether anything changed. Measurement replaces that with a number that moves, and a number that moves is something you can actually train against.",
+          "This is why generic advice fails. Being told to slow down, [sound confident](/guides/how-to-sound-confident-in-an-investor-pitch) or cut the fillers names a symptom you already suspected and gives you no way to tell whether anything changed. Measurement replaces that with a number that moves, and a number that moves is something you can actually train against.",
         ],
       },
       {
         h: "Fix one habit at a time, in this order",
         p: [
-          "Pace first, because it is upstream of the others. When you slow into the 130 to 150 band you create the gaps where pauses can land, and you give yourself enough processing time that fillers stop being necessary. Founders who fix pace often find their filler rate falls without ever working on fillers directly.",
+          "Pace first, because it is upstream of the others. When you slow into the 130 to 150 band you create the gaps where pauses can land, and you give yourself enough processing time that fillers stop being necessary. Founders who fix pace often find their [filler rate](/guides/how-to-stop-using-filler-words) falls without ever working on fillers directly.",
           "Pauses second, because the mechanism that lowers pace is pausing at boundaries rather than drawling the words. Deliberately slowing your articulation is exhausting and never survives past the first sentence. Stopping fully for half a second to a second and a half at the end of each thought drops the average without changing how the words themselves sound.",
           "Fillers third, and only if they are still there. Then clarity, then energy. Working on all five at once produces no measurable movement on any of them, which is the most common reason founders conclude that speaking practice does not work for them.",
         ],
+        list: {
+          ordered: true,
+          intro:
+            "Work down this list and stop at the first habit that is outside its range. Fixing two timing habits in the same fortnight makes both worse, because they interfere.",
+          items: [
+            "Pace, if you are above 160 words per minute. Everything else is easier to hear once the words arrive at a speed a listener can follow.",
+            "Fillers, if you are above 8 per minute. This is the habit that most changes how prepared you sound, and it moves fastest.",
+            "Pauses, once pace and fillers are inside range. Placement matters more than length: end of thought, never mid-sentence.",
+            "Clarity, which usually improves on its own once the first three are fixed, and only needs separate work if it does not.",
+            "Vocal energy last. It is the hardest to change deliberately and the least costly to leave alone.",
+          ],
+        },
       },
       {
         h: "What to measure, and how often",
@@ -218,9 +302,12 @@ export const GUIDES: Guide[] = [
     metaTitle: "Investor Pitch Delivery: How to Sound Fundable",
     description:
       "The delivery side of raising: what the first sixty seconds decide, how pace and pauses change under investor pressure, and how to practise the questions rather than the script.",
+    answer:
+      "Investor pitch delivery is decided in the first sixty to ninety seconds, before the deck reaches the market slide. Open with what the company does in one plain sentence, hold a pace near 140 words per minute, stop fully after your ask, and rehearse the questions rather than the script.",
     intro:
       "Pitch delivery is judged in the first sixty to ninety seconds, before the deck reaches the market slide. In that window an investor is not evaluating the business - they do not have enough information to - they are deciding whether to keep listening properly or to start half-listening while they think about their next meeting. What tips that decision is almost entirely delivery: whether you open with the thing itself or with preamble, whether your pace leaves room to follow you, and whether you sound like someone answering a question rather than performing a rehearsal.",
-    updated: "2026-08-22",
+    published: "2026-08-22",
+    updated: "2026-08-24",
     readMinutes: 10,
     primaryKeyword: "investor pitch delivery",
     secondaryKeywords: [
@@ -250,7 +337,7 @@ export const GUIDES: Guide[] = [
       {
         h: "What pressure does to your pace",
         p: [
-          "Pitch delivery is where speaking pace fails most reliably, because the arousal that drives it is highest. Founders who sit comfortably at 140 words per minute in conversation routinely hit 180 or more once the meeting is real, and they do not notice, because their internal sense of tempo rose with their heart rate.",
+          "Pitch delivery is where [speaking pace](/guides/how-to-stop-talking-too-fast) fails most reliably, because the arousal that drives it is highest. Founders who sit comfortably at 140 [words per minute](/guides/ideal-speaking-pace-words-per-minute) in conversation routinely hit 180 or more once the meeting is real, and they do not notice, because their internal sense of tempo rose with their heart rate.",
           "The signature is consistent: the first thirty seconds sit near normal and the back half accelerates as the pressure accumulates. That is exactly the wrong shape, because the back half is where the detail lives - the numbers, the traction, the thing you most need them to retain.",
           "The fix is not slowing the words. It is stopping fully at the end of each idea for half a second to a second and a half. The words keep their normal tempo, the average across the minute lands in the 130 to 150 band, and the listener gets the processing time the detail requires.",
         ],
@@ -270,6 +357,18 @@ export const GUIDES: Guide[] = [
           "Rising intonation at the end of statements, which turns your traction into a question. This one is unconscious and common in founders pitching a round they are not sure they deserve, and it undoes the content of the sentence entirely.",
           "Speeding up when challenged. The instinct under a hard question is to produce more words faster, which reads as defensiveness. Slowing down under challenge is the single most reliable delivery signal of someone who has thought about the objection before.",
         ],
+        list: {
+          intro:
+            "None of these are about the business. All of them are read as information about the business anyway.",
+          items: [
+            "Accelerating past 170 words per minute the moment you reach the part you are least sure of.",
+            "Answering a question with context first and the answer somewhere in the third sentence.",
+            "Ending statements on a rising pitch, which turns a claim into a request for agreement.",
+            "Filling every gap, so there is no moment where the investor can react to what you said.",
+            "Running the [one-line description](/guides/how-to-explain-your-startup-clearly) together with the next sentence, so it never lands as a sentence.",
+            "Going quiet in volume rather than in speech when challenged, which reads as retreat.",
+          ],
+        },
       },
       {
         h: "How to rehearse without sounding rehearsed",
@@ -317,9 +416,12 @@ export const GUIDES: Guide[] = [
     metaTitle: "Free AI Tools for Communication Skills",
     description:
       "What free AI communication tools measure, where the free tier usually stops, and how to tell a tool that hands you evidence from one that hands you a score.",
+    answer:
+      "Free AI tools for communication skills fall into four categories: recording analysers, meeting copilots, roleplay partners and transcribers. Only the first three change how you speak, and all three measure the same five things - speaking pace, filler words, pause length, clarity and vocal energy. Choose on free allowance and evidence, not feature count.",
     intro:
-      "Almost every AI communication tool does one of four jobs: it analyses a recording you made, it sits inside a live meeting, it talks back to you so you can practise, or it turns speech into text. Only the first three change how you speak, and each measures the same small set of things - speaking pace, filler words, pause length, word-level clarity and vocal range. Nothing free, and nothing paid, can tell you whether the point you made was worth making. Knowing which of the four you need takes a minute, and it saves signing up for three tools that do the same job badly.",
-    updated: "2026-08-22",
+      "Almost every AI communication tool does one of four jobs: it analyses a recording you made, it sits inside a live meeting, it talks back to you so you can practise, or it turns speech into text. Only the first three change how you speak, and each measures the same small set of things - [speaking pace](/guides/how-to-stop-talking-too-fast), [filler words](/guides/how-to-stop-using-filler-words), pause length, word-level clarity and vocal range. Nothing free, and nothing paid, can tell you whether the point you made was worth making. Knowing which of the four you need takes a minute, and it saves signing up for three tools that do the same job badly.",
+    published: "2026-08-22",
+    updated: "2026-08-24",
     readMinutes: 10,
     primaryKeyword: "free ai tool for communication skills",
     secondaryKeywords: [
@@ -338,7 +440,7 @@ export const GUIDES: Guide[] = [
       {
         h: "The five things an AI can measure",
         p: [
-          "Speaking pace, in words per minute, over the whole recording and inside each section. The section figure is the one that matters: almost nobody speaks at a constant rate, and the useful finding is not that you averaged 155 but that you hit 190 the moment you reached the number you were nervous about.",
+          "Speaking pace, in [words per minute](/guides/ideal-speaking-pace-words-per-minute), over the whole recording and inside each section. The section figure is the one that matters: almost nobody speaks at a constant rate, and the useful finding is not that you averaged 155 but that you hit 190 the moment you reached the number you were nervous about.",
           "Filler rate, in fillers per minute rather than a raw count. A count depends on how long you spoke, so it cannot be compared week to week. Under about 3 per minute reads as ordinary speech; above 8 becomes the thing a listener remembers instead of the point.",
           "Pause length and placement. A tool that reports an average pause tells you almost nothing. What you need is the longest pause in the clip and where each one fell, because a pause at the end of a thought does a completely different job from a pause in the middle of your own sentence.",
           "Word-level clarity, meaning which specific words came out too soft, too fast or too swallowed to survive the trip to a listener. This is the measurement people most often mistake for an accent score, and it is not one: it is about whether the word arrived.",
@@ -359,8 +461,35 @@ export const GUIDES: Guide[] = [
           "Recording analysers. You record on your own and the tool returns measurements with timestamps. Best for building a habit, because you control the prompt, the length and the pressure, and because you can repeat the same sixty seconds a week later and see whether anything moved. This is the category with the most genuinely free options.",
           "Live meeting coaches. Something joins your Zoom, Meet or Teams call and coaches during it or immediately after. Best when the problem only appears with real people in the room and you cannot reproduce it alone. The trade-off is real: something has to be in the meeting, which usually means a visible participant and a conversation with whoever else is on the call.",
           "Conversational practice partners. You talk out loud and an AI asks questions back, so you are answering something you did not write. Best for the specific failure of knowing your material perfectly and losing it the moment someone interrupts. Free tiers here are usually the tightest, because every turn costs the provider money.",
-          "Transcription and writing assistants. Genuinely useful, and not coaching. A transcript shows you your sentence structure and how long you took to reach the point, which is worth having, but it is blind to everything the audio carried. If rambling is your problem a transcript helps; if pace, pauses or flatness are the problem it cannot see them at all.",
+          "Transcription and writing assistants. Genuinely useful, and not coaching. A transcript shows you your sentence structure and how long you took to reach the point, which is worth having, but it is blind to everything the audio carried. If [rambling](/guides/how-to-stop-rambling) is your problem a transcript helps; if pace, pauses or flatness are the problem it cannot see them at all.",
         ],
+        table: {
+          caption:
+            "The four categories of AI communication tool, and the situation each one fits",
+          head: ["Category", "What it does", "Use it when"],
+          rows: [
+            [
+              "Recording analyser",
+              "Measures a rehearsal you made on purpose and shows the timestamps behind each number",
+              "You have a date to prepare for and want a trend",
+            ],
+            [
+              "Meeting copilot",
+              "Joins a live call and coaches during or after it",
+              "The problem only appears with other people present",
+            ],
+            [
+              "Roleplay partner",
+              "Asks you questions in a role so you practise answering",
+              "You freeze when interrupted rather than when speaking",
+            ],
+            [
+              "Transcriber",
+              "Turns speech into text and nothing more",
+              "You need the words, not feedback on the delivery",
+            ],
+          ],
+        },
       },
       {
         h: "What free usually means",
@@ -396,6 +525,18 @@ export const GUIDES: Guide[] = [
           "Days 8 to 14: keep the first habit, add the second, and bring in questions you did not write. At the end, re-record the day 1 prompt and compare. The gap is usually obvious enough that other people notice before you do.",
           "Re-record immediately after listening rather than tomorrow. The correction happens in the gap between hearing the defect and speaking again, and a day is long enough to lose most of it.",
         ],
+        list: {
+          ordered: true,
+          intro:
+            "The tool is the small part. This routine is what actually moves the numbers, and it works with any of the analysers above.",
+          items: [
+            "Days 1-3: record one unrehearsed minute a day and change nothing. You are establishing a baseline and getting past hearing your own voice.",
+            "Day 3: pick the single number furthest from its target range. Ignore the other four entirely.",
+            "Days 4-10: same daily minute, one instruction only, aimed at that number. Write the number down each day.",
+            "Days 11-14: raise the pressure - an uncomfortable question, or a two-second limit before you must start - and see how much of the gain survives.",
+            "Day 14: re-measure all five. Whatever is now furthest from range is next fortnight's work.",
+          ],
+        },
       },
     ],
     faqs: [
@@ -429,9 +570,12 @@ export const GUIDES: Guide[] = [
     metaTitle: "How to Stop Using Filler Words",
     description:
       "Filler words come from discomfort with silence, not a habit you can drop. The method that actually reduces them, with numbers to aim for and a two-week drill.",
+    answer:
+      "Stop using filler words by replacing each one with a closed-mouth pause rather than trying to delete it. An um is a placeholder produced while the sentence is still being planned, so silence has to take its place. Under 3 fillers per minute reads as normal speech; above 8 they become the content.",
     intro:
       "You reduce filler words by getting comfortable with silence, not by trying to delete the fillers. Every um is a placeholder your mouth produces while your brain is still assembling the sentence, so removing it without replacing it leaves nothing to fill the gap and the um comes straight back. The method that works is to swap each filler for a deliberate closed-mouth pause, one situation at a time, and to track the rate rather than judge the feeling. Under 3 fillers per minute reads as ordinary speech. Above 8 is where listeners start hearing the fillers instead of the point.",
-    updated: "2026-08-21",
+    published: "2026-08-21",
+    updated: "2026-08-24",
     readMinutes: 8,
     primaryKeyword: "how to stop using filler words",
     secondaryKeywords: [
@@ -453,7 +597,7 @@ export const GUIDES: Guide[] = [
       {
         h: "A filler and a thinking pause are the same moment",
         p: [
-          "Both occupy the same instant. Only one costs you anything. A thinking pause is silence while you decide what comes next; a filler is noise while you decide what comes next. The listener uses that moment identically either way, which is the part most people get wrong: they believe silence will read as being lost, when in practice it reads as being deliberate.",
+          "Both occupy the same instant. Only one costs you anything. A [thinking pause](/guides/how-to-use-pauses-when-speaking) is silence while you decide what comes next; a filler is noise while you decide what comes next. The listener uses that moment identically either way, which is the part most people get wrong: they believe silence will read as being lost, when in practice it reads as being deliberate.",
           "Recordings make this obvious in a way live conversation never does. A one-second silence feels enormous from the inside and passes almost unnoticed from the outside. The reason it feels enormous is that you are the only person present who knows you had not finished planning.",
           "So the target is not fewer words. It is the same moment, spent silently. That reframing moves more speakers than any amount of trying to catch the um mid-flight.",
         ],
@@ -467,6 +611,18 @@ export const GUIDES: Guide[] = [
           "Expect the second recording to feel slow and stilted. It will not sound that way. Compare the two on playback rather than from memory, because memory reports how it felt to produce and playback reports what a listener received.",
           "Repeat daily for a week on unrehearsed prompts. Most people roughly halve their rate in that time and then plateau. The plateau is the point where the remaining fillers are structural, and need the pace and structure work rather than more of this drill.",
         ],
+        list: {
+          ordered: true,
+          intro:
+            "Five passes. The whole method is one substitution, repeated until it stops requiring attention.",
+          items: [
+            "Record sixty seconds answering a question you have not rehearsed, and count your fillers. Fix nothing on this pass - you need a number from unedited speech.",
+            "Listen back and note where each filler landed, not how many there were. Look for the four positions: before a number, before a name, at the start of an answer, at the seam between two ideas.",
+            "Record the same prompt again with one instruction: when you feel the filler coming, close your mouth. A closed mouth cannot produce um or uh - both need the jaw open and the folds already running.",
+            "Compare the two recordings on playback rather than from memory. The second will feel slow to produce and will not sound slow to a listener.",
+            "Repeat daily for a week on prompts you have not seen. Most people roughly halve their rate, then plateau where the remaining fillers are structural.",
+          ],
+        },
       },
       {
         h: "Numbers to aim for",
@@ -476,13 +632,35 @@ export const GUIDES: Guide[] = [
           "Above 8 per minute the fillers become the content. In a pitch or an interview this is the level at which people report afterwards that the speaker seemed unprepared, even when the substance was strong.",
           "Track rate rather than count, because rate survives comparison across recordings of different lengths. Twelve fillers in ninety seconds and eight in sixty are the same problem; the raw counts suggest otherwise.",
         ],
+        table: {
+          caption:
+            "Filler word rates, what a listener hears at each level, and what to do about it",
+          head: ["Fillers per minute", "What a listener registers", "What to do"],
+          rows: [
+            [
+              "Under 3",
+              "Nothing. This is ordinary speech",
+              "Leave it alone - chasing zero costs warmth",
+            ],
+            [
+              "3 to 8",
+              "Something is off, without being able to name it",
+              "The closed-mouth drill, daily, for two weeks",
+            ],
+            [
+              "Above 8",
+              "The fillers instead of the point; reads as unprepared",
+              "Fix pace first, then the drill",
+            ],
+          ],
+        },
       },
       {
         h: "Mistakes that keep the rate high",
         p: [
           "Substituting a different filler. Replacing um with so, right or actually does nothing, because the listener registers the hesitation rather than the specific syllable. If your um count drops while your so count rises, you have moved the problem rather than solved it.",
           "Practising on rehearsed material. Reading a prepared paragraph aloud produces almost no fillers regardless of skill, which makes it useless as practice and misleading as measurement. Use questions you have not seen.",
-          "Speeding up to escape. Many speakers accelerate to reach the end of a sentence before the planning gap opens. That trades fillers for a pace problem and usually makes comprehension worse.",
+          "Speeding up to escape. Many speakers accelerate to reach the end of a sentence before the planning gap opens. That trades fillers for a [pace problem](/guides/how-to-stop-talking-too-fast) and usually makes comprehension worse.",
           "Working on fillers and pace in the same week. Both are timing habits and they interfere with each other. Fix whichever number is further from target, then move to the other.",
         ],
       },
@@ -530,9 +708,12 @@ export const GUIDES: Guide[] = [
     metaTitle: "How to Stop Talking Too Fast",
     description:
       "Talking too fast is a pressure response, not a personality trait. How to find your real pace, why telling yourself to slow down fails, and the drills that work.",
+    answer:
+      "Stop talking too fast by adding full stops between thoughts, not by slowing the words themselves. Pausing for half a second to a second at the end of each thought lowers your words per minute without producing a drawl. Aim for 130 to 150 words per minute measured across a whole recording.",
     intro:
-      "You stop talking too fast by adding pauses, not by slowing the words down. Deliberately slowing your articulation produces a drawl that is exhausting to maintain, which is why the instruction to slow down rarely survives past the first sentence. What actually lowers your words per minute is stopping fully at the end of each thought for half a second to a second and a half. The pace of the words themselves barely changes, the average across the minute drops into the comfortable 130 to 150 range, and comprehension rises sharply.",
-    updated: "2026-08-21",
+      "You stop talking too fast by adding pauses, not by slowing the words down. Deliberately slowing your articulation produces a drawl that is exhausting to maintain, which is why the instruction to slow down rarely survives past the first sentence. What actually lowers your [words per minute](/guides/ideal-speaking-pace-words-per-minute) is stopping fully at the end of each thought for half a second to a second and a half. The pace of the words themselves barely changes, the average across the minute drops into the comfortable 130 to 150 range, and comprehension rises sharply.",
+    published: "2026-08-22",
+    updated: "2026-08-24",
     readMinutes: 8,
     primaryKeyword: "how to stop talking too fast",
     secondaryKeywords: [
@@ -566,6 +747,38 @@ export const GUIDES: Guide[] = [
           "Below roughly 110, attention drifts. Deliberate slowness has its uses for a single weighted sentence, but sustained across a minute it reads as hesitant rather than considered.",
           "Technical or unfamiliar material sits at the lower end of the range; material your audience already knows tolerates the upper end. The mistake is picking a pace by personality rather than by what the listener has to do with it.",
         ],
+        table: {
+          caption:
+            "Speaking pace ranges and what each one does to a listener",
+          head: ["Words per minute", "How it reads", "Where it fits"],
+          rows: [
+            [
+              "Under 110",
+              "Laboured; attention drifts between words",
+              "Almost nowhere outside deliberate emphasis",
+            ],
+            [
+              "110-130",
+              "Considered, easy to follow",
+              "Technical material, bad audio, non-native listeners",
+            ],
+            [
+              "130-150",
+              "Normal, in control",
+              "Most situations, including a pitch",
+            ],
+            [
+              "150-170",
+              "Energetic, harder to retain",
+              "Familiar material to a warm room",
+            ],
+            [
+              "Above 170",
+              "Followed word by word, remembered barely at all",
+              "Nowhere you need the point to survive",
+            ],
+          ],
+        },
       },
       {
         h: "The pause method",
@@ -575,13 +788,24 @@ export const GUIDES: Guide[] = [
           "Compare the two. The word rate inside each thought will be nearly identical. The average across the minute will have dropped, often by twenty or more, and the second version will sound markedly more composed.",
           "This works where slowing down fails because it changes one discrete decision six times, rather than demanding continuous conscious control of a motor process that runs faster than deliberate attention.",
         ],
+        list: {
+          ordered: true,
+          intro:
+            "You are not slowing the words. You are inserting silence between the thoughts, which is what the measured number actually reflects.",
+          items: [
+            "Say one complete thought at your natural speed. Do not modify the words themselves.",
+            "Stop fully at the end of it. Mouth closed, half a second to a second, no sound of any kind.",
+            "Start the next thought at the same natural speed. Resist the urge to make up the lost time.",
+            "Repeat for sixty seconds and measure. A pace of 175 typically lands between 135 and 145 with nothing changed but the stops.",
+          ],
+        },
       },
       {
         h: "Drills that transfer to real situations",
         p: [
           "The full-stop drill. Read three sentences aloud and hold a two-second silence at each full stop. Two seconds is longer than you would ever use live; the point is to recalibrate what a pause feels like, so a one-second pause stops registering as a failure.",
           "The one-breath rule. Say one complete thought per breath and take the breath at the end rather than mid-sentence. Speakers who run fast almost always breathe in the wrong place, which is why they sound like they are running out of air when they are not.",
-          "The hostile-question drill. Have someone ask a question you would rather not answer, and require two seconds of silence before you start. This is the only drill here that survives contact with an actual investor meeting, because it trains the pause into the exact moment your pace normally spikes.",
+          "The hostile-question drill. Have someone ask a question you would rather not answer, and require two seconds of silence before you start. This is the only drill here that survives contact with an actual [investor meeting](/guides/investor-pitch-delivery), because it trains the pause into the exact moment your pace normally spikes.",
           "Ending on a full stop. Fast speakers chain thoughts with and, so and but, which removes every natural place to stop. Consciously ending on a full stop and starting the next thought fresh gives the pauses somewhere to live.",
         ],
       },
@@ -625,9 +849,12 @@ export const GUIDES: Guide[] = [
     metaTitle: "Ideal Speaking Pace (Words Per Minute)",
     description:
       "The right speaking pace is 130 to 150 words per minute for most situations. How to measure yours, why the target moves by context, and how to hit it reliably.",
+    answer:
+      "The ideal speaking pace is 130 to 150 words per minute for most situations. Go nearer 120 for technical or unfamiliar material and up to 160 for a story told to a familiar room. Below 110 sounds laboured; above 170 a listener follows the words but retains almost none of them.",
     intro:
-      "A good speaking pace is 130 to 150 words per minute for most situations. That range is wide enough to carry emphasis and slow enough for a listener to do something with what you said rather than merely follow it. The target moves with context: unfamiliar or technical material belongs nearer 120, while a story told to a room that already knows the space tolerates 160. What does not move is the ceiling. Above roughly 170 words per minute retention falls off regardless of how clearly you articulate, and above 190 comprehension itself starts to go.",
-    updated: "2026-08-21",
+      "A good [speaking pace](/guides/how-to-stop-talking-too-fast) is 130 to 150 words per minute for most situations. That range is wide enough to carry emphasis and slow enough for a listener to do something with what you said rather than merely follow it. The target moves with context: unfamiliar or technical material belongs nearer 120, while a story told to a room that already knows the space tolerates 160. What does not move is the ceiling. Above roughly 170 words per minute retention falls off regardless of how clearly you articulate, and above 190 comprehension itself starts to go.",
+    published: "2026-08-21",
+    updated: "2026-08-24",
     readMinutes: 7,
     primaryKeyword: "ideal speaking pace words per minute",
     secondaryKeywords: [
@@ -646,6 +873,43 @@ export const GUIDES: Guide[] = [
           "150 to 170: energetic. Works for familiar material and for audiences already engaged. Costs you nothing in comprehension and something in retention.",
           "Above 170: the listener follows in the moment and remembers noticeably less afterwards. This is the most dangerous band, because the speaker gets no live feedback that anything is wrong - nobody looks confused - and only discovers the cost when the follow-up does not arrive.",
         ],
+        table: {
+          caption:
+            "Ideal speaking pace by situation, in words per minute",
+          head: ["Situation", "Words per minute", "Why"],
+          rows: [
+            [
+              "Conversation",
+              "140-160",
+              "Turn-taking carries the rhythm, so speed costs less",
+            ],
+            [
+              "Presentation or talk",
+              "130-150",
+              "One-way speech needs processing time built in",
+            ],
+            [
+              "Investor pitch",
+              "130-150",
+              "High-stakes and unfamiliar - retention matters more than energy",
+            ],
+            [
+              "Technical explanation",
+              "110-130",
+              "Every unfamiliar term costs the listener a beat",
+            ],
+            [
+              "Audiobook or narration",
+              "150-160",
+              "The listener controls the pace and can rewind",
+            ],
+            [
+              "Podcast",
+              "150-170",
+              "Conversational register, forgiving format",
+            ],
+          ],
+        },
       },
       {
         h: "How to measure your own",
@@ -655,6 +919,17 @@ export const GUIDES: Guide[] = [
           "Measure the halves separately. A great many speakers sit at 140 for the first thirty seconds and 175 for the second, and a single average across the minute hides that completely. The acceleration is the actionable finding, not the mean.",
           "Take at least three samples across different days. Pace varies with sleep, caffeine and how much you care about the topic, and one reading will mislead you in whichever direction that day happened to fall.",
         ],
+        list: {
+          ordered: true,
+          intro:
+            "Two minutes of arithmetic, or one recording. Both give the same number.",
+          items: [
+            "Record sixty seconds of unrehearsed speech - an answer to a real question, not a paragraph read aloud.",
+            "Transcribe it and count the words. Any transcription will do; you need the count, not the accuracy.",
+            "Divide the word count by the length in minutes. Sixty seconds makes this the raw count.",
+            "Repeat on a second, different prompt. A single recording measures that recording; two measure you.",
+          ],
+        },
       },
       {
         h: "Why the target moves",
@@ -669,7 +944,7 @@ export const GUIDES: Guide[] = [
         h: "Hitting the target without sounding slow",
         p: [
           "Do not lower the word rate inside a sentence. Slowed articulation is what produces the recognisable drawl of somebody who has been told to slow down.",
-          "Lower the average with pauses between complete thoughts instead. Half a second to a second and a half at each of four to six thought boundaries in a minute is enough to move a 175 average into the low 150s without touching how fast the words come out.",
+          "Lower the average with [pauses between complete thoughts](/guides/how-to-use-pauses-when-speaking) instead. Half a second to a second and a half at each of four to six thought boundaries in a minute is enough to move a 175 average into the low 150s without touching how fast the words come out.",
           "Write to the pace when the slot is fixed. At 140 words per minute a sixty-second pitch holds about 140 words and a ninety-second one about 210. Most over-length pitches are a word-count problem being treated as a delivery problem.",
         ],
       },
@@ -705,9 +980,12 @@ export const GUIDES: Guide[] = [
     metaTitle: "How to Use Pauses When Speaking",
     description:
       "A pause of half a second to a second and a half at the end of a thought is the highest-leverage change most speakers can make. Where to put them and why they work.",
+    answer:
+      "Use pauses at the end of complete thoughts, never inside them, and hold each one for half a second to a second and a half. Pauses placed at thought boundaries lower your average pace without slowing your words, remove the gap fillers were occupying, and give a listener time to process the point.",
     intro:
-      "Use pauses at the end of complete thoughts, not in the middle of them, and hold each one for half a second to a second and a half. That single change does more work than any other delivery adjustment: it drops your average pace without slowing your words, it removes the gap that fillers were occupying, and it gives the listener the processing time they need to actually retain what you just said. The reason most people do not do it is that a one-second silence feels roughly three times longer to the speaker than it does to the room.",
-    updated: "2026-08-21",
+      "Use pauses at the end of complete thoughts, not in the middle of them, and hold each one for half a second to a second and a half. That single change does more work than any other delivery adjustment: it drops your [average pace](/guides/ideal-speaking-pace-words-per-minute) without slowing your words, it removes the gap that [fillers](/guides/how-to-stop-using-filler-words) were occupying, and it gives the listener the processing time they need to actually retain what you just said. The reason most people do not do it is that a one-second silence feels roughly three times longer to the speaker than it does to the room.",
+    published: "2026-08-22",
+    updated: "2026-08-24",
     readMinutes: 7,
     primaryKeyword: "how to use pauses when speaking",
     secondaryKeywords: [
@@ -734,6 +1012,17 @@ export const GUIDES: Guide[] = [
           "Before you change direction. Moving from problem to solution, or from what happened to what it means, deserves a longer pause than a sentence boundary - closer to a second and a half.",
           "Not in the middle of a clause. A pause inside a phrase reads as searching for the word, which is exactly the impression you were trying to avoid. Where the pause lands matters more than how many you use.",
         ],
+        list: {
+          intro:
+            "Placement decides whether a pause reads as control or as hesitation. The same one-second silence does both, depending only on where it falls.",
+          items: [
+            "At the end of a complete thought, always. This is the pause that does all the work.",
+            "Before you answer a question you were not expecting - it buys planning time and reads as consideration.",
+            "After your [one-line description](/guides/how-to-explain-your-startup-clearly), so it lands as a sentence rather than a clause.",
+            "Before a number you want remembered, and after it.",
+            "Never in the middle of a clause. A gap between subject and verb reads as losing the thread, because usually it is.",
+          ],
+        },
       },
       {
         h: "How long is right",
@@ -743,6 +1032,33 @@ export const GUIDES: Guide[] = [
           "A second and a half to two seconds at a structural break, or immediately after something you want to land. This is close to the maximum a listener will tolerate without wondering whether you have lost your place.",
           "Beyond about three seconds you are no longer pausing, you are stopping, and the room will start to fill the silence. There are speakers who use that deliberately. It is not a beginner move.",
         ],
+        table: {
+          caption:
+            "Pause length and what each one does",
+          head: ["Length", "What it does", "Where to use it"],
+          rows: [
+            [
+              "Under 0.3s",
+              "Registers as a breath, not a pause",
+              "Nowhere deliberately",
+            ],
+            [
+              "0.5-1.0s",
+              "Marks the end of a thought",
+              "Between sentences, throughout",
+            ],
+            [
+              "1.0-1.5s",
+              "Signals that what came before mattered",
+              "After a claim you want to land",
+            ],
+            [
+              "2s or more",
+              "Reads as searching, unless clearly deliberate",
+              "Before answering a hard question",
+            ],
+          ],
+        },
       },
       {
         h: "The drill",
@@ -793,9 +1109,12 @@ export const GUIDES: Guide[] = [
     metaTitle: "How to Speak with Confidence",
     description:
       "Confidence in speech is produced by pace, pauses and pitch range, not by feeling confident. What listeners actually respond to, and how to change each one.",
+    answer:
+      "Speak with confidence by changing four delivery behaviours rather than waiting to feel confident. Listeners read confidence from a pace that does not accelerate, pauses that land at the end of thoughts, pitch that varies rather than flattening, and sentences that end downward instead of rising. All four are measurable.",
     intro:
       "Sounding confident is a set of four measurable delivery behaviours, not an emotional state you have to reach first. Listeners read confidence from pace that does not accelerate, pauses that fall at the end of thoughts, pitch that varies rather than flattening, and sentences that end downward instead of rising. All four can be changed deliberately while you still feel nervous, which is the useful part: you do not have to feel confident to sound it, and sounding it usually brings the feeling along afterwards rather than the other way round.",
-    updated: "2026-08-21",
+    published: "2026-08-21",
+    updated: "2026-08-24",
     readMinutes: 8,
     primaryKeyword: "how to speak with confidence",
     secondaryKeywords: [
@@ -816,11 +1135,38 @@ export const GUIDES: Guide[] = [
       {
         h: "The four behaviours listeners actually read",
         p: [
-          "Stable pace. Not slow - stable. A recording that starts at 140 and ends at 180 reads as increasingly rattled even if the average looks fine. The variance carries the signal, so measuring the halves separately matters more than measuring the mean.",
-          "Pauses at thought boundaries. Silence at the end of a complete idea reads as having finished a point deliberately. Silence in the middle of a clause reads as having lost the word. Same duration, opposite interpretation.",
+          "[Stable pace](/guides/ideal-speaking-pace-words-per-minute). Not slow - stable. A recording that starts at 140 and ends at 180 reads as increasingly rattled even if the average looks fine. The variance carries the signal, so measuring the halves separately matters more than measuring the mean.",
+          "[Pauses at thought boundaries](/guides/how-to-use-pauses-when-speaking). Silence at the end of a complete idea reads as having finished a point deliberately. Silence in the middle of a clause reads as having lost the word. Same duration, opposite interpretation.",
           "Pitch range. Anxiety compresses pitch toward a monotone, and flat delivery is heard as either bored or uncertain. Range does not mean sing-song; it means the difference between your highest and lowest note across a sentence not collapsing to nearly nothing.",
           "Terminal downward inflection. Statements that end on a rising note read as questions, and a speaker who ends every sentence upward sounds like they are seeking approval for each one. Ending downward is a small, learnable change with a disproportionate effect.",
         ],
+        table: {
+          caption:
+            "The four measurable behaviours a listener reads as confidence",
+          head: ["Behaviour", "What low confidence sounds like", "What to aim for"],
+          rows: [
+            [
+              "Pace stability",
+              "Accelerating into the uncertain part",
+              "Same pace throughout, 130-150 wpm",
+            ],
+            [
+              "Pause placement",
+              "Gaps mid-sentence, none at the ends",
+              "0.5-1.5s at the end of thoughts",
+            ],
+            [
+              "Pitch range",
+              "Flattening to a monotone under pressure",
+              "Range that moves with the content",
+            ],
+            [
+              "Sentence endings",
+              "Rising, turning claims into questions",
+              "Falling, on every statement",
+            ],
+          ],
+        },
       },
       {
         h: "Changing each one",
@@ -843,7 +1189,7 @@ export const GUIDES: Guide[] = [
       {
         h: "A four-week progression",
         p: [
-          "Week 1: baseline only. One unrehearsed minute daily. Note your pace in each half, your longest pause and your filler rate. Change nothing.",
+          "Week 1: baseline only. One unrehearsed minute daily. Note your pace in each half, your longest pause and your [filler rate](/guides/how-to-stop-using-filler-words). Change nothing.",
           "Week 2: pauses. One instruction only - stop fully at the end of each thought. Expect pace and fillers to improve as side effects, since both were partly consequences of never stopping.",
           "Week 3: pitch and terminal inflection. Keep the pauses. Add the exaggerate-then-halve drill, and listen back to final words specifically.",
           "Week 4: pressure. Answer questions you have not seen, ideally uncomfortable ones, and re-measure everything. Whatever survives here is what you actually have. Whatever does not needs another cycle, which is normal rather than a sign it is not working.",
@@ -881,9 +1227,12 @@ export const GUIDES: Guide[] = [
     metaTitle: "How to Stop Rambling When You Talk",
     description:
       "Rambling is a structure problem, not a length problem. Why answers run long, the three-sentence shape that fixes it, and how to hear it in your own recordings.",
+    answer:
+      "Stop rambling by deciding where the answer ends before you start speaking. Rambling comes from beginning without a destination, so every sentence has to generate the next one. Use a three-sentence shape - answer, one piece of support, stop - and cap a spoken answer at roughly sixty seconds.",
     intro:
       "You stop rambling by deciding where the answer ends before you start it. Rambling is not caused by talking too much; it is caused by beginning to speak without having chosen a destination, so each sentence has to generate the next one and there is never an obvious place to stop. The fix is structural: answer in one sentence, support it in one or two, then stop. Most people who believe they ramble are producing ninety-second answers to questions that wanted twenty seconds, and they cannot tell because the length feels entirely different from the inside.",
-    updated: "2026-08-21",
+    published: "2026-08-22",
+    updated: "2026-08-24",
     readMinutes: 7,
     primaryKeyword: "how to stop rambling",
     secondaryKeywords: [
@@ -908,8 +1257,18 @@ export const GUIDES: Guide[] = [
           "Sentence one: the answer. Directly, with no preamble and no restating of the question. If the question was whether the metric is growing, sentence one says yes or no.",
           "Sentence two: the reason or the evidence. One piece, the strongest one. Not three.",
           "Sentence three: the implication, or the stop. Either what it means for the listener, or nothing at all - stopping after two sentences is a legitimate answer and it reads as decisive.",
-          "This shape holds for roughly twenty to thirty seconds of speech, which is the right length for the large majority of questions in meetings, interviews and investor conversations. Longer answers should be a deliberate choice you make because the question genuinely warranted it, not the default that happens when you did not choose.",
+          "This shape holds for roughly twenty to thirty seconds of speech, which is the right length for the large majority of questions in meetings, interviews and [investor conversations](/guides/how-to-prepare-for-investor-qa). Longer answers should be a deliberate choice you make because the question genuinely warranted it, not the default that happens when you did not choose.",
         ],
+        list: {
+          ordered: true,
+          intro:
+            "The shape is the whole method. It works because it decides the ending before you start, which is the thing rambling lacks.",
+          items: [
+            "Answer the question in one sentence. Not context, not background - the answer itself, first.",
+            "Support it with one piece of evidence, example or number. One, not three.",
+            "Stop. Do not summarise, do not add a second example, do not check whether that was enough.",
+          ],
+        },
       },
       {
         h: "Hearing it in your own recordings",
@@ -924,7 +1283,7 @@ export const GUIDES: Guide[] = [
         h: "Drills",
         p: [
           "The twenty-second cap. Answer unrehearsed questions with a hard twenty-second limit. It will feel brutally short and produce answers that are noticeably better. The constraint forces the decision about the destination to happen before you start.",
-          "Answer-first. Require the first sentence to contain the answer, with no run-up. This is harder than it sounds, because most people use the run-up to buy planning time, which is exactly what the pre-answer pause is for instead.",
+          "Answer-first. Require the first sentence to contain the answer, with no run-up. This is harder than it sounds, because most people use the run-up to buy planning time, which is exactly what the [pre-answer pause](/guides/how-to-use-pauses-when-speaking) is for instead.",
           "The one-claim rule. Make exactly one claim per answer and support it once. If a second claim genuinely matters, offer it - out loud, explicitly - as a separate thing the listener can ask about.",
           "Deliberate stopping. Plan the final sentence before you begin and stop on it, even if it feels abrupt. Abrupt from the inside is usually crisp from the outside, the same asymmetry that makes pauses feel longer than they are.",
         ],
@@ -945,7 +1304,7 @@ export const GUIDES: Guide[] = [
       },
       {
         q: "Is rambling the same as talking too fast?",
-        a: "No, though they often appear together. Rambling is a structure problem - the answer has no planned ending. Talking too fast is a timing problem. A fast rambler and a slow rambler have the same underlying issue, and fixing pace alone does not solve it.",
+        a: "No, though they often appear together. Rambling is a structure problem - the answer has no planned ending. Talking too fast is a timing problem. A fast rambler and a slow rambler have the same underlying issue, and fixing [pace](/guides/how-to-stop-talking-too-fast) alone does not solve it.",
       },
     ],
     related: [
@@ -961,9 +1320,12 @@ export const GUIDES: Guide[] = [
     metaTitle: "Improve English Communication Skills",
     description:
       "A measurable method for improving spoken English: track pace, filler words, pauses and clarity from your own recordings instead of following generic advice.",
+    answer:
+      "Improve spoken English by measuring it instead of studying it. Record sixty seconds answering a real question and check four numbers: words per minute, fillers per minute, average pause length, and how many words a listener would miss. Fix the worst number, record again, and repeat daily for two weeks.",
     intro:
-      "The fastest way to improve spoken English is to stop studying it and start measuring it. Record sixty seconds of yourself answering a real question, then check four numbers: your words per minute, your filler words per minute, your average pause length, and how many words a listener would have missed. Fix the worst number, record again, and repeat. Most people see a clear change within two weeks, because they are finally working on a specific defect instead of a vague feeling.",
-    updated: "2026-08-21",
+      "The fastest way to improve spoken English is to stop studying it and start measuring it. Record sixty seconds of yourself answering a real question, then check four numbers: your [words per minute](/guides/ideal-speaking-pace-words-per-minute), your [filler words](/guides/how-to-stop-using-filler-words) per minute, your average pause length, and how many words a listener would have missed. Fix the worst number, record again, and repeat. Most people see a clear change within two weeks, because they are finally working on a specific defect instead of a vague feeling.",
+    published: "2026-08-21",
+    updated: "2026-08-24",
     readMinutes: 8,
     primaryKeyword: "how to improve english communication skills",
     secondaryKeywords: [
@@ -989,6 +1351,33 @@ export const GUIDES: Guide[] = [
           "Pause length. Confident speakers pause 0.5 to 1.5 seconds at the end of a thought. If your longest pause in a minute is under half a second, you are not giving anything room to land, and you will sound rushed even at a reasonable word count.",
           "Clarity, meaning how many words are actually recoverable by a listener. Dropped word endings and swallowed final consonants cost far more comprehension than accent does.",
         ],
+        table: {
+          caption:
+            "The four numbers to check in a recording, and the range each should sit in",
+          head: ["Number", "How to read it", "Target"],
+          rows: [
+            [
+              "Words per minute",
+              "Speed a listener has to keep up with",
+              "130-150",
+            ],
+            [
+              "Fillers per minute",
+              "How often you fill a planning gap with sound",
+              "Under 3",
+            ],
+            [
+              "Average pause length",
+              "Whether thoughts are separated at all",
+              "0.5-1.5s at thought ends",
+            ],
+            [
+              "Unclear words",
+              "Words too soft or fast to survive the trip",
+              "Under 5% of words",
+            ],
+          ],
+        },
       },
       {
         h: "Accent is not the variable you think it is",
@@ -1048,9 +1437,12 @@ export const GUIDES: Guide[] = [
     metaTitle: "How to Practise a Startup Pitch",
     description:
       "Most founders rehearse a pitch by rereading slides. How to practise delivery instead, the numbers investors respond to, and a rehearsal schedule that holds up.",
+    answer:
+      "Practise a startup pitch by recording it out loud and measuring the delivery, not by rereading the deck. Rereading rehearses recognition; investors respond to delivery. Record the sixty-second version, check pace, filler rate, pause placement and total length, fix the worst of the four, then record the same pitch again.",
     intro:
-      "Practise your pitch by recording it out loud and measuring the delivery, not by rereading the deck. Rereading rehearses recognition; investors are responding to delivery. Record the sixty-second version, check four numbers - pace, filler rate, pause placement and how long you actually took - fix the worst one, and record again. Founders who do this for a week before a raise usually find two things: the pitch is thirty seconds longer than they believed, and the acceleration in the back half is what was reading as nerves.",
-    updated: "2026-08-21",
+      "Practise your pitch by recording it out loud and measuring the delivery, not by rereading the deck. Rereading rehearses recognition; investors are responding to delivery. Record the sixty-second version, check four numbers - pace, [filler rate](/guides/how-to-stop-using-filler-words), [pause placement](/guides/how-to-use-pauses-when-speaking) and how long you actually took - fix the worst one, and record again. Founders who do this for a week before a raise usually find two things: the pitch is thirty seconds longer than they believed, and the acceleration in the back half is what was reading as nerves.",
+    published: "2026-08-21",
+    updated: "2026-08-24",
     readMinutes: 8,
     primaryKeyword: "how to practise a startup pitch",
     secondaryKeywords: [
@@ -1074,8 +1466,35 @@ export const GUIDES: Guide[] = [
           "Length. Time the sixty-second version. If it runs past seventy-five seconds you do not have a sixty-second pitch, and the fix is cutting words rather than talking faster.",
           "Pace, measured in each half separately. The signature of an under-rehearsed pitch is 140 in the first half and 175 in the second. The average looks acceptable and the delivery does not.",
           "Filler rate. Fillers cluster before numbers, which in a pitch means they cluster on your traction slide - precisely where you least want hesitation. Check where yours fall rather than only how many there are.",
-          "Pause placement. There should be a full stop after your one-line description of what the company does, and another before your ask. Both are moments the listener needs to process, and founders routinely run straight through them.",
+          "Pause placement. There should be a full stop after your [one-line description](/guides/how-to-explain-your-startup-clearly) of what the company does, and another before your ask. Both are moments the listener needs to process, and founders routinely run straight through them.",
         ],
+        table: {
+          caption:
+            "What to measure in a recorded pitch rehearsal",
+          head: ["Number", "Why it decides the meeting", "Target"],
+          rows: [
+            [
+              "Pace",
+              "Accelerating reads as escaping the room",
+              "130-150 wpm, stable throughout",
+            ],
+            [
+              "Filler rate",
+              "Above 8 a minute and you read as unprepared",
+              "Under 3 per minute",
+            ],
+            [
+              "Pause placement",
+              "A pause after the ask is what makes it an ask",
+              "End of thoughts, 0.5-1.5s",
+            ],
+            [
+              "Actual length",
+              "Founders routinely run 2x their estimate",
+              "60s version stays under 75s",
+            ],
+          ],
+        },
       },
       {
         h: "Rehearse the structure, not the words",
@@ -1102,6 +1521,20 @@ export const GUIDES: Guide[] = [
           "Day 5: beats in isolation. Twenty seconds each, in random order, unrehearsed sequence.",
           "Days 6 to 7: interruptions. Have someone break in with a question partway through, and practise answering it and returning. This is the rehearsal that most closely resembles the actual meeting, and the one founders skip.",
         ],
+        list: {
+          ordered: true,
+          intro:
+            "Seven days, one recording a day. The point is repetition against a fixed deadline, not perfection on day one.",
+          items: [
+            "Day 1: record the sixty-second version cold and measure all four numbers. Do not fix anything.",
+            "Day 2: record the one-line description on its own, twenty times. It is the sentence everything else depends on.",
+            "Day 3: full pitch again, working the single worst number from day 1.",
+            "Day 4: answer the five questions you least want, timed, sixty seconds each.",
+            "Day 5: full pitch, then straight into two questions with no gap. This is the transition where founders lose pace.",
+            "Day 6: record in the actual conditions - standing, at the time of day the meeting falls, on the device you will use.",
+            "Day 7: rest. A pitch rehearsed on the morning of the meeting sounds rehearsed on the morning of the meeting.",
+          ],
+        },
       },
     ],
     faqs: [
@@ -1135,9 +1568,12 @@ export const GUIDES: Guide[] = [
     metaTitle: "Sound Confident in an Investor Pitch",
     description:
       "Investors read confidence from four delivery signals, all of them measurable. What they are, where founders lose them, and how to hold them under real pressure.",
+    answer:
+      "Sound confident in an investor pitch by holding four behaviours steady under pressure: a pace that does not accelerate past about 160 words per minute, a full stop after your one-line description and before your ask, pitch range that does not flatten, and answers that begin with the answer.",
     intro:
-      "You sound confident in an investor pitch by holding four delivery behaviours steady under pressure: a pace that does not accelerate, a full stop after your one-line description and before your ask, pitch range that does not flatten, and answers that begin with the answer. Founders lose all four in the same place - the moment a question arrives that they were not expecting - which is why rehearsing the pitch does almost nothing for how confident you sound and rehearsing the interruptions does almost everything.",
-    updated: "2026-08-21",
+      "You sound confident in an [investor pitch](/guides/investor-pitch-delivery) by holding four delivery behaviours steady under pressure: a pace that does not accelerate, a full stop after your [one-line description](/guides/how-to-explain-your-startup-clearly) and before your ask, pitch range that does not flatten, and answers that begin with the answer. Founders lose all four in the same place - the moment a question arrives that they were not expecting - which is why rehearsing the pitch does almost nothing for how confident you sound and rehearsing the interruptions does almost everything.",
+    published: "2026-08-22",
+    updated: "2026-08-24",
     readMinutes: 7,
     primaryKeyword: "how to sound confident in an investor pitch",
     secondaryKeywords: [
@@ -1163,6 +1599,16 @@ export const GUIDES: Guide[] = [
           "On the ask. Many founders speed up and drop their volume on the amount, which reads as apology. The ask deserves a pause before it and a downward inflection on the number.",
           "In the back half generally. Pace drifts upward through a pitch as the pressure accumulates, so the last twenty seconds are usually the worst-delivered and are also what the room remembers most recently.",
         ],
+        list: {
+          intro:
+            "Almost always in the same four places, and almost always within a second of the same trigger.",
+          items: [
+            "The moment a question arrives mid-sentence, where pace jumps and the answer starts with context.",
+            "The ask, delivered as a subordinate clause and run into the next sentence rather than stopped after.",
+            "The traction slide, where an uncomfortable number gets said faster and quieter than everything around it.",
+            "The competitor question, where pitch flattens and sentence endings start rising.",
+          ],
+        },
       },
       {
         h: "The pre-answer pause",
@@ -1184,7 +1630,7 @@ export const GUIDES: Guide[] = [
         h: "Rehearsing under pressure",
         p: [
           "Record answers to the ten questions you least want to be asked. Not the ten most likely - the ten you are dreading. The dread is what changes your delivery, and rehearsing comfortable questions does not touch it.",
-          "Measure the same numbers you measure everywhere else: pace by half, filler rate, longest pause, answer length. Compare the dread questions to your baseline. The size of the gap is the amount of work still to do.",
+          "Measure the same numbers you measure everywhere else: pace by half, [filler rate](/guides/how-to-stop-using-filler-words), longest pause, answer length. Compare the dread questions to your baseline. The size of the gap is the amount of work still to do.",
           "Re-record the worst one immediately. The correction happens in the gap between hearing the defect and speaking again, and that gap closes if you wait until tomorrow.",
         ],
       },
@@ -1220,9 +1666,12 @@ export const GUIDES: Guide[] = [
     metaTitle: "How to Prepare for Investor Q&A",
     description:
       "The questions decide the meeting, not the pitch. How to build a real question bank, structure answers so they land, and rehearse the ones you are dreading.",
+    answer:
+      "Prepare for investor Q&A by rehearsing the ten questions you are dreading, out loud and timed. Structure every answer as claim, then evidence, then stop, and cap it at about sixty seconds. Rehearse them cold rather than in order, because the meeting will not ask them in the order you practised.",
     intro:
-      "Prepare for investor Q&A by rehearsing the ten questions you are dreading, out loud, with the answers timed. The pitch is the part founders rehearse and the questions are the part that decides the meeting, which is exactly backwards. Build a bank of the questions you do not want, structure each answer as claim then evidence then stop, cap it at thirty seconds, and record yourself answering them cold. The measurable target is that your pace, filler rate and answer length on a dreaded question look like your baseline on an easy one.",
-    updated: "2026-08-21",
+      "Prepare for investor Q&A by rehearsing the ten questions you are dreading, out loud, with the answers timed. The [pitch](/guides/investor-pitch-delivery) is the part founders rehearse and the questions are the part that decides the meeting, which is exactly backwards. Build a bank of the questions you do not want, structure each answer as claim then evidence then stop, cap it at thirty seconds, and record yourself answering them cold. The measurable target is that your pace, [filler rate](/guides/how-to-stop-using-filler-words) and answer length on a dreaded question look like your baseline on an easy one.",
+    published: "2026-08-22",
+    updated: "2026-08-24",
     readMinutes: 8,
     primaryKeyword: "how to prepare for investor q&a",
     secondaryKeywords: [
@@ -1240,6 +1689,22 @@ export const GUIDES: Guide[] = [
           "Group them. Most fall into a small number of buckets - the market is smaller than you claim, the growth is not organic, the competitor is better funded, the team is missing a function, the churn is the real story. Preparing a bucket prepares several questions at once.",
           "Keep it to about ten. A bank of forty questions gets skimmed rather than rehearsed, and skimming is exactly the failure mode this exercise exists to fix.",
         ],
+        list: {
+          intro:
+            "Start from the questions you hope are not asked. That list is short, you already know it, and it is where the meeting is decided.",
+          items: [
+            "Why is this a company rather than a feature someone else ships next quarter?",
+            "What happens to you if the incumbent does this in a year?",
+            "Which number here are you least confident in, and why?",
+            "Why has growth flattened over the last two months?",
+            "Why is this the right team for this specific problem?",
+            "What did you get wrong in the last twelve months, and what changed as a result?",
+            "How much of your revenue comes from your largest customer?",
+            "What have you already tried that did not work?",
+            "Why now, when this was possible three years ago?",
+            "What would make you shut this down?",
+          ],
+        },
       },
       {
         h: "The shape of a good answer",
@@ -1249,6 +1714,16 @@ export const GUIDES: Guide[] = [
           "Then stop, or add one sentence of implication. Twenty to thirty seconds total. Longer answers to hard questions read as defensiveness almost regardless of content.",
           "Concede what is true. If the competitor genuinely is better funded, saying so and then explaining why it does not decide the outcome is far stronger than disputing it. Investors have heard the dispute and they have rarely heard the concession.",
         ],
+        list: {
+          ordered: true,
+          intro:
+            "Claim, evidence, stop. Under sixty seconds. The stop is the part founders skip, and it is the part that reads as confidence.",
+          items: [
+            "State the answer in the first sentence, even when the answer is that you do not know.",
+            "Give one piece of evidence for it - a number, a customer, a specific thing that happened.",
+            "Stop, and let them ask the follow-up. Answering the follow-up before it is asked reads as anticipating an attack.",
+          ],
+        },
       },
       {
         h: "Rehearse cold, and measure",
@@ -1299,9 +1774,12 @@ export const GUIDES: Guide[] = [
     metaTitle: "How to Explain Your Startup Clearly",
     description:
       "If a listener cannot repeat what your company does, nothing after that sentence is being evaluated. How to build the one-liner and test whether it actually works.",
+    answer:
+      "Explain your startup in one sentence that names who has the problem and what changes for them, then stop and let it land. Test it by asking listeners to say it back rather than whether they understood. Until they can repeat it accurately, everything after that sentence is being half-heard.",
     intro:
       "Explain your startup in one sentence that names who has the problem and what changes for them, then stop and let it land. The test is not whether people say they understood - they will, out of politeness - but whether they can say it back to you accurately. Until they can, everything after that sentence is being heard by someone still working on the first question. Most founders fail this not on the wording but on the delivery: they run the one-liner straight into the next sentence and remove the moment the listener needed to absorb it.",
-    updated: "2026-08-21",
+    published: "2026-08-22",
+    updated: "2026-08-24",
     readMinutes: 7,
     primaryKeyword: "how to explain your startup clearly",
     secondaryKeywords: [
@@ -1319,6 +1797,16 @@ export const GUIDES: Guide[] = [
           "One sentence, not two. The second sentence is almost always a hedge, and hedges are where the listener loses the thread.",
           "Avoid the X-for-Y analogy unless both halves are genuinely well known to this specific listener. It compresses well and misleads often, and you will spend the next minute correcting the wrong half.",
         ],
+        list: {
+          ordered: true,
+          intro:
+            "One sentence, three parts, in this order. Anything else in it is going in the second sentence.",
+          items: [
+            "Name who has the problem, specifically enough that the listener can picture one of them.",
+            "Name what is broken for that person today, in their words rather than yours.",
+            "Name what changes once they use it. Not what the product is - what is different afterwards.",
+          ],
+        },
       },
       {
         h: "Test it properly",
@@ -1332,8 +1820,8 @@ export const GUIDES: Guide[] = [
       {
         h: "The delivery half nobody rehearses",
         p: [
-          "Full stop after the sentence. A real one, a second or more. This is the single most common delivery failure in a pitch: the one-liner is fine and it is immediately buried under the next sentence.",
-          "Do not accelerate into it. Founders have said this sentence hundreds of times, and familiar material drifts fast. The listener is hearing it for the first time and needs it at a slower pace than it feels natural to deliver.",
+          "Full stop after the sentence. A real one, a second or more. This is the single most common [delivery failure in a pitch](/guides/investor-pitch-delivery): the one-liner is fine and it is immediately buried under the next sentence.",
+          "Do not accelerate into it. Founders have said this sentence hundreds of times, and familiar material drifts fast. The listener is hearing it for the first time and needs it at a [slower pace](/guides/ideal-speaking-pace-words-per-minute) than it feels natural to deliver.",
           "Land the last word downward. A one-liner ending on a rising inflection sounds like you are checking whether it was acceptable, which invites the listener to evaluate the sentence rather than absorb it.",
           "Say it the same way every time, even though the rest of your pitch should stay loose. This one sentence is the exception to the rehearse-structure-not-words rule, because it has to survive being repeated by someone else.",
         ],
@@ -1378,9 +1866,12 @@ export const GUIDES: Guide[] = [
     metaTitle: "Free AI for Public Speaking Practice",
     description:
       "What AI can and cannot do for public speaking, the numbers that matter for a talk rather than a pitch, and a free rehearsal routine that fits in fifteen minutes a day.",
+    answer:
+      "Free AI for public speaking practice replaces the one part of rehearsal that used to need another person: an honest account of what you actually did. Record a rehearsal and you get pace across the whole talk and inside each section, filler rate, pause placement, and the words a listener would miss.",
     intro:
-      "AI does not cure stage fright. What it removes is the part of rehearsal that used to require another person: an honest account of what you actually did, rather than what it felt like you did. Record a rehearsal and you get your pace across the whole talk and inside each section, your filler rate, where your pauses fell, and which words a listener would have missed. That is most of what a speaking coach spends the first three sessions telling you, and it costs nothing.",
-    updated: "2026-08-22",
+      "AI does not cure stage fright. What it removes is the part of rehearsal that used to require another person: an honest account of what you actually did, rather than what it felt like you did. Record a rehearsal and you get your pace across the whole talk and inside each section, your [filler rate](/guides/how-to-stop-using-filler-words), where your pauses fell, and which words a listener would have missed. That is most of what a speaking coach spends the first three sessions telling you, and it costs nothing.",
+    published: "2026-08-22",
+    updated: "2026-08-24",
     readMinutes: 9,
     primaryKeyword: "free ai for public speaking",
     secondaryKeywords: [
@@ -1394,7 +1885,7 @@ export const GUIDES: Guide[] = [
       {
         h: "What AI is good for, and what it is not",
         p: [
-          "It is good at the things that are true of the recording and invisible to you while speaking. You do not know that you sped up by thirty words per minute in the last two minutes, that your longest pause was under half a second, or that the word you built the whole talk around came out too soft to hear four times. All three are measurable and all three are fixable within a week.",
+          "It is good at the things that are true of the recording and invisible to you while speaking. You do not know that you sped up by thirty [words per minute](/guides/ideal-speaking-pace-words-per-minute) in the last two minutes, that your longest pause was under half a second, or that the word you built the whole talk around came out too soft to hear four times. All three are measurable and all three are fixable within a week.",
           "It is not good at whether the talk was worth giving. Structure, the choice of examples, whether the ending earned the applause - a competent human audience judges those in a way nothing automated approaches. If your problem is that the material is thin, no measurement will find it.",
           "It is also not an audience. Rehearsing alone into a laptop trains you for rehearsing alone into a laptop, which is why the last rehearsal before a real talk should have at least one person in the room even if the previous ten did not.",
         ],
@@ -1433,6 +1924,20 @@ export const GUIDES: Guide[] = [
           "Days 9 to 12: full run-throughs, timed, standing up, at the volume you will actually use. Volume changes pace, so a seated murmured rehearsal does not predict the real thing.",
           "Days 13 and 14: one run in front of a person, and one recorded run of the opening and closing only. Do not add new material in the last two days; the marginal value of a better example is lower than the cost of rehearsing it twice.",
         ],
+        list: {
+          ordered: true,
+          intro:
+            "Fourteen days to a talk, using only a free tier. One recording a day, and one thing to fix at a time.",
+          items: [
+            "Days 1-2: record the opening ninety seconds cold. Measure pace, fillers and [pause placement](/guides/how-to-use-pauses-when-speaking). Fix nothing yet.",
+            "Days 3-5: work only the worst of the three numbers, on the opening, until it sits in range.",
+            "Days 6-8: record the section you are least sure of, not the one you enjoy. Pace almost always spikes there.",
+            "Days 9-10: run the transitions between sections back to back. Fillers cluster on seams.",
+            "Days 11-12: full run-through, standing, timed. Compare the total length to the slot you have been given.",
+            "Day 13: record the opening once more and compare against day 1 directly. This is the only honest measure of progress.",
+            "Day 14: do not rehearse. Reread the opening sentence and stop there.",
+          ],
+        },
       },
       {
         h: "Where a free tier will stop",
@@ -1474,9 +1979,12 @@ export const GUIDES: Guide[] = [
     metaTitle: "Free AI Speaking Partner: Does It Work?",
     description:
       "Talking to an AI is genuinely useful for one thing and useless for another. What a free AI speaking partner is good for, what it cannot give you, and how to run a session.",
+    answer:
+      "The best free AI English speaking partner is whichever one makes you speak out loud, unscripted, to questions you did not write. Voice matters more than the model behind it: typing to a chatbot trains writing rather than speech. Use a partner for speaking volume and a recording analyser for judgement.",
     intro:
       "An AI speaking partner is good at one thing that matters and bad at one thing people expect from it. It is good at making you speak out loud, unscripted, to a question you did not write, as often as you like and without the social cost of using up someone else's afternoon. It is bad at judging you the way a person would: it does not get bored, it does not misunderstand you in the specific way a distracted investor does, and it accepts a vague answer far more readily than a human ever would. Used for the first and not the second, it is the cheapest speaking practice available.",
-    updated: "2026-08-22",
+    published: "2026-08-22",
+    updated: "2026-08-24",
     readMinutes: 9,
     primaryKeyword: "best free ai english speaking partner",
     secondaryKeywords: [
@@ -1509,9 +2017,19 @@ export const GUIDES: Guide[] = [
         p: [
           "It should ask one question at a time and then wait. A partner that delivers three questions in a paragraph has turned a conversation into a reading exercise, and you will answer the last one and forget the first two - which is also what happens with human interviewers, but you cannot practise recovering from it if the format never creates it.",
           "It should follow up on the weakest part of your answer rather than moving on politely. The value is concentrated in the second question, because the first one you were ready for.",
-          "It should measure something. A partner that only talks back leaves you with an impression of how it went, and impressions are exactly what recording exists to replace. Pace, length and filler rate for each answer are the minimum worth having.",
-          "It should let you pick the pressure. Practising a friendly standup and practising a hostile investor are different exercises, and doing only the friendly one builds a confidence that does not survive contact.",
+          "It should measure something. A partner that only talks back leaves you with an impression of how it went, and impressions are exactly what recording exists to replace. [Pace](/guides/ideal-speaking-pace-words-per-minute), length and [filler rate](/guides/how-to-stop-using-filler-words) for each answer are the minimum worth having.",
+          "It should let you pick the pressure. Practising a friendly standup and practising a [hostile investor](/guides/how-to-prepare-for-investor-qa) are different exercises, and doing only the friendly one builds a confidence that does not survive contact.",
         ],
+        list: {
+          intro:
+            "Four things decide whether a free speaking partner is worth the twenty minutes. Feature lists rarely mention any of them.",
+          items: [
+            "It takes voice in and gives voice back. Typing to a chatbot trains writing, not speech.",
+            "The free allowance recurs rather than being a lifetime handful. A habit needs two weeks, not five attempts.",
+            "It asks follow-ups on the weak half of your answer instead of moving politely to the next question.",
+            "It does not penalise your accent. Test this by saying something you know was perfectly clear.",
+          ],
+        },
       },
       {
         h: "What it cannot give you",
@@ -1530,6 +2048,17 @@ export const GUIDES: Guide[] = [
           "Do not restart. When an answer goes wrong, finish it anyway, because finishing badly is a skill and it is the one you will need. Restarting trains you to restart, and you cannot restart in a real meeting.",
           "Take the worst two answers and do those questions again at the end. That is the whole session: fifteen minutes of reps and five minutes on the two that failed.",
         ],
+        list: {
+          ordered: true,
+          intro:
+            "Twenty minutes, four blocks. The structure matters more than the partner does.",
+          items: [
+            "Five minutes on something you know well, to get past the first-two-minutes awkwardness that distorts everything after it.",
+            "Ten minutes on something you have not explained before, which is where the actual practice happens.",
+            "Three minutes answering follow-ups you did not expect, without preparing between them.",
+            "Two minutes recording a summary of what you just said, which is the part you can measure and compare next week.",
+          ],
+        },
       },
       {
         h: "When to stop talking and start recording",
@@ -1571,9 +2100,12 @@ export const GUIDES: Guide[] = [
     metaTitle: "Free Yoodli and Poised Alternatives",
     description:
       "How Yoodli, Poised and recording-based coaches differ, where each free tier stops, and how to choose by the situation you are preparing for rather than the feature list.",
+    answer:
+      "Yoodli alternatives divide into three shapes that barely compete with each other: recording analysers that measure a rehearsal you made on purpose, meeting copilots that coach inside a live call, and roleplay simulators that ask you questions. Yoodli is mainly a roleplay simulator, so choose by the shape your situation needs.",
     intro:
       "AI speech coaches come in three shapes, and most comparison articles list them as if they competed. They mostly do not. A recording analyser measures a rehearsal you made on purpose. A meeting copilot sits in a real call and coaches you inside it. A roleplay simulator asks you questions so you can practise answering. Yoodli is mainly the first and third, Poised is the second, and which one is worth your time depends entirely on whether your problem shows up when you rehearse or only when someone else is in the room. Details below were accurate in August 2026; pricing and packaging on any of these products change, so check the vendor before you commit.",
-    updated: "2026-08-22",
+    published: "2026-08-22",
+    updated: "2026-08-24",
     readMinutes: 9,
     primaryKeyword: "yoodli alternatives",
     secondaryKeywords: [
@@ -1588,11 +2120,36 @@ export const GUIDES: Guide[] = [
       {
         h: "The three shapes of AI speech coach",
         p: [
-          "Recording analysers. You record deliberately, alone, and get measurements back with the timestamps that produced them. The strength is repeatability: the same prompt at the same length a week later is the only setup where a change in your filler rate means anything. The weakness is that rehearsal pressure is not meeting pressure.",
+          "Recording analysers. You record deliberately, alone, and get measurements back with the timestamps that produced them. The strength is repeatability: the same prompt at the same length a week later is the only setup where a change in your [filler rate](/guides/how-to-stop-using-filler-words) means anything. The weakness is that rehearsal pressure is not meeting pressure.",
           "Meeting copilots. Something joins your live calls and coaches you during or immediately after them. The strength is that it sees the real thing, including the moment you talked over someone. The weakness is that a bot in the meeting is a decision involving everyone else on the call, and that you cannot practise a call you are not having.",
           "Roleplay simulators. An AI plays an interviewer, a customer or an investor and asks questions. The strength is pressure on demand. The weakness is that it will accept an answer a real counterpart would have pushed on, and that no two sessions are comparable, so it measures nothing over time.",
           "Most people need the first plus one of the others. Almost nobody needs all three, and buying all three is the most common way this category gets abandoned in week two.",
         ],
+        table: {
+          caption:
+            "The three shapes of AI speech coach, and which situation each one answers",
+          head: ["Shape", "What it does", "Strength", "Choose it when"],
+          rows: [
+            [
+              "Recording analyser",
+              "Measures a rehearsal you made on purpose, with timestamps",
+              "Repeatable, so a change over time means something",
+              "You have a date to prepare for",
+            ],
+            [
+              "Meeting copilot",
+              "Joins live calls and coaches during or after",
+              "Sees the real thing, not the rehearsal",
+              "The problem only appears with others present",
+            ],
+            [
+              "Roleplay simulator",
+              "Plays a role and asks you questions",
+              "Pressure on demand",
+              "You freeze when interrupted",
+            ],
+          ],
+        },
       },
       {
         h: "Yoodli, briefly",
@@ -1625,7 +2182,7 @@ export const GUIDES: Guide[] = [
           "FounderVoice is a recording analyser first. You record sixty seconds in the browser and get pace overall and per section, filler count and rate with timestamps, pause length and placement, word-level clarity, and pitch range - with the moment behind each number, so you can hear it rather than trust it. The free allowance is ten recordings every 24 hours with no account and no card, which is deliberately the recurring shape rather than a lifetime handful, because a habit needs two weeks and not five attempts.",
           "It also has a practice mode, where an AI plays a standup lead, a sceptical operator or a seed investor and pushes back on what you said. The free allowance there is smaller than for recording, which is honest about what each costs to run.",
           "After several sessions it compares you against your own history rather than an average, which is the part that turns a set of numbers into a trend you can act on.",
-          "What it is not: there is no meeting bot, so it will not sit in your calls; there is no video, so eye contact, gesture and posture are outside what it measures; and it is aimed at founder situations - the pitch, the investor questions, the demo, the interview - rather than at general-purpose sales enablement. If you need a copilot inside live meetings, Poised is the category and this is not it.",
+          "What it is not: there is no meeting bot, so it will not sit in your calls; there is no video, so eye contact, gesture and posture are outside what it measures; and it is aimed at founder situations - the pitch, the [investor questions](/guides/how-to-prepare-for-investor-qa), the demo, the interview - rather than at general-purpose sales enablement. If you need a copilot inside live meetings, Poised is the category and this is not it.",
         ],
       },
       {
@@ -1666,6 +2223,24 @@ export const GUIDES: Guide[] = [
 
 export function getGuide(slug: string): Guide | undefined {
   return GUIDES.find((g) => g.slug === slug);
+}
+
+/**
+ * Every word the page actually renders, for `wordCount` in the Article schema.
+ *
+ * Counted rather than written down by hand, because a hand-written count is
+ * wrong the first time a paragraph is edited, and a schema field that
+ * contradicts the page is worse than an absent one.
+ */
+export function guideWordCount(guide: Guide): number {
+  const parts: string[] = [guide.answer, guide.intro];
+  for (const s of guide.sections) {
+    parts.push(s.h, ...s.p);
+    if (s.list) parts.push(s.list.intro ?? "", ...s.list.items);
+    if (s.table) parts.push(s.table.caption, ...s.table.head, ...s.table.rows.flat());
+  }
+  for (const f of guide.faqs) parts.push(f.q, f.a);
+  return parts.join(" ").trim().split(/\s+/).length;
 }
 
 /**
@@ -1715,3 +2290,44 @@ function assertNoDuplicatePrimaries() {
 }
 
 assertNoDuplicatePrimaries();
+
+/**
+ * In-body links are written as `[anchor](/guides/slug)` inside the prose, and
+ * rendered by components/GuideBody.tsx. They are the internal links that carry
+ * weight: anchor text chosen for the target, inside the sentence that raises
+ * the topic, rather than three identical tiles at the foot of the page.
+ *
+ * Which means a typo in a slug is a 404 sitting inside an article, and the
+ * cheapest possible moment to catch it is now.
+ */
+function assertGuideLinksResolve() {
+  const slugs = new Set(GUIDES.map((g) => g.slug));
+  const linkRe = /\[[^\]]+\]\(([^)]+)\)/g;
+  for (const g of GUIDES) {
+    const prose: string[] = [g.answer, g.intro];
+    for (const s of g.sections) {
+      prose.push(...s.p);
+      if (s.list) prose.push(s.list.intro ?? "", ...s.list.items);
+    }
+    for (const f of g.faqs) prose.push(f.a);
+    for (const text of prose) {
+      for (const m of text.matchAll(linkRe)) {
+        const href = m[1];
+        if (!href.startsWith("/")) {
+          throw new Error(`${g.slug}: in-body link "${href}" is not site-relative.`);
+        }
+        const guideSlug = href.startsWith("/guides/") ? href.slice("/guides/".length) : null;
+        if (guideSlug && !slugs.has(guideSlug)) {
+          throw new Error(
+            `${g.slug}: in-body link points at /guides/${guideSlug}, which is not a guide.`,
+          );
+        }
+        if (guideSlug === g.slug) {
+          throw new Error(`${g.slug}: in-body link points at its own page.`);
+        }
+      }
+    }
+  }
+}
+
+assertGuideLinksResolve();

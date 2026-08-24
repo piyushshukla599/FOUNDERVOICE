@@ -1,5 +1,8 @@
 node_modules/
 .next/
+# Alternate build dirs: `NEXT_DIST_DIR=.next-build npm run build` lets a
+# production build run without fighting a live `next dev` over .next.
+.next-*/
 .venv/
 __pycache__/
 *.pyc
