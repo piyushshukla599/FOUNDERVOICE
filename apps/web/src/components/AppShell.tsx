@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/Logo";
-import { ContactModal } from "@/components/ContactModal";
+import { ContactModal, type ContactInterest } from "@/components/ContactModal";
 
 type NavItem = { href: string; label: string; icon: typeof Mic };
 type NavGroup = NavItem & {
@@ -85,15 +85,25 @@ function groupActive(pathname: string, g: NavGroup) {
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [contactOpen, setContactOpen] = useState(false);
-  const [contactInterest, setContactInterest] = useState<"feedback" | "general">("general");
+  const [contactInterest, setContactInterest] = useState<ContactInterest>("general");
   const [moreOpen, setMoreOpen] = useState(false);
   const hideChrome =
     CHROMELESS.includes(pathname) || CHROMELESS_PREFIXES.some((p) => pathname.startsWith(p));
 
   useEffect(() => {
     const onOpen = (ev: Event) => {
-      const detail = (ev as CustomEvent<{ interest?: "feedback" | "general" }>).detail;
-      setContactInterest(detail?.interest === "feedback" ? "feedback" : "general");
+      const detail = (ev as CustomEvent<{ interest?: string }>).detail;
+      /* "upgrade" is what the coach page sends; it is the same request as
+         "pro", and collapsing both to "general" used to file a Pro lead as an
+         ordinary contact note. */
+      const asked = detail?.interest;
+      setContactInterest(
+        asked === "feedback"
+          ? "feedback"
+          : asked === "pro" || asked === "upgrade"
+            ? "pro"
+            : "general",
+      );
       setContactOpen(true);
     };
     window.addEventListener("fv-open-contact", onOpen);

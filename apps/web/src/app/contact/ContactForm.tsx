@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Check, Mail, Sparkles } from "lucide-react";
 import { Divider, ErrorBanner, PageHeader } from "@/components/ui";
-import { api } from "@/lib/api";
+import { submitLead } from "@/lib/formsubmit";
 
 /* The reason someone landed here. `interest=pro` arrives from the upgrade gate,
    so the page can lead with Pro rather than a generic contact form. */
@@ -25,6 +25,9 @@ export function ContactForm() {
   const [email, setEmail] = useState("");
   const [company, setCompany] = useState("");
   const [message, setMessage] = useState("");
+  /* Hidden from people, visible to bots. A non-empty value drops the
+     submission instead of mailing it. */
+  const [honey, setHoney] = useState("");
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState("");
   const [error, setError] = useState("");
@@ -37,8 +40,16 @@ export function ContactForm() {
     setBusy(true);
     setError("");
     try {
-      const res = await api.contact({ name, email, company, message, interest });
-      setDone(res.message || "Thanks. We have your note.");
+      const reply = await submitLead({
+        name,
+        email,
+        company,
+        message,
+        interest,
+        honey,
+        source: "Contact page",
+      });
+      setDone(reply || "Thanks. We have your note.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not send. Try again.");
     } finally {
@@ -98,6 +109,17 @@ export function ContactForm() {
       <Divider />
 
       <form onSubmit={(e) => void submit(e)} className="fv-enter space-y-5">
+        <input
+          type="text"
+          name="_honey"
+          value={honey}
+          onChange={(e) => setHoney(e.target.value)}
+          tabIndex={-1}
+          autoComplete="off"
+          aria-hidden
+          className="hidden"
+        />
+
         <div>
           <p className="fv-eyebrow-quiet mb-3">What is this about</p>
           <div className="grid gap-2 sm:grid-cols-2">

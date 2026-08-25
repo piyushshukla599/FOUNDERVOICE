@@ -40,6 +40,12 @@ const nextConfig: NextConfig = {
     }
     const fromApi = ["'self'", ...origins].filter(Boolean).join(" ");
 
+    // The contact, Pro and feedback forms post to FormSubmit from the browser
+    // (see src/lib/formsubmit.ts), so it is the one cross-origin fetch target
+    // besides the API. Without it here the send fails as a CSP violation in
+    // the console, which the form can only report as a generic network error.
+    const FORMSUBMIT_ORIGIN = "https://formsubmit.co";
+
     // 'unsafe-inline' for scripts is unavoidable without threading a nonce
     // through every response: the App Router inlines its hydration payload.
     // The policy still confines scripts, frames and form posts to this origin,
@@ -56,7 +62,7 @@ const nextConfig: NextConfig = {
       // playing back with no network request and no error anyone could read.
       `media-src ${fromApi} blob:`,
       "font-src 'self' data:",
-      `connect-src ${fromApi}`,
+      `connect-src ${fromApi} ${FORMSUBMIT_ORIGIN}`,
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",

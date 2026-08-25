@@ -2,13 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
-import { api } from "@/lib/api";
+import { submitLead } from "@/lib/formsubmit";
+
+export type ContactInterest = "feedback" | "pro" | "general";
 
 type Props = {
   open: boolean;
   onClose: () => void;
-  /** feedback = product feedback; general = contact / partnership */
-  interest?: "feedback" | "general";
+  /** feedback = product feedback; pro = upgrade request; general = contact / partnership */
+  interest?: ContactInterest;
 };
 
 export function ContactModal({ open, onClose, interest = "general" }: Props) {
@@ -17,6 +19,9 @@ export function ContactModal({ open, onClose, interest = "general" }: Props) {
   const [phone, setPhone] = useState("");
   const [company, setCompany] = useState("");
   const [message, setMessage] = useState("");
+  /* Hidden from people, visible to bots. A non-empty value drops the
+     submission instead of mailing it. */
+  const [honey, setHoney] = useState("");
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState("");
   const [error, setError] = useState("");
@@ -30,7 +35,12 @@ export function ContactModal({ open, onClose, interest = "general" }: Props) {
   if (!open) return null;
 
   const isFeedback = interest === "feedback";
-  const title = isFeedback ? "Share feedback" : "Contact FounderVoice";
+  const isPro = interest === "pro";
+  const title = isFeedback
+    ? "Share feedback"
+    : isPro
+      ? "Talk to us about Pro"
+      : "Contact FounderVoice";
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,24 +48,39 @@ export function ContactModal({ open, onClose, interest = "general" }: Props) {
     setError("");
     setDone("");
     try {
-      const res = await api.contact({
+      const reply = await submitLead({
         name,
         email,
         phone,
         company,
         message:
           message ||
-          (isFeedback ? "I'd like to share product feedback." : ""),
-        interest: isFeedback ? "feedback" : "general",
+          (isFeedback
+            ? "I'd like to share product feedback."
+            : isPro
+              ? "I'd like Pro access."
+              : ""),
+        interest,
+        honey,
+        source: isFeedback
+          ? "In-app feedback"
+          : isPro
+            ? "In-app Pro request"
+            : "In-app contact",
       });
-      setDone(res.message);
+      setDone(reply || "Thanks. We have your note.");
       setName("");
       setEmail("");
       setPhone("");
       setCompany("");
       setMessage("");
+      setHoney("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not send, is the API running?");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not send. Check your connection and try again.",
+      );
     } finally {
       setBusy(false);
     }
@@ -92,10 +117,22 @@ export function ContactModal({ open, onClose, interest = "general" }: Props) {
         <p className="mt-1 text-sm text-[var(--muted)]">
           {isFeedback
             ? "FounderVoice is 100% free. Tell us what to improve. We read every note."
-            : "Questions, press, or partnerships, leave your details and we’ll reply."}
+            : isPro
+              ? "Team seats, priority coaching and rollout support. Tell us how you are using FounderVoice and we will set you up."
+              : "Questions, press, or partnerships, leave your details and we’ll reply."}
         </p>
 
         <form onSubmit={(e) => void submit(e)} className="mt-4 space-y-3">
+          <input
+            type="text"
+            name="_honey"
+            value={honey}
+            onChange={(e) => setHoney(e.target.value)}
+            tabIndex={-1}
+            autoComplete="off"
+            aria-hidden
+            className="hidden"
+          />
           <label className="fv-label block">
             Full name *
             <input
@@ -151,7 +188,7 @@ export function ContactModal({ open, onClose, interest = "general" }: Props) {
               disabled={busy}
               className="fv-hero !h-11 !px-5 !text-[14px] disabled:opacity-50"
             >
-              {busy ? "Sending…" : "Send"}
+              {busy ? "Sending…" : isPro ? "Request Pro access" : "Send"}
             </button>
             <button
               type="button"

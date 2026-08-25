@@ -39,6 +39,26 @@ npm run dev
 
 Open the URL Next prints (`http://localhost:3000`, or **3001/3002** if 3000 is busy). Landing: `/welcome`.
 
+#### Where contact, Pro and feedback forms go
+
+Every form (the `/contact` page, the in-app feedback modal, and the Pro
+request) posts to [FormSubmit](https://formsubmit.co) from the browser, so the
+message lands in an inbox whether or not the API has SMTP configured. The same
+lead is also POSTed to `/api/contact`, which stores it in `contact_leads`.
+
+**FormSubmit needs activating once.** Submit any form, then click the
+activation link FormSubmit emails to the destination address — until that is
+done, submissions are held rather than delivered.
+
+The destination lives in `NEXT_PUBLIC_FORMSUBMIT_ENDPOINT` (see
+`apps/web/src/lib/formsubmit.ts` for the default). It ships in the client
+bundle, so after activating, swap in the random alias FormSubmit issues to keep
+the real address out of scrapers' reach:
+
+```powershell
+echo NEXT_PUBLIC_FORMSUBMIT_ENDPOINT=abc123yourhash >> .env.local
+```
+
 ### Docker (API only)
 
 ```powershell

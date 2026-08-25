@@ -69,7 +69,17 @@ export default function PrivacyPage() {
         <h2 className="text-lg text-[var(--ink)]">Contact form</h2>
         <p>
           If you submit the in-app contact or feedback form, we receive the details you enter (name,
-          email, phone, company, message) so we can reply. Do not include sensitive audio or secrets.
+          email, phone, company, message) so we can reply. Those details are delivered to our inbox
+          by{" "}
+          <a
+            href="https://formsubmit.co"
+            rel="noopener noreferrer nofollow"
+            className="text-[var(--violet-bright)] hover:underline"
+          >
+            FormSubmit
+          </a>
+          , a form-to-email relay, and are also stored on the FounderVoice API server. Nothing you
+          record is attached. Do not include sensitive audio or secrets.
         </p>
 
         <h2 className="text-lg text-[var(--ink)]">No unnecessary tracking</h2>
