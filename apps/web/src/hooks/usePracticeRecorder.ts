@@ -17,6 +17,10 @@ export function usePracticeRecorder() {
   const streamRef = useRef<MediaStream | null>(null);
   const timerRef = useRef<number | null>(null);
   const startedAtRef = useRef(0);
+  // Guarded on a ref, not on state: `start` is called from inside a long async
+  // flow that captured this hook several renders ago, and a stale `recording`
+  // there made the second take return immediately without opening the mic.
+  const busyRef = useRef(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const transcriptRef = useRef("");
 
@@ -65,7 +69,8 @@ export function usePracticeRecorder() {
   }, []);
 
   const start = useCallback(async () => {
-    if (starting || recording) return;
+    if (busyRef.current || mrRef.current) return;
+    busyRef.current = true;
     setStarting(true);
     setError("");
     chunksRef.current = [];
@@ -100,9 +105,10 @@ export function usePracticeRecorder() {
       stopTracks();
       setError(e instanceof Error ? e.message : "Microphone failed");
     } finally {
+      busyRef.current = false;
       setStarting(false);
     }
-  }, [recording, startSpeech, starting, stopTracks]);
+  }, [startSpeech, stopTracks]);
 
   const stop = useCallback(async (): Promise<{ blob: Blob; transcript: string; durationSec: number } | null> => {
     stopSpeech();
@@ -111,6 +117,8 @@ export function usePracticeRecorder() {
     const mr = mrRef.current;
     const durationSec = Math.max(0.5, (Date.now() - startedAtRef.current) / 1000);
     if (!mr || mr.state === "inactive") {
+      // Leaving a dead recorder in the ref would block every later start.
+      mrRef.current = null;
       setRecording(false);
       stopTracks();
       return null;
