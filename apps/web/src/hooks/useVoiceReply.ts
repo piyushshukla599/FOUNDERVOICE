@@ -46,6 +46,13 @@ export function useVoiceReply() {
   const [listening, setListening] = useState(false);
   /** What has been heard so far this turn, including the interim guess. */
   const [heard, setHeard] = useState("");
+  // Same reasoning as the speech side: assume the browser can listen until it has
+  // had a chance to tell us, so the server HTML and the first client render agree.
+  const [supported, setSupported] = useState(true);
+
+  useEffect(() => {
+    setSupported(speechInputSupported());
+  }, []);
 
   const active = useRef<SpeechRecognition | null>(null);
   const settle = useRef<((r: Reply) => void) | null>(null);
@@ -172,5 +179,5 @@ export function useVoiceReply() {
 
   useEffect(() => cancel, [cancel]);
 
-  return { listen, cancel, listening, heard, supported: speechInputSupported() };
+  return { listen, cancel, listening, heard, supported };
 }

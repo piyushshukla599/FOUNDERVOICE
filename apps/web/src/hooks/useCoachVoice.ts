@@ -46,6 +46,10 @@ export function useCoachVoice() {
   const [voices, setVoices] = useState<VoiceChoice[]>([]);
   const [voiceName, setVoiceName] = useState("");
   const [rate, setRate] = useState(DEFAULT_RATE);
+  // Assume speech until the browser says otherwise: the server cannot know, and
+  // guessing "unsupported" would render the fallback notice into the HTML only to
+  // pull it out on hydration.
+  const [supported, setSupported] = useState(true);
   const run = useRef(0);
 
   useEffect(() => {
@@ -55,6 +59,7 @@ export function useCoachVoice() {
       /* storage disabled, the coach speaks by default */
     }
     setRate(speechRate());
+    setSupported(browserSpeechSupported());
     const load = () => {
       const found = listVoices().map((v) => ({ name: v.name, lang: v.lang }));
       setVoices(found);
@@ -144,7 +149,7 @@ export function useCoachVoice() {
     voiceName,
     rate,
     /** False in browsers with no speech synthesis at all (older Firefox on Linux). */
-    supported: browserSpeechSupported(),
+    supported,
     speak,
     play,
     stop,
