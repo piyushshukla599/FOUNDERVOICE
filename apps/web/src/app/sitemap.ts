@@ -21,9 +21,9 @@ import { TOOLS } from "@/lib/tools";
 
 /** Bump when the static marketing pages are meaningfully edited. */
 const STATIC_UPDATED = {
-  home: "2026-08-21",
-  guidesIndex: "2026-08-24",
-  toolsIndex: "2026-08-24",
+  home: "2026-09-02",
+  guidesIndex: "2026-09-02",
+  toolsIndex: "2026-09-02",
   onboarding: "2026-08-21",
   contact: "2026-08-21",
   privacy: "2026-06-01",

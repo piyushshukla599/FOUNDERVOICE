@@ -2219,6 +2219,608 @@ export const GUIDES: Guide[] = [
     ],
     cta: CTA.free,
   },
+  /* ------------------------------------------------------- acquisition, 2026-09
+     Added after the August GSC read, which showed the site collecting
+     impressions at position ~70 on queries no page was actually pointed at:
+     "speaking skills in communication" was the largest single source of
+     impressions on the site and had no page aimed at it at all. Every entry
+     below owns either a query that already produced impressions, or a
+     commercial long-tail whose SERP is thin enough to enter without links. */
+  {
+    slug: "speaking-skills-in-communication",
+    title: "Speaking Skills in Communication",
+    metaTitle: "Speaking Skills in Communication",
+    description:
+      "What speaking skills actually are, the six that carry most of the weight, and how to measure each one on a recording of your own voice instead of guessing.",
+    answer:
+      "Speaking skills in communication are the delivery habits that decide whether what you said arrives intact: pace, pauses, filler rate, clarity, vocal energy and structure. They sit apart from vocabulary and grammar, they are measurable on any recording, and they are the half a listener judges within about fifteen seconds.",
+    intro:
+      "Speaking skills are the part of communication that survives the trip to a listener. Vocabulary and grammar decide what you are able to say; speaking skills decide how much of it lands. The distinction matters because they fail differently and are fixed differently, and because the second set is measurable in a way the first is not. Six habits carry most of the weight, each one countable on a sixty-second recording, and each one improvable on its own without touching the others.",
+    published: "2026-09-02",
+    updated: "2026-09-02",
+    readMinutes: 8,
+    primaryKeyword: "speaking skills in communication",
+    secondaryKeywords: [
+      "speaking skills",
+      "better speaking skills",
+      "types of speaking skills",
+      "how to improve speaking skills",
+      "verbal communication skills",
+    ],
+    cluster: "speaking",
+    sections: [
+      {
+        h: "Speaking skills are not the same as language skills",
+        p: [
+          "Two people with identical vocabulary can produce completely different results in the same meeting, and the difference is entirely in delivery. One speaks at 190 words per minute with four fillers a minute and no pause before the important sentence; the other says the same words at 140 with a beat of silence in front of the conclusion. The second person is described afterwards as clearer, and often as more senior.",
+          "This is why working only on language stalls. If you already have the words, more vocabulary adds nothing to the meeting - the loss is happening between your mouth and the listener, not in the dictionary. If English is a second language and you want that half addressed too, the practical version is in [improving English communication skills](/guides/how-to-improve-english-communication-skills), which separates the two problems properly.",
+          "The useful consequence: delivery is countable. You cannot put a number on whether a sentence was well chosen, but you can put one on how fast it was said, how many fillers were in it, and whether the pause landed before or after the point.",
+        ],
+      },
+      {
+        h: "The six speaking skills that carry the weight",
+        p: [
+          "Not an exhaustive taxonomy. These are the six that change the outcome most per hour spent on them, ordered by how quickly a change becomes audible to other people.",
+        ],
+        table: {
+          caption: "The six measurable speaking skills, with a working target for each",
+          head: ["Skill", "What it controls", "Working target", "How to measure it"],
+          rows: [
+            ["Pace", "Whether the listener can keep up while thinking", "130-150 wpm, stable", "Words divided by minutes, per section"],
+            ["Pauses", "Which sentence gets registered as important", "0.5-1.5s at thought ends", "Silence length and placement"],
+            ["Filler rate", "Whether you read as prepared or unsure", "Under 3 per minute", "Count of um, uh, like, you know"],
+            ["Clarity", "How many words survive the trip", "Under 5% unclear", "Word-level articulation on playback"],
+            ["Vocal energy", "Whether attention holds past a minute", "Range that does not flatten", "Pitch variation across the clip"],
+            ["Structure", "Whether the point arrives before attention goes", "Point inside 20 seconds", "Time to your first conclusion"],
+          ],
+        },
+      },
+      {
+        h: "Pace: the one that moves everything else",
+        p: [
+          "Pace is first because fixing it drags three of the others with it. Speeding up is what people do under pressure, and a fast speaker loses pauses, gains fillers and loses clarity all at once, because the articulation of consonants is the first thing to go when the mouth is behind the brain.",
+          "The comfortable range for explaining something unfamiliar sits around 130 to 150 words per minute. The number itself matters less than its stability: a clip that runs at 140 throughout is easier to follow than one that averages 140 by running at 110 for the safe half and 175 for the part you were dreading, and the second pattern is far more common. The full treatment is in [the ideal speaking pace](/guides/ideal-speaking-pace-words-per-minute), and the fix if you already know you rush is in [how to stop talking too fast](/guides/how-to-stop-talking-too-fast).",
+        ],
+        list: {
+          intro: "Three checks that take one recording each:",
+          items: [
+            "Record ninety seconds explaining something you know well. That is your baseline pace, and it is the fastest you should ever need to go.",
+            "Record the same length on the question you are dreading. The gap between the two clips is your pressure response, in words per minute.",
+            "Read the transcript of the second clip aloud at the first clip's pace. That is what it should have sounded like, and hearing it is more persuasive than being told.",
+          ],
+        },
+      },
+      {
+        h: "Pauses, fillers, and the same underlying gap",
+        p: [
+          "Filler words are not a vocabulary problem and not really a nervousness problem. They fill a gap that the speaker has not given themselves permission to leave silent. Every um is a pause that was going to happen anyway, dressed up so it does not feel like one. That is why telling someone to stop saying um rarely works, and why replacing the um with a deliberate pause works quickly: the gap was never the problem, and a silent gap reads as thinking while a filled one reads as searching.",
+          "Pauses are also the only punctuation available out loud. A half-second before your conclusion is what tells a listener that the next sentence is the one to remember, and speakers who never pause deliver every sentence at the same weight, which leaves the listener to work out what mattered. Most decide it was nothing. [How to use pauses](/guides/how-to-use-pauses-when-speaking) covers the placement; [how to stop filler words](/guides/how-to-stop-using-filler-words) covers the substitution.",
+        ],
+      },
+      {
+        h: "How to actually improve them, in the order that works",
+        p: [
+          "One habit at a time, for about two weeks each. Working on all six simultaneously produces a speaker concentrating so hard on their own delivery that the content suffers, which is a worse outcome than the fillers were.",
+          "The sequence below is ordered by dependency rather than by importance. Pace first because it moves three others. Pauses second because they are the mechanism that removes fillers. Clarity third because it only becomes fixable once you are no longer racing. Energy and structure last, because they are the ones that need attention to spare.",
+        ],
+        list: {
+          ordered: true,
+          intro: "Two weeks per step, sixty seconds a day, same prompt each time:",
+          items: [
+            "Get pace stable in the range, including on the hard question. Nothing else is reliably measurable until this holds.",
+            "Replace filled gaps with silent ones. Count the fillers each day; the number should halve inside a fortnight.",
+            "Fix the words that came out unclear - almost always the ones at the end of a fast sentence.",
+            "Stop the pitch flattening after the first minute, which is what makes a listener disengage without knowing why.",
+            "Move your conclusion to the front, and check the timestamp where it now lands.",
+          ],
+        },
+      },
+      {
+        h: "Why self-assessment fails, and what to use instead",
+        p: [
+          "You cannot hear your own delivery while producing it. The brain suppresses the sound of your own voice during speech and fills in the intended version rather than the delivered one, which is why a recording of yourself is uncomfortable in a way that is genuinely informative: it is the first time you have heard what everyone else hears.",
+          "Estimates made from memory are wrong in a consistent direction. People underestimate their own length, hear far fewer of their own fillers than are there, and remember pauses as longer than they were. That is not a character flaw; it is that planning time is invisible from the inside.",
+          "So the honest options are a recording you analyse yourself, or a tool that counts for you. Either works. What does not work is asking a colleague, who will tell you it was fine, and who is answering a social question rather than a technical one. [Free AI communication tools](/guides/free-ai-communication-tools) covers what to look for, and the [speaking pace test](/tools/speaking-pace-test) and [filler word counter](/tools/filler-word-counter) do two of these six on their own.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "What are speaking skills in communication?",
+        a: "They are the delivery habits that decide how much of what you said reaches the listener: pace, pause placement, filler rate, clarity of articulation, vocal energy and the order you put your points in. They are distinct from vocabulary and grammar, and unlike those, every one of them is countable on a recording.",
+      },
+      {
+        q: "What are the main types of speaking skills?",
+        a: "The measurable ones split into three groups. Timing skills - pace and pauses. Precision skills - filler rate and clarity of articulation. Engagement skills - vocal energy and the structure of what you say. Body language is often listed alongside them, but it is a separate channel and needs video rather than audio to assess.",
+      },
+      {
+        q: "How long does it take to improve speaking skills?",
+        a: "A single habit shifts audibly in about two weeks of one minute a day, provided you record the same prompt each time so the comparison means something. Six habits worked one at a time is roughly three months. Working on all six at once takes longer and usually stalls, because attention spent monitoring delivery comes out of the content.",
+      },
+      {
+        q: "Can you improve speaking skills without a coach?",
+        a: "Yes, for the measurable half. Pace, fillers, pauses and clarity are all countable from a recording, and counting them is most of the work - the correction is usually obvious once the number is in front of you. A coach earns their fee on the parts that are judgement calls: what to cut, what to lead with, and how to handle a hostile room.",
+      },
+      {
+        q: "What is the difference between speaking skills and communication skills?",
+        a: "Communication skills is the wider set and includes listening, writing and reading a room. Speaking skills are the spoken-delivery subset. The distinction is practical rather than academic: speaking skills are the ones you can put a number on this afternoon, which makes them the ones that improve fastest.",
+      },
+    ],
+    related: [
+      "ideal-speaking-pace-words-per-minute",
+      "how-to-stop-using-filler-words",
+      "how-to-use-pauses-when-speaking",
+      "how-to-speak-with-confidence",
+    ],
+    cta: CTA.free,
+  },
+  {
+    slug: "free-ai-communication-coach-no-signup",
+    title: "Free AI Communication Coach, No Sign Up",
+    metaTitle: "Free AI Communication Coach, No Sign Up",
+    description:
+      "What you can genuinely use without an account or a card, what every free tier costs you in exchange, and how to tell a free tool from a free trial before you record anything.",
+    answer:
+      "A free AI communication coach with no sign up lets you record in the browser and get pace, filler count, pause length and clarity back without creating an account or entering a card. Most tools advertised as free are free trials behind a signup wall; the difference is whether the allowance recurs or runs out once.",
+    intro:
+      "Almost every tool in this category calls itself free, and almost none of them mean the same thing by it. Some mean a recurring daily allowance you never pay for. Some mean a lifetime handful of attempts, which is an evaluation rather than a free tier. Some mean free after you create an account, verify an email and add a card that is not charged yet. Those are three different products, and the word on the button does not distinguish them. This sets out what to check before you record anything, and what genuinely runs with no account at all.",
+    published: "2026-09-02",
+    updated: "2026-09-02",
+    readMinutes: 7,
+    primaryKeyword: "free ai communication coach no sign up",
+    secondaryKeywords: [
+      "communication ai no login",
+      "free speech analysis without account",
+      "practice speaking online free no registration",
+      "free ai speaking coach no credit card",
+      "no signup speaking practice",
+    ],
+    cluster: "tools",
+    sections: [
+      {
+        h: "Three things the word free is used to mean",
+        p: [
+          "A recurring free tier gives you an allowance that refills - so many recordings a day, every day, with no payment relationship. This is the only shape in which a free tool can actually change a habit, because habit change needs about two weeks of repetition and no lifetime allowance survives that.",
+          "A lifetime free allowance gives you a fixed number of attempts, ever. Five roleplays or three recordings, and then it stops. This is sized for deciding whether to buy, which is a legitimate thing for a product to offer and a useless thing to plan a fortnight of practice around.",
+          "A free trial is a paid product with the payment deferred. Card up front, cancel before day fourteen. Nothing wrong with it, but it belongs in a different mental category from the other two, and the distinction is deliberately blurred on a lot of landing pages.",
+        ],
+        table: {
+          caption: "What each meaning of free actually gives you",
+          head: ["Shape", "Account needed", "Card needed", "Good for"],
+          rows: [
+            ["Recurring free tier", "Sometimes", "No", "Building a habit over weeks"],
+            ["Lifetime free allowance", "Usually", "No", "Deciding whether to buy"],
+            ["Free trial", "Yes", "Usually", "Evaluating a paid product in depth"],
+            ["Free after signup", "Yes", "No", "Products funded by the email list"],
+          ],
+        },
+      },
+      {
+        h: "Why the signup wall exists, and what it costs you",
+        p: [
+          "The account is not primarily there to hold your data. It is there because an email address is the asset that makes a free user worth having, and because a signup step filters out everyone who was only mildly curious - which improves every metric the company reports, at the cost of the person who wanted to check one recording before deciding anything.",
+          "What it costs you is specific and worth naming. You cannot try before deciding whether the measurement is any good. Your voice recording is now attached to an identity on someone's server. And the friction lands at exactly the moment you were most likely to actually do the thing, which is why so many people intend to practise and never record once.",
+          "There is a real trade-off on the other side. Without an account, nothing can compare today's recording against last month's, and the comparison against your own history is the part that turns numbers into progress. The reasonable arrangement is that the measurement works immediately with no account, and the history is what an account buys you later.",
+        ],
+      },
+      {
+        h: "What to check before you record anything",
+        p: [
+          "Five checks, about two minutes, and they eliminate most of the field before you have given anyone your voice.",
+        ],
+        list: {
+          ordered: true,
+          items: [
+            "Open the tool in a private window. If the record button works without a form, the no-signup claim is true. If it does not, it was free-after-signup.",
+            "Find the allowance as a number. Free forever with no number attached is a marketing sentence, not a limit you can plan around.",
+            "Check whether the allowance refills daily or is a lifetime total. This is the single most consequential difference and it is usually one line deep in an FAQ.",
+            "Look for the timestamp behind each number. A tool returning a score with no evidence trail cannot be checked, improved against, or trusted when it is wrong.",
+            "Read what happens to the audio. Whether it is stored, for how long, and whether it trains a model should be answerable in one paragraph on the privacy page.",
+          ],
+        },
+      },
+      {
+        h: "What runs with no account at all",
+        p: [
+          "Browser-based recording analysers are the category where no-signup genuinely happens, because analysing a sixty-second clip is cheap enough to give away and needs no persistent state to do once. Live conversational roleplay is the category where it mostly does not, because a back-and-forth with a language model costs real money per minute and is trivially abusable without a rate limit tied to something.",
+          "That split explains most of what you will find. If a product offers both, expect the recording side to be generously free and the roleplay side to be metered tightly, and treat a product offering unlimited free roleplay with no account with mild suspicion about what is paying for it.",
+          "On this site: recording is ten a day with no account and no card, and it returns pace overall and per section, filler count and rate with timestamps, pause length and placement, word-level clarity and pitch range. Practice rounds, where an AI plays a counterpart and pushes back, are two rounds free - a smaller number, for exactly the cost reason above. Nothing is gated behind an email, and there is no card field anywhere in the free path.",
+        ],
+      },
+      {
+        h: "Getting something useful out of one session",
+        p: [
+          "If you are only going to do this once, do not record a scripted paragraph. A script hides every problem you are trying to find, because the pressure that produces fillers and acceleration comes from composing while speaking, and a script removes the composing.",
+          "Record the question you are dreading instead. Sixty seconds, one take, no restarts - a restart is you editing out the exact moment worth measuring. Then look at one number rather than six: whichever is furthest from the working target is the one to work on, and the other five can wait a fortnight.",
+          "If you want the wider comparison rather than the no-account subset, [free AI communication tools](/guides/free-ai-communication-tools) covers what each category can and cannot do, [choosing an AI communication coach](/guides/best-ai-communication-coach) covers the selection checks in full, and [free AI public speaking practice](/guides/free-ai-public-speaking-practice) covers the same ground for talks rather than conversations.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Is there a free AI communication coach with no sign up?",
+        a: "Yes, in the recording-analyser category. Browser tools that measure a clip you record can run without an account, because a single sixty-second analysis is cheap and needs no stored state. Live conversational roleplay almost always requires one, because a back-and-forth with a model costs money per minute and needs a rate limit attached to something.",
+      },
+      {
+        q: "Can I practise speaking online without creating an account?",
+        a: "You can record and get measurements back without one. What you cannot get without an account is a comparison against your own past sessions, since there is nothing to attach the history to. A sensible arrangement is measurement free and immediate, history as the thing an account adds.",
+      },
+      {
+        q: "Do free tools without signup keep my voice recording?",
+        a: "It varies, and it should be stated plainly on the privacy page in one paragraph. The questions worth an answer are whether the audio is stored after analysis, for how long, and whether it is used to train anything. A tool that cannot answer those in a sentence each is one to skip, regardless of how good the free tier looks.",
+      },
+      {
+        q: "What is the catch with a free tier that has no card and no account?",
+        a: "Usually the allowance and the depth. The free path gives you the measurement, which is cheap to run; the paid path gives you history, longer recordings, or unlimited roleplay, which are not. That is a fair trade and it is visible up front. The catch actually worth watching for is a lifetime handful dressed up as a recurring allowance.",
+      },
+      {
+        q: "Is there an AI communication coach with no login and no download?",
+        a: "Browser-based analysers need neither. The recording happens in the page using the microphone permission the browser already manages, so there is nothing to install, and the analysis runs server-side on the clip. Anything asking you to install a desktop app is usually a meeting copilot, which is a different category solving a different problem.",
+      },
+    ],
+    related: [
+      "free-ai-communication-tools",
+      "best-ai-communication-coach",
+      "free-ai-public-speaking-practice",
+      "yoodli-alternatives",
+    ],
+    cta: CTA.free,
+  },
+  {
+    slug: "best-ai-communication-coach",
+    title: "How to Choose the Best AI Communication Coach",
+    metaTitle: "Best AI Communication Coach: How to Choose",
+    description:
+      "The five checks that separate an AI communication coach worth using from a score generator, which category fits which problem, and an honest account of where this one stops.",
+    answer:
+      "The best AI communication coach is the one matching how your problem shows up. Recording analysers suit a deadline you are rehearsing for, roleplay simulators suit freezing under questions, and meeting copilots suit failures that only appear with other people present. Judge candidates on evidence trails and session-to-session comparison, not feature counts.",
+    intro:
+      "There is no single best AI communication coach, and any article naming one has not asked what your problem is. The category contains at least three products that barely compete with each other, and choosing the wrong shape is the most common reason people try one of these and abandon it inside a fortnight. What follows is a selection framework rather than a ranking: which shape fits which failure, the five checks that eliminate most candidates in twenty minutes, and where this product sits including what it does not do. Anything said about the market was accurate in September 2026 and changes often.",
+    published: "2026-09-02",
+    updated: "2026-09-02",
+    readMinutes: 8,
+    primaryKeyword: "best ai communication coach",
+    secondaryKeywords: [
+      "best communication coach",
+      "ai communication coach comparison",
+      "best ai speaking coach",
+      "ai coach for communication skills",
+      "online communication coach",
+    ],
+    cluster: "tools",
+    sections: [
+      {
+        h: "Start from how your problem shows up, not from features",
+        p: [
+          "Three failure patterns cover most people, and each one points at a different category of tool. Getting this right matters more than any feature comparison, because a tool aimed at the wrong pattern will report perfectly accurate numbers about something that is not your problem.",
+          "The diagnostic takes one recording. Answer a genuinely uncomfortable question about your own work, out loud, for sixty seconds, alone. If the recording is already bad - fast, full of fillers, no pauses - your problem is delivery and it reproduces in private, which means rehearsal fixes it. If it is fine and real meetings still go badly, the problem needs other people present to appear, and no amount of solo recording will surface it.",
+        ],
+        table: {
+          caption: "Which category answers which failure pattern",
+          head: ["How it shows up", "Category to use", "What it gives you", "What it cannot do"],
+          rows: [
+            ["Bad even when rehearsing alone", "Recording analyser", "Repeatable numbers with timestamps", "Reproduce real pressure"],
+            ["Fine alone, freezes when questioned", "Roleplay simulator", "Pressure on demand", "Measure anything comparably"],
+            ["Fine alone, fails in group calls", "Meeting copilot", "Evidence from the real thing", "Help before the meeting exists"],
+            ["Not sure which", "Recording analyser first", "A baseline to reason from", "Be answered without one recording"],
+          ],
+        },
+      },
+      {
+        h: "The five checks that eliminate most of the field",
+        p: [
+          "Run these against any candidate. They take about twenty minutes in total, and they are ordered so the cheapest disqualifier comes first.",
+        ],
+        list: {
+          ordered: true,
+          items: [
+            "Does every number come with the moment that produced it? A filler count with no timestamps cannot be verified, argued with, or learned from - it is a score, and a score is the least useful thing a coach can hand you.",
+            "Can it compare this session to your last one? A tool that measures you in isolation each time is measuring nothing, because the only meaningful reading of 4.1 fillers a minute is whether it used to be 7.",
+            "Does it name one thing to fix, or list twelve? Twelve findings is a report. One is coaching. Attention is the scarce resource, and a list of twelve spends all of it on triage.",
+            "Does it penalise your accent? Test by recording something you know was perfectly clear. A clarity score that drops on clean speech in a non-native accent is measuring the wrong thing, and will teach you to fix what was never broken.",
+            "Does the free allowance recur? A lifetime handful is an evaluation. Habit change takes about two weeks of daily repetition, and no fixed lifetime allowance survives it.",
+          ],
+        },
+      },
+      {
+        h: "What the market currently looks like",
+        p: [
+          "Recording analysers are the crowded end. Browser tools that take a clip and return pace, filler rate and clarity, usually free for a limited number of recordings. They differ mainly in whether they show their working: most return a score and a summary, and a minority return the timestamps behind each number. That minority is the one worth your time, for the reasons in check one.",
+          "Roleplay simulators have grown fastest. An AI plays an interviewer, a customer or an investor and asks you questions, which is genuinely valuable if freezing is your failure pattern. The weakness is consistent across all of them: they will accept an answer a real counterpart would have pushed back on, and no two sessions are comparable, so nothing accumulates. Yoodli is the best-known product spanning this and the analyser category; the fuller comparison, including Poised on the meeting-copilot side, is in [Yoodli alternatives](/guides/yoodli-alternatives).",
+          "Meeting copilots are the smallest group and the hardest to adopt, because a bot joining your calls is a decision involving everyone else on the call. They answer a question nothing else can - what you actually do in a real meeting, rather than in a rehearsal - and they are useless for a talk you are giving in ten days, since there is no live call to sit in.",
+          "General-purpose chatbots deserve a mention, because a lot of people use one for this. A text model can review a transcript and give you sensible advice about structure and word choice. It cannot hear you, so pace, pauses, filler rate, clarity and vocal energy are all outside what it can assess - and it will comment on them confidently anyway if you ask.",
+        ],
+      },
+      {
+        h: "The questions to ask about pricing before you commit",
+        p: [
+          "Find the free allowance as a number, and find out whether it refills. Those two facts determine whether you can build a habit on the free tier or are evaluating a purchase, and they are frequently one line deep in an FAQ rather than on the pricing page.",
+          "Then check what the paid tier actually buys. In this category it is usually breadth - unlimited roleplay, team seats, meeting integration, longer recordings - rather than a better measurement of the four numbers that matter. If the core measurement is identical on both tiers and the free allowance recurs, paying may buy you nothing you need.",
+          "Finally, check the annual-billing framing. A price quoted as eight dollars a month billed annually is a ninety-six dollar decision, and the monthly figure is the one on the page.",
+        ],
+      },
+      {
+        h: "Where FounderVoice sits, and where it stops",
+        p: [
+          "It is a recording analyser first, built for founder situations - the pitch, the investor questions, the demo, the board update, the interview. You record sixty seconds in the browser and get pace overall and per section, filler count and rate with timestamps, pause length and placement, word-level clarity and pitch range, each with the moment behind it. Ten recordings every 24 hours, no account and no card, and the allowance refills daily rather than running out once. If that no-account detail is the deciding factor, [what runs with no sign up](/guides/free-ai-communication-coach-no-signup) goes through it properly.",
+          "There is a practice mode where an AI plays a standup lead, a sceptical operator or a seed investor and follows up on the weak half of your answer. Two rounds free, a smaller allowance than recording, because a live back-and-forth costs considerably more to run. After several sessions it compares you against your own history rather than against an average.",
+          "What it is not: there is no meeting bot, so it will not sit in your calls. There is no video, so eye contact, gesture and posture are outside what it measures. It has no opinion on your business - not your market size, not your traction - because a tool claiming to would be guessing from a transcript. And it is aimed at high-stakes founder moments rather than at general sales enablement or language learning. If your failure only appears in live group calls, a meeting copilot is the category, and this is not it.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "What is the best AI communication coach?",
+        a: "There is no single best one, because the category contains three products solving different failures. If your delivery is already poor when rehearsing alone, use a recording analyser. If you are fine alone and freeze when questioned, use a roleplay simulator. If you only fail in live group calls, use a meeting copilot. Choosing the wrong shape is why most people abandon these in two weeks.",
+      },
+      {
+        q: "Are AI communication coaches actually effective?",
+        a: "For the measurable habits, yes, and measurably so - pace, filler rate, pause placement and clarity all shift inside a fortnight of daily one-minute recordings, because the correction is usually obvious once the number is visible. For judgement calls like what to cut or how to handle a hostile room, a human coach is still better, and no current tool is close.",
+      },
+      {
+        q: "Is a free AI communication coach good enough?",
+        a: "If the free allowance recurs daily, usually yes. What changes delivery is one minute a day for two weeks with the same prompt, and that fits comfortably inside a recurring free tier. Paid tiers in this category buy breadth rather than a better measurement of the four numbers that matter.",
+      },
+      {
+        q: "Can ChatGPT be a communication coach?",
+        a: "It can review a transcript and give useful advice on structure and word choice. It cannot hear you, so pace, pause placement, filler rate, clarity and vocal energy are all outside what it can assess - and it will still answer confidently if you ask about them. Use a text model for what you said, and something that hears audio for how you said it.",
+      },
+      {
+        q: "How much does an AI communication coach cost?",
+        a: "As of September 2026 the paid tiers in this category commonly start in the region of eight to twenty dollars a month, frequently quoted at the annual rate. Check whether the free allowance recurs before paying, because if it does and it covers a daily minute of recording, the paid tier may be buying breadth you do not need.",
+      },
+    ],
+    related: [
+      "yoodli-alternatives",
+      "free-ai-communication-coach-no-signup",
+      "free-ai-communication-tools",
+      "ai-speaking-partner",
+    ],
+    cta: CTA.free,
+  },
+  {
+    slug: "what-to-do-before-an-investor-pitch",
+    title: "What to Do Before an Investor Pitch",
+    metaTitle: "What to Do Before an Investor Pitch",
+    description:
+      "A timed preparation plan for the two weeks, the day and the ten minutes before an investor meeting - what to rehearse, what to leave alone, and what to check.",
+    answer:
+      "Before an investor pitch, rehearse the questions rather than the deck. Spend the final fortnight recording your sixty-second version and the ten answers you are dreading, the day before on one clean run and proper sleep, and the last ten minutes on slow breathing and a deliberately slow first sentence rather than on changes.",
+    intro:
+      "Most pitch preparation is spent on the wrong half. Founders rework slides until the night before and rehearse the questions not at all, which is backwards: the deck is the part you control completely, and the questions are the part that decides the meeting. This is a timed plan built around that inversion - what to do with two weeks, with one day, and with ten minutes. It assumes the deck is finished, because if it is not, the answer to what to do before the pitch is finish the deck.",
+    published: "2026-09-02",
+    updated: "2026-09-02",
+    readMinutes: 8,
+    primaryKeyword: "what to do before an investor pitch",
+    secondaryKeywords: [
+      "investor pitch preparation checklist",
+      "before investor pitch",
+      "how to prepare for a pitch meeting",
+      "day before pitch meeting",
+      "pitch meeting preparation",
+    ],
+    cluster: "founder",
+    sections: [
+      {
+        h: "Two weeks out: build the question bank, not more slides",
+        p: [
+          "Write down the ten questions you are most hoping they will not ask. Not the ten most likely - the ten you are dreading, which is a different and much shorter list, and the one that predicts how the meeting goes. The overlap between the two lists is usually about half, and the non-overlapping half is where meetings are lost.",
+          "Then answer each one out loud, cold, timed, once. No rehearsing before the first take: the first take is the data. Most founders discover two things immediately - that answers they thought were thirty seconds run ninety, and that pace and filler rate on the dreaded questions are far worse than on the pitch itself, which they have rehearsed. That gap is the actual preparation gap.",
+          "The full treatment is in [preparing for investor Q&A](/guides/how-to-prepare-for-investor-qa). The short version: an answer you have said out loud once is a different object from an answer you have thought about, and only the first survives being interrupted.",
+        ],
+        list: {
+          intro: "The ten that belong on almost every founder's list:",
+          items: [
+            "Why now, and why has nobody done this already?",
+            "What happens when the obvious large incumbent decides to do this?",
+            "Walk me through the unit economics at your current scale.",
+            "What is your actual retention, cohort by cohort?",
+            "How much of that revenue comes from a single customer?",
+            "What did you get wrong in the last twelve months?",
+            "Why is this team the one to do it?",
+            "What does this round buy you, in milestones rather than in months?",
+            "What is the weakest part of this business?",
+            "Who else is in the round, and on what terms?",
+          ],
+        },
+      },
+      {
+        h: "The fortnight: one minute a day, same prompt",
+        p: [
+          "Record the sixty-second version of the pitch every day. Same length, same prompt, same time of day if you can, because the comparison is the entire value and a comparison between different prompts measures nothing. Ten minutes total across the whole fortnight, and it outperforms three long rehearsal sessions comfortably.",
+          "Watch four numbers and ignore the rest. Pace should sit between 130 and 150 words per minute and, more importantly, stay there across the whole clip rather than averaging into range by running slow through the safe part and fast through the ask. Filler rate under three a minute. A pause of half a second to a second and a half before each conclusion. Clarity holding on the last words of sentences, which is where it fails first.",
+          "Alternate: pitch on odd days, a dreaded question on even ones. The question days are the ones that move, because the pitch is already over-rehearsed and the answers are not.",
+        ],
+        table: {
+          caption: "The four numbers to watch in the final fortnight",
+          head: ["Number", "Target", "What a bad reading means"],
+          rows: [
+            ["Pace", "130-150 wpm, stable across the clip", "You accelerate into the part you are unsure of"],
+            ["Filler rate", "Under 3 per minute", "You are composing while speaking, not recalling"],
+            ["Pause before conclusions", "0.5-1.5 seconds", "Every sentence lands at the same weight"],
+            ["Clarity at sentence ends", "Under 5% unclear", "You are outrunning your own articulation"],
+          ],
+        },
+      },
+      {
+        h: "The day before: stop changing things",
+        p: [
+          "No new slides, no new numbers, no restructuring. A change made the day before has not been rehearsed and will be the sentence you stumble on, and the cost of stumbling is higher than the benefit of marginally better wording almost every time.",
+          "Do one clean run of the whole thing, out loud, standing, timed, without stopping to fix anything. Stopping to fix is the habit that produces a founder who can deliver the first two minutes beautifully and has never once delivered the ending. Then do one pass on the three questions you are still worst at, and stop.",
+          "Then sleep, properly. Sleep loss shows up in speech before it shows up anywhere you can feel it - pace rises, articulation degrades, and recovery from an interruption gets noticeably slower. It is the highest-leverage thing available on the last night, and the one most reliably sacrificed to slide edits.",
+        ],
+      },
+      {
+        h: "Logistics worth checking the day before",
+        p: [
+          "Boring, and each one has ended a meeting badly for somebody. Ten minutes of checking removes an entire category of failure that has nothing to do with how well you speak.",
+        ],
+        list: {
+          items: [
+            "Test the actual video link on the actual device, signed into the account you will use. Share a slide and confirm the audio route while you are there.",
+            "Have the deck as a PDF locally, not only in a cloud tab, and know which key advances it.",
+            "Know your three headline numbers well enough to say without the slide, because the slide will be the one that fails to load.",
+            "Confirm who is in the room and what they invest in. Being pitched a seed thesis by someone who only does Series B is a five-minute meeting.",
+            "Set the room up: light in front of you, camera at eye level, phone off rather than face down.",
+          ],
+        },
+      },
+      {
+        h: "The last ten minutes",
+        p: [
+          "Do not rehearse. Reading the deck one more time in the ten minutes before does nothing for recall and reliably raises your baseline speaking rate, which is the opposite of what you need walking in.",
+          "Slow breathing instead - out for longer than in, for about two minutes. This is not a relaxation ritual; it is the most direct available lever on the physiology that makes you speak too fast, and it works within a couple of minutes.",
+          "Then plan the first sentence, and only the first sentence. Say it slower than feels natural, because the opening is delivered at whatever pace your adrenaline sets and everything after it anchors to that. A deliberately slow first sentence buys back the entire first minute. [Sounding confident in an investor pitch](/guides/how-to-sound-confident-in-an-investor-pitch) covers what a room reads off that opening, and the [pitch practice tool](/tools/pitch-practice) is where the fortnight of recordings goes.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "What should I do the day before an investor pitch?",
+        a: "One clean uninterrupted run of the whole pitch out loud, one pass on the three questions you are still worst at, and then stop. No new slides and no restructuring - an unrehearsed change is the sentence you will stumble on. Then sleep properly, because sleep loss degrades pace and articulation before you can feel it.",
+      },
+      {
+        q: "How long should I practise before a pitch meeting?",
+        a: "One minute a day for the final fortnight, recording the same prompt each time, plus one full run the day before. Under half an hour of practice in total. That beats three long rehearsal sessions, because the value is in the comparison between days, and a long session gives you one data point and a sore throat.",
+      },
+      {
+        q: "Should I memorise my pitch word for word?",
+        a: "No. A memorised pitch fails at the first interruption, because recall of a fixed sequence does not survive being knocked out of it, and investors interrupt. Memorise the sixty-second structure and the three headline numbers, and let the wording vary. The one thing worth rehearsing word for word is the first sentence.",
+      },
+      {
+        q: "What do investors judge in the first minute?",
+        a: "Whether you can explain the business clearly, and whether you sound like someone who knows it. That reads mostly off delivery, since they cannot yet evaluate the substance - pace, whether you pause before the important sentence, and whether the filler rate suggests recall or composition. It is not fair, but it is what a stranger has to work with in sixty seconds.",
+      },
+      {
+        q: "What should I do in the ten minutes before the meeting?",
+        a: "Slow breathing, out-breath longer than in, for about two minutes, then plan your first sentence and deliver it slower than feels natural. Do not read the deck again - it does nothing for recall and raises your baseline speaking rate at exactly the wrong moment.",
+      },
+    ],
+    related: [
+      "how-to-prepare-for-investor-qa",
+      "pitch-practice-for-founders",
+      "how-to-sound-confident-in-an-investor-pitch",
+      "investor-pitch-delivery",
+    ],
+    cta: CTA.pitch,
+  },
+  {
+    slug: "how-to-practice-a-presentation",
+    title: "How to Practise a Presentation Out Loud",
+    metaTitle: "How to Practise a Presentation Out Loud",
+    description:
+      "Why reading your slides is not rehearsal, how many run-throughs actually help, and a schedule for the week before a class presentation, a conference talk or a work update.",
+    answer:
+      "Practise a presentation by delivering it out loud, standing, timed, without stopping to fix anything. Three to five full run-throughs spread across a week beat a dozen partial ones, and recording at least one of them is the only way to find the pace and filler problems you cannot hear while speaking.",
+    intro:
+      "Nearly everyone practises presentations the same way, and it is the wrong way: reading through the slides silently, several times, stopping to improve the wording. That rehearses recognition of the material and nothing about the delivery, which is why people who have prepared for hours still speak too fast, run over time and lose their place at the first interruption. Rehearsal that works has three properties - out loud, uninterrupted, and timed - and this is how to arrange the week before around them, whether it is a class presentation, a conference talk or a Monday update.",
+    published: "2026-09-02",
+    updated: "2026-09-02",
+    readMinutes: 8,
+    primaryKeyword: "how to practise a presentation out loud",
+    secondaryKeywords: [
+      "how to practice a presentation",
+      "how to practice a college presentation",
+      "rehearse a presentation",
+      "practice presentation for class",
+      "how many times to rehearse a presentation",
+    ],
+    cluster: "speaking",
+    sections: [
+      {
+        h: "Reading the slides is not practice",
+        p: [
+          "Silent reading builds familiarity with the material, and familiarity feels like preparedness. It is not the same thing. The mouth has never produced the sentences, so the transitions between points have never been said, the timing is unknown, and the parts you are shakiest on have been skimmed rather than exercised - because skimming is exactly what the brain does with material it finds uncomfortable.",
+          "The measurable consequence is length. A deck read silently in eight minutes is routinely delivered in fourteen, because silent reading skips the pauses, the transitions, and the sentences you improvise between slides. Anyone who has run over their slot has usually rehearsed only in their head.",
+          "So the minimum viable rehearsal is out loud, standing, with a timer running, and without stopping. The no-stopping part is the one people abandon first and the one that matters most, because stopping to fix produces a speaker who has delivered the opening twenty times and the conclusion never.",
+        ],
+      },
+      {
+        h: "How many run-throughs, and spread over how long",
+        p: [
+          "Three to five full uninterrupted run-throughs, spread across several days, is the range where the returns are. Below three, the ending has never been delivered under fatigue. Above about six in the same week, the delivery starts to flatten into recitation - the tell is that it stops sounding like you are thinking about what you are saying, which an audience hears immediately as reading.",
+          "Spacing matters more than the count. Five run-throughs across five days beats five in one evening by a wide margin, for the same reason spaced repetition beats cramming, and it gives you five separate chances to notice that a section does not work rather than one.",
+        ],
+        table: {
+          caption: "A week before a presentation, one pass a day",
+          head: ["Day", "What to do", "Roughly how long"],
+          rows: [
+            ["7 days out", "First full run, out loud, timed. Expect it to be bad", "Talk length + 10 min"],
+            ["5 days out", "Second run. Fix structure, not wording", "Talk length + 10 min"],
+            ["4 days out", "Record 60 seconds of the opening and check pace", "5 minutes"],
+            ["3 days out", "Third full run, standing, with the real slides", "Talk length"],
+            ["2 days out", "Practise the three questions you are dreading", "10 minutes"],
+            ["1 day out", "One clean run. Change nothing afterwards", "Talk length"],
+            ["On the day", "Two minutes of slow breathing. No rehearsal", "2 minutes"],
+          ],
+        },
+      },
+      {
+        h: "Record one of them, because you cannot hear yourself",
+        p: [
+          "You cannot assess your own delivery while producing it. The brain suppresses the sound of your own voice while you speak and substitutes the version you intended, which is why a recording is startling, and why it is the only honest feedback available without another person in the room.",
+          "You do not need to record the whole talk. Sixty seconds of the opening and sixty seconds of the section you find hardest will surface almost everything: whether you are above 150 words per minute, whether the filler rate climbs on the hard section, whether you pause before conclusions or run every sentence together, and which words at the ends of sentences came out too soft to survive a room.",
+          "The comparison is what makes it useful. Record the same sixty seconds on day seven and on day one, and the change is unmissable, where a single recording just tells you something you may not act on. The [speaking pace test](/tools/speaking-pace-test) and [filler word counter](/tools/filler-word-counter) do the two most common of these, and [free AI public speaking practice](/guides/free-ai-public-speaking-practice) covers what a tool can and cannot assess.",
+        ],
+      },
+      {
+        h: "If it is a college or class presentation",
+        p: [
+          "The constraints differ from a conference talk in two ways that change the plan. The time limit is enforced strictly and is usually short, and a portion of the grade is typically for delivery rather than content - which means the rehearsal is worth marks directly, not just indirectly.",
+          "Rehearse to about ninety per cent of the limit rather than to the limit. Nerves add length, they do not subtract it, and a talk that fits exactly in rehearsal will overrun on the day. If the limit is ten minutes, your rehearsal target is nine.",
+          "Practise the handover if it is a group presentation. Group presentations fail at the joins far more often than inside the sections - the handover is the one part nobody rehearses, because it belongs to two people and therefore to neither. Say the actual sentence you will use to hand over, out loud, with the other person, at least twice.",
+          "And prepare for the question you cannot answer, because in an assessed presentation there will be one. \"I do not know, but here is how I would find out\", delivered calmly, costs almost nothing; a guess delivered fast costs a lot. [Speaking with confidence](/guides/how-to-speak-with-confidence) covers what that calm is actually made of.",
+        ],
+      },
+      {
+        h: "What to fix, in order",
+        p: [
+          "One thing per run-through. Trying to fix pace, fillers, pauses and structure simultaneously produces a speaker monitoring their own delivery so closely that the content degrades, which is a worse trade than the fillers were.",
+          "Length first, because it is binary and everything else is wasted if you get cut off. Then pace, because it drags fillers and clarity along with it - [how to stop talking too fast](/guides/how-to-stop-talking-too-fast) is the mechanism. Then the transitions between sections, which is where people actually lose their place, rather than inside a section. Then pauses before your two or three key sentences, which is what tells a room which sentences those are.",
+          "Wording last, and only if there is time. It is the thing everyone wants to work on, and the one with the smallest effect on how the talk is received.",
+        ],
+        list: {
+          ordered: true,
+          items: [
+            "Length: land inside the slot with ten per cent to spare.",
+            "Pace: 130-150 words per minute, and stable rather than averaging into range.",
+            "Transitions: the sentence that gets you from each section to the next, said out loud.",
+            "Pauses: half a second to a second and a half before each key point.",
+            "Wording: last, and only once the four above are done.",
+          ],
+        },
+      },
+    ],
+    faqs: [
+      {
+        q: "How many times should I rehearse a presentation?",
+        a: "Three to five full uninterrupted run-throughs, spread across several days rather than done in one evening. Fewer than three and you have never delivered the ending under fatigue; more than about six in a week and the delivery flattens into recitation, which an audience hears as reading.",
+      },
+      {
+        q: "Should I practise a presentation out loud or in my head?",
+        a: "Out loud, always. Silent practice builds familiarity with the material but exercises none of the delivery, and it systematically underestimates length - a deck read silently in eight minutes commonly takes fourteen to deliver, because silent reading skips the pauses, transitions and improvised connective sentences.",
+      },
+      {
+        q: "How do I practise a college presentation?",
+        a: "The same as any talk, with two adjustments. Rehearse to ninety per cent of the time limit, because nerves add length. And if it is a group presentation, rehearse the handovers out loud with the other people - group presentations fail at the joins, which are the one part that belongs to two people and so gets rehearsed by neither.",
+      },
+      {
+        q: "Is it worth recording myself practising?",
+        a: "Yes, and sixty seconds is enough. You cannot hear your own delivery while producing it, because the brain substitutes the intended version for the delivered one. One minute of the opening and one of the hardest section will surface your pace, your filler rate under pressure, and the words that came out too soft to reach the back of a room.",
+      },
+      {
+        q: "What should I do on the day of the presentation?",
+        a: "Not rehearse. A final read-through does nothing for recall and reliably raises your baseline speaking rate at the worst possible moment. Two minutes of slow breathing with the out-breath longer than the in-breath, then deliver your first sentence slower than feels natural, because everything after it anchors to that pace.",
+      },
+    ],
+    related: [
+      "how-to-stop-talking-too-fast",
+      "ideal-speaking-pace-words-per-minute",
+      "how-to-speak-with-confidence",
+      "free-ai-public-speaking-practice",
+    ],
+    cta: CTA.free,
+  },
 ];
 
 export function getGuide(slug: string): Guide | undefined {

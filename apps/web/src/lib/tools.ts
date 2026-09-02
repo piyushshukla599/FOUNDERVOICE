@@ -25,7 +25,10 @@ import { GUIDES } from "@/lib/guides";
 export type ToolSection = {
   h: string;
   p: string[];
-  list?: { ordered?: true; items: string[] };
+  /* `intro` is rendered by GuideSection, which tool pages share with the
+     guides. It was missing from this type only, so a tool list could not
+     introduce itself the way a guide list can. */
+  list?: { ordered?: true; intro?: string; items: string[] };
   table?: { caption: string; head: string[]; rows: string[][] };
 };
 
@@ -356,6 +359,348 @@ export const TOOLS: Tool[] = [
       "yoodli-alternatives",
     ],
     cta: { label: "Record my pitch", href: "/onboarding" },
+  },
+  /* --------------------------------------------------------------- 2026-09
+     Three head terms that had no page pointed at them. "ai communication
+     coach" and "public speaking practice" were being answered by the homepage,
+     which is also trying to be the founder positioning page and therefore wins
+     neither; "presentation practice" was not answered at all, despite being
+     the situation most people arrive from. */
+  {
+    slug: "ai-communication-coach",
+    h1: "Free AI Communication Coach",
+    metaTitle: "Free AI Communication Coach",
+    description:
+      "Record sixty seconds and get your communication measured: speaking pace, filler rate, pause placement, clarity and vocal energy, each with the timestamp behind it. No account, no card.",
+    answer:
+      "An AI communication coach measures how you speak rather than what you say. Record sixty seconds in the browser and get speaking pace overall and per section, filler count and rate, pause length and placement, word-level clarity and pitch range, each with the moment behind it. Ten recordings every 24 hours, free.",
+    primaryKeyword: "ai communication coach",
+    secondaryKeywords: [
+      "free ai communication coach",
+      "online communication coach",
+      "ai coach for communication skills",
+      "improve communication with ai",
+      "communication skills ai tool",
+    ],
+    published: "2026-09-02",
+    updated: "2026-09-02",
+    measures: "All five delivery numbers, with the timestamp behind each one",
+    sections: [
+      {
+        h: "What an AI can and cannot coach",
+        p: [
+          "It can measure delivery, precisely and repeatably. How fast you spoke, where you sped up, how many fillers and at which second, how long your pauses were and whether they landed before your point or in the middle of a sentence, which words came out too soft or too rushed to survive the trip to a listener, and whether your pitch flattened after the first minute. All of that is signal processing on audio, and a machine does it better than a human listener because a human listener is busy following your argument.",
+          "It cannot tell you whether your argument was any good. Judgement calls - what to cut, what to lead with, whether that analogy will land with this particular room, how to handle someone hostile - are still a human coach's job, and a tool claiming otherwise is guessing from a transcript.",
+          "The useful split is that the measurable half is also the half that fails first. Most people do not lose a room because their reasoning was weak. They lose it because they went at 180 words per minute with no pause before the conclusion, and nobody has ever told them.",
+        ],
+      },
+      {
+        h: "The five numbers, and what a bad reading means",
+        p: [
+          "Every number comes with the moment that produced it, so you can play back the second in question rather than take the figure on trust. A score with no evidence trail cannot be argued with, and cannot teach you anything.",
+        ],
+        table: {
+          caption: "What one recording returns",
+          head: ["Measurement", "Working target", "What a bad reading usually means"],
+          rows: [
+            ["Speaking pace", "130-150 wpm, stable", "You accelerate through the part you are unsure of"],
+            ["Filler rate", "Under 3 per minute", "You are composing while speaking rather than recalling"],
+            ["Pause placement", "0.5-1.5s at thought ends", "Every sentence is landing at the same weight"],
+            ["Clarity", "Under 5% unclear", "You are outrunning your own articulation"],
+            ["Vocal energy", "Range that does not collapse", "Attention drops off after about a minute"],
+          ],
+        },
+      },
+      {
+        h: "Why one number matters more than five",
+        p: [
+          "A report listing twelve things to fix is a report. Attention is the scarce resource in changing a habit, and a list of twelve spends all of it deciding where to start.",
+          "So the readout names one habit - whichever is furthest from its working target and most likely to be dragging the others with it. Pace usually is: a fast speaker loses pauses, gains fillers and loses clarity all at once, which means three of the five numbers move when you fix one.",
+          "After several sessions the comparison shifts from targets to your own history, which is the reading that actually means something. Four fillers a minute is neither good nor bad in isolation. Four when it was seven a fortnight ago is the whole point.",
+        ],
+        list: {
+          intro: "The routine that works, in about ten minutes total across two weeks:",
+          items: [
+            "Sixty seconds a day, same prompt every day, so the comparison between days is real.",
+            "Use a question you find genuinely uncomfortable, not a script - a script removes the composing pressure that produces the problem.",
+            "One take, no restarts. A restart edits out the exact moment worth measuring.",
+            "Work on one number until it holds, then move to the next. Two weeks per habit is the realistic pace.",
+          ],
+        },
+      },
+      {
+        h: "Free, and what that means here",
+        p: [
+          "Ten recordings every 24 hours, no account and no card, and the allowance refills daily rather than being a lifetime handful. That distinction is the one that decides whether a free tier can change anything: habit change takes about two weeks of repetition, and five lifetime attempts is an evaluation of the product, not a fortnight of practice.",
+          "Practice rounds - where an AI plays a standup lead, a sceptical operator or a seed investor and pushes back on the weak half of your answer - are two rounds free. A smaller allowance, because a live back-and-forth with a model costs considerably more to run than analysing a recording, and pretending otherwise would mean quietly withdrawing it later.",
+          "Nothing is gated behind an email address, and there is no card field anywhere in the free path. What an account adds later is history: the comparison against your own past sessions, which has nothing to attach to when there is no account.",
+        ],
+      },
+      {
+        h: "What it does not do",
+        p: [
+          "No video. Eye contact, gesture and posture are a separate channel and outside what this measures, so if body language is your question, this is the wrong tool.",
+          "No meeting bot. It will not join your calls, which means it cannot see the failure that only appears when other people are in the room. That is a real category of problem and it needs a meeting copilot instead.",
+          "No opinion on your content. It will not tell you your market sizing is optimistic or your analogy is confusing, because a tool making that call from a transcript would be guessing, and a confident guess is worse than silence.",
+          "It is not language learning. It measures delivery, not grammar or vocabulary, so it is useful to a non-native speaker for exactly the same reasons it is useful to anyone else and no more than that.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "What is an AI communication coach?",
+        a: "A tool that measures how you speak rather than what you say. It takes a recording and returns speaking pace, filler count and rate, pause length and placement, word-level clarity and vocal energy, ideally with the timestamp behind each figure. It replaces the guesswork in self-assessment, not the judgement of a human coach.",
+      },
+      {
+        q: "Is this AI communication coach free?",
+        a: "Recording is free at ten a day, with no account and no card, and the allowance refills every 24 hours rather than running out permanently. Practice rounds against an AI counterpart are free at two rounds - a smaller number, because a live conversation costs much more to run than analysing a clip.",
+      },
+      {
+        q: "Can AI really improve your communication skills?",
+        a: "For the measurable habits, yes. Pace, filler rate, pause placement and clarity all shift inside about two weeks of daily one-minute recordings, because the correction is usually obvious once the number is in front of you. For structure, argument and reading a room, a human coach is still better.",
+      },
+      {
+        q: "Do I need to install anything?",
+        a: "No. It records in the browser using the microphone permission your browser already manages, and the analysis runs server-side on the clip. There is no app to install and no extension. Anything in this category asking you to install a desktop application is usually a meeting copilot, which solves a different problem.",
+      },
+      {
+        q: "Will it penalise my accent?",
+        a: "It measures articulation and audibility rather than conformity to an accent, so clean speech in any accent should score as clear. The honest way to check that claim on any tool, this one included, is to record something you know was perfectly clear and see whether the clarity number drops.",
+      },
+    ],
+    guides: [
+      "best-ai-communication-coach",
+      "free-ai-communication-coach-no-signup",
+      "free-ai-communication-tools",
+      "speaking-skills-in-communication",
+      "how-to-communicate-as-a-founder",
+      "ai-speaking-partner",
+      "yoodli-alternatives",
+    ],
+    cta: { label: "Measure my delivery free", href: "/onboarding" },
+  },
+  {
+    slug: "presentation-practice",
+    h1: "Presentation Practice: Rehearse Out Loud, Free",
+    metaTitle: "Free Presentation Practice Tool",
+    description:
+      "Rehearse a presentation out loud and get the delivery measured: length, speaking pace, filler rate, pause placement and clarity, so you find the problems before the room does.",
+    answer:
+      "Presentation practice works when you deliver out loud, timed, without stopping - and record at least one run. Record sixty seconds of your opening and get length, speaking pace overall and per section, filler count and rate, pause placement and word-level clarity, so you can see the overrun and the rush before the day.",
+    primaryKeyword: "presentation practice tool",
+    secondaryKeywords: [
+      "practice presentation online free",
+      "college presentation practice",
+      "rehearse presentation with ai",
+      "practice speaking for class presentation",
+      "presentation rehearsal tool",
+    ],
+    published: "2026-09-02",
+    updated: "2026-09-02",
+    measures: "Length and pace against your slot, plus fillers, pauses and clarity",
+    sections: [
+      {
+        h: "The two ways presentations go wrong, and both are measurable",
+        p: [
+          "They run over, and they go too fast. These are the same failure seen from two angles: a talk rehearsed silently is estimated at roughly two thirds of its real length, so the speaker plans for eight minutes, discovers on the day that they are at minute nine with three slides left, and accelerates through the ending - which is the part they most needed the room to follow.",
+          "Neither problem is visible from the inside. You cannot time a talk you rehearsed in your head, and you cannot hear your own pace while producing it, because the brain substitutes the version you intended for the version you delivered.",
+          "Both are trivially visible from a recording. Length is a number. Pace is a number, and a pace that climbs across the clip is the acceleration you could not feel, plotted.",
+        ],
+      },
+      {
+        h: "What a recorded rehearsal returns",
+        p: [
+          "You do not need to record the whole talk. Sixty seconds of the opening and sixty of the section you find hardest surfaces almost everything worth fixing, and it is short enough that you will actually do it more than once.",
+        ],
+        table: {
+          caption: "What to check on a rehearsal recording, and the target",
+          head: ["Measurement", "Target for a presentation", "Why it matters here"],
+          rows: [
+            ["Length", "90% of your allotted slot", "Nerves add length on the day, never subtract it"],
+            ["Speaking pace", "130-150 wpm, stable", "Slides plus speed is how an audience loses the thread"],
+            ["Filler rate", "Under 3 per minute", "Climbs sharply on the section you know least well"],
+            ["Pause placement", "0.5-1.5s before each key point", "It is the only way to mark what matters out loud"],
+            ["Clarity", "Under 5% unclear", "Sentence endings fail first, and they carry the point"],
+          ],
+        },
+      },
+      {
+        h: "A week before, one pass a day",
+        p: [
+          "Three to five full uninterrupted run-throughs spread across the week beats a dozen partial ones in a single evening. Below three, you have never delivered the ending under fatigue; above about six in a week, delivery flattens into recitation, which an audience hears immediately as reading.",
+          "The rule that people abandon first and that matters most: do not stop to fix things mid-run. Stopping produces a speaker who has delivered the opening twenty times and the conclusion never. Make notes, finish the run, then fix.",
+        ],
+        list: {
+          ordered: true,
+          items: [
+            "Seven days out: first full run, out loud, standing, timed. Expect it to be bad and do not stop.",
+            "Five days out: second run. Fix structure and cuts, not wording.",
+            "Four days out: record sixty seconds of the opening and check pace and length against the slot.",
+            "Three days out: third full run with the real slides on the real screen.",
+            "Two days out: the three questions you are dreading, answered out loud, cold.",
+            "One day out: one clean run, then change nothing. On the day, two minutes of slow breathing and no rehearsal at all.",
+          ],
+        },
+      },
+      {
+        h: "If it is a class or college presentation",
+        p: [
+          "Two things differ. The time limit is enforced and usually short, and a share of the grade is typically for delivery - so rehearsal is worth marks directly rather than only indirectly.",
+          "Rehearse to about ninety per cent of the limit. A talk that fits exactly in rehearsal will overrun on the day, because adrenaline adds length through extra connective sentences you did not plan.",
+          "If it is a group presentation, rehearse the handovers out loud with the other people. Group presentations fail at the joins far more often than inside the sections, because the handover belongs to two people and therefore gets rehearsed by neither. The step-by-step version is in [how to practise a presentation](/guides/how-to-practice-a-presentation).",
+        ],
+      },
+      {
+        h: "What it does not do",
+        p: [
+          "It does not make slides, and it has no view on your deck design. This measures the delivery of a presentation, which is a different product from the many tools that generate one.",
+          "It does not do video, so eye contact, gesture, posture and where you are looking are outside what it measures.",
+          "It does not grade your content. Whether the argument holds and whether the evidence supports it are judgement calls, and a tool making them from a transcript would be guessing.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "How do I practise a presentation?",
+        a: "Out loud, standing, timed, without stopping to fix anything mid-run. Three to five full run-throughs spread across a week, and record at least one of them - a talk rehearsed silently is estimated at about two thirds of its real length, so silent practice is how people end up running over.",
+      },
+      {
+        q: "Is there a free tool to practise a presentation?",
+        a: "This one is free at ten recordings every 24 hours, with no account and no card, and the allowance refills daily. It returns length, speaking pace overall and per section, filler count and rate, pause placement and word-level clarity, each with the timestamp behind it.",
+      },
+      {
+        q: "How long before a presentation should I start practising?",
+        a: "About a week, with one pass a day, is the shape that works. Spacing matters more than the total count - five run-throughs across five days beats five in one evening comfortably, and it gives you five separate chances to notice a section is not working rather than one.",
+      },
+      {
+        q: "How do I stop going over time?",
+        a: "Time a real out-loud run rather than estimating, and rehearse to ninety per cent of your slot. Nerves add length on the day through connective sentences you did not plan, so a talk that fits exactly in rehearsal will overrun. If you are already over, cut a section rather than planning to speak faster.",
+      },
+      {
+        q: "Does it work for a class presentation as well as a work one?",
+        a: "Yes - the measurements are the same, and a strict time limit makes them more useful rather than less. The one adjustment for an assessed presentation is to rehearse group handovers out loud with your group, because that is where group presentations actually fail.",
+      },
+    ],
+    guides: [
+      "how-to-practice-a-presentation",
+      "free-ai-public-speaking-practice",
+      "how-to-stop-talking-too-fast",
+      "ideal-speaking-pace-words-per-minute",
+      "how-to-speak-with-confidence",
+      "speaking-skills-in-communication",
+    ],
+    cta: { label: "Record my rehearsal", href: "/onboarding" },
+  },
+  {
+    slug: "public-speaking-practice",
+    h1: "Public Speaking Practice, Online and Free",
+    metaTitle: "Free Public Speaking Practice Online",
+    description:
+      "Practise public speaking in the browser and get the delivery measured - pace, fillers, pauses, clarity and vocal energy - with the timestamp behind every number. No account needed.",
+    answer:
+      "Public speaking practice online means recording yourself deliberately and getting the delivery measured rather than judged from memory. Record sixty seconds in the browser and get speaking pace, filler count and rate, pause length and placement, word-level clarity and pitch range, each with the second that produced it. Free, ten a day.",
+    primaryKeyword: "public speaking practice online",
+    secondaryKeywords: [
+      "practice public speaking free",
+      "public speaking practice tool",
+      "speech practice online",
+      "how to practice public speaking alone",
+      "public speaking without an audience",
+    ],
+    published: "2026-09-02",
+    updated: "2026-09-02",
+    measures: "Pace, fillers, pauses, clarity and vocal energy, with timestamps",
+    sections: [
+      {
+        h: "Practising alone works, if you record it",
+        p: [
+          "The standard objection to solo practice is that it cannot reproduce an audience, which is true and mostly beside the point. The habits that lose a room - racing, filling every gap, never pausing, letting sentence endings go soft - are all present when you rehearse alone. They get worse in front of people; they do not appear from nowhere.",
+          "What solo practice genuinely cannot do is unrehearsed feedback. You cannot hear your own delivery while producing it, because the brain suppresses the sound of your own voice during speech and substitutes what you meant to say. This is why rehearsing without recording can be repeated fifty times without improving anything - you are practising, accurately, the version in your head.",
+          "A recording removes that. It is the first time you hear what a room hears, which is uncomfortable and is the entire value.",
+        ],
+      },
+      {
+        h: "What gets measured, and the working targets",
+        p: [
+          "Five numbers, each with the moment behind it so you can hear what produced it instead of trusting a figure.",
+        ],
+        table: {
+          caption: "Delivery measurements for a spoken piece, with targets",
+          head: ["Measurement", "Target", "The failure it catches"],
+          rows: [
+            ["Speaking pace", "130-150 wpm, stable", "Racing through the part you know least well"],
+            ["Filler rate", "Under 3 per minute", "Filling gaps instead of leaving them"],
+            ["Pause placement", "0.5-1.5s at thought ends", "Every sentence delivered at the same weight"],
+            ["Clarity", "Under 5% unclear", "Sentence endings that never reach the back of the room"],
+            ["Vocal energy", "Range that does not flatten", "The monotone that loses attention after a minute"],
+          ],
+        },
+      },
+      {
+        h: "Nerves show up as pace, and pace is fixable",
+        p: [
+          "Nervousness is not directly measurable and mostly not worth chasing. What it does to your speech is measurable, and that is the part that actually reaches the audience: the heart rate rises, the breath shortens, and the speaking rate goes up by twenty to forty words a minute without the speaker noticing at all.",
+          "This is useful because it converts an unfixable-feeling problem into a fixable one. You are not going to stop feeling nervous before a talk, and the advice to relax has never worked for anyone. You can, however, practise starting slower than feels natural, and the opening sets the pace that everything after it anchors to.",
+          "Two minutes of slow breathing with a longer out-breath than in-breath, immediately before, is the most direct lever available on the physiology. It is not a relaxation ritual - it is the fastest way to lower the rate you will speak at in the first minute.",
+        ],
+        list: {
+          intro: "A fortnight that changes the delivery, at one minute a day:",
+          items: [
+            "Same prompt each day, sixty seconds, one take. The comparison between days is the whole value.",
+            "Use something you find genuinely uncomfortable to talk about, not a script.",
+            "Fix one number at a time. Pace first, because three of the others move with it.",
+            "Record once more the day before the real thing, and change nothing after it.",
+          ],
+        },
+      },
+      {
+        h: "Free, and what that actually covers",
+        p: [
+          "Ten recordings every 24 hours, no account and no card. The allowance refills daily rather than being a lifetime handful, which is the difference between a free tier you can build a fortnight of practice on and one sized for evaluating a purchase.",
+          "There is also a practice mode where an AI plays a counterpart and pushes back on your answers - two rounds free, a deliberately smaller allowance, because a live back-and-forth costs much more to run than analysing a clip.",
+          "The wider comparison of what is free in this category, and what free is being used to mean, is in [free AI public speaking practice](/guides/free-ai-public-speaking-practice) and [what runs with no sign up](/guides/free-ai-communication-coach-no-signup).",
+        ],
+      },
+      {
+        h: "What it does not do",
+        p: [
+          "It does not give you an audience. Roleplay against an AI counterpart is pressure of a sort, and it is not the same as forty people looking at you - for that, a speaking group in a room with actual humans is still the answer, and nothing online replaces it.",
+          "It does not do video, so posture, gesture and eye contact are outside what it measures.",
+          "It does not write or assess your speech. What you said and whether it was worth saying are judgement calls; how you said it is what this counts.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "How can I practise public speaking alone?",
+        a: "Record yourself deliberately - sixty seconds, one take, on something you find genuinely uncomfortable to talk about - and measure the result rather than assessing it from memory. Rehearsing without recording can be repeated indefinitely without improving anything, because you cannot hear your own delivery while producing it.",
+      },
+      {
+        q: "Is there free public speaking practice online?",
+        a: "This is free at ten recordings every 24 hours with no account and no card, returning pace, filler count and rate, pause length and placement, word-level clarity and pitch range with the timestamp behind each one. Check on any tool whether the free allowance refills daily or is a lifetime total.",
+      },
+      {
+        q: "How do I stop being nervous when speaking?",
+        a: "You mostly do not, and chasing the feeling is the wrong target. What nerves do to your speech is measurable and fixable: the rate rises twenty to forty words a minute without you noticing. Two minutes of slow breathing beforehand and a deliberately slow first sentence handle most of the damage, because everything after the opening anchors to its pace.",
+      },
+      {
+        q: "How long does it take to get better at public speaking?",
+        a: "One habit shifts audibly in about two weeks of one minute a day, recorded against the same prompt so the comparison is real. Working on pace, fillers, pauses and clarity one at a time is roughly two months. Attempting all four at once takes longer, because the attention spent monitoring your own delivery comes out of the content.",
+      },
+      {
+        q: "Can practising online replace a speaking group?",
+        a: "For the measurable habits, yes, and it is faster - a room full of people will not tell you your filler rate. For the experience of a live audience, no, and nothing online does. The two solve different halves, and the recording half is the one you can do at seven in the morning.",
+      },
+    ],
+    guides: [
+      "free-ai-public-speaking-practice",
+      "how-to-practice-a-presentation",
+      "how-to-speak-with-confidence",
+      "how-to-stop-using-filler-words",
+      "speaking-skills-in-communication",
+      "free-ai-communication-coach-no-signup",
+    ],
+    cta: { label: "Record and measure a minute", href: "/onboarding" },
   },
 ];
 

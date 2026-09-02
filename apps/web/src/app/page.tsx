@@ -3,6 +3,7 @@ import Link from "next/link";
 import { PublicFooter, PublicHeader } from "@/components/PublicChrome";
 import { GUIDES } from "@/lib/guides";
 import { OG_IMAGE, SITE_URL } from "@/lib/schema";
+import { TOOLS } from "@/lib/tools";
 
 /**
  * The public landing page, and the only page most people see before deciding
@@ -47,12 +48,14 @@ const FEATURED_GUIDES = [
   "how-to-stop-using-filler-words",
   "how-to-stop-talking-too-fast",
   "pitch-practice-for-founders",
+  "what-to-do-before-an-investor-pitch",
   "how-to-prepare-for-investor-qa",
+  "how-to-practice-a-presentation",
   // The tools cluster gets one link from the front door rather than none. A
   // hub with no inbound link from the highest-authority page on the site is a
   // hub in name only.
   "free-ai-communication-tools",
-  "free-ai-public-speaking-practice",
+  "speaking-skills-in-communication",
 ];
 
 /** Where founders actually use this. Named because search intent lives here. */
@@ -481,6 +484,35 @@ export default function LandingPage() {
                 </li>
               );
             })}
+          </ul>
+        </section>
+
+        {/* The tool pages had no link from the front door at all, which is the
+            worst place for that gap to be: they carry the commercial intent
+            ("filler word counter", "ai pitch practice", "presentation
+            practice") and they were reachable only from inside a guide. A hub
+            plus every page in it, with the measurement as the anchor text,
+            because that is the phrase the page is trying to win. */}
+        <section className="border-t border-[var(--line)] py-24 lg:py-32">
+          <div className="fv-reveal flex flex-wrap items-baseline justify-between gap-4">
+            <h2 className="text-[24px] leading-tight text-[var(--ink)]">Or start with the number</h2>
+            <Link href="/tools" className="fv-quiet-link text-[14px]">
+              All {TOOLS.length} free tools
+            </Link>
+          </div>
+          <ul className="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {TOOLS.map((tool) => (
+              <li key={tool.slug} className="fv-reveal">
+                <Link href={`/tools/${tool.slug}`} className="fv-tile h-full">
+                  <span className="block text-[15.5px] leading-snug text-[var(--ink-dim)]">
+                    {tool.h1}
+                  </span>
+                  <span className="mt-2 block text-[13.5px] leading-relaxed text-[var(--faint)]">
+                    {tool.measures}
+                  </span>
+                </Link>
+              </li>
+            ))}
           </ul>
         </section>
 

@@ -37,6 +37,9 @@ behind every number. Ten recordings every 24 hours, no account.
 - [Free Filler Word Counter](https://foundervoice.app/tools/filler-word-counter): Counts um, uh, like, you know, so, actually and basically, with a rate per minute and a timestamp on each.
 - [Speaking Pace Test (Words Per Minute)](https://foundervoice.app/tools/speaking-pace-test): Words per minute for the whole clip and per section, so the point where you sped up is visible.
 - [AI Pitch Practice for Founders](https://foundervoice.app/tools/pitch-practice): All five delivery measurements on a rehearsed pitch, plus practice rounds against a sceptical counterpart.
+- [Free AI Communication Coach](https://foundervoice.app/tools/ai-communication-coach): All five delivery measurements on one recording, with the timestamp behind each number.
+- [Free Presentation Practice Tool](https://foundervoice.app/tools/presentation-practice): Length and pace against your slot, plus fillers, pauses and clarity, before the room sees it.
+- [Free Public Speaking Practice Online](https://foundervoice.app/tools/public-speaking-practice): Pace, fillers, pauses, clarity and vocal energy on a spoken piece, practised alone.
 - [All tools](https://foundervoice.app/tools): The index.
 
 ## Guides: delivery
@@ -49,6 +52,8 @@ behind every number. Ten recordings every 24 hours, no account.
 - [How to Speak with Confidence](https://foundervoice.app/guides/how-to-speak-with-confidence): The four delivery behaviours listeners read as confidence, and how to change each.
 - [How to Stop Rambling](https://foundervoice.app/guides/how-to-stop-rambling): Rambling is a structure problem; the three-sentence answer shape that fixes it.
 - [How to Improve English Communication Skills](https://foundervoice.app/guides/how-to-improve-english-communication-skills): A measurable method using your own recordings, with a two-week plan.
+- [Speaking Skills in Communication](https://foundervoice.app/guides/speaking-skills-in-communication): The six measurable speaking skills, a working target for each, and the order to fix them in.
+- [How to Practise a Presentation Out Loud](https://foundervoice.app/guides/how-to-practice-a-presentation): Why silent run-throughs underestimate length, how many passes help, and a week-before schedule.
 
 ## Guides: founder communication
 
@@ -57,6 +62,7 @@ behind every number. Ten recordings every 24 hours, no account.
 - [How to Sound Confident in an Investor Pitch](https://foundervoice.app/guides/how-to-sound-confident-in-an-investor-pitch): Where founders lose composure, and the pre-answer pause that prevents it.
 - [How to Prepare for Investor Q&A](https://foundervoice.app/guides/how-to-prepare-for-investor-qa): Building a question bank from what you are dreading, and answering in 30 seconds.
 - [How to Explain Your Startup Clearly](https://foundervoice.app/guides/how-to-explain-your-startup-clearly): The one-liner, how to test whether it works, and the delivery half nobody rehearses.
+- [What to Do Before an Investor Pitch](https://foundervoice.app/guides/what-to-do-before-an-investor-pitch): A timed plan for the fortnight, the day and the ten minutes before the meeting.
 
 ## Guides: free AI speech tools
 
@@ -64,6 +70,8 @@ behind every number. Ten recordings every 24 hours, no account.
 - [Free AI for Public Speaking Practice](https://foundervoice.app/guides/free-ai-public-speaking-practice): What AI can and cannot do for a talk, and a two-week rehearsal schedule.
 - [Free AI Speaking Partner](https://foundervoice.app/guides/ai-speaking-partner): What talking to an AI is good for, what it cannot give you, and how to run a session.
 - [Free Yoodli and Poised Alternatives](https://foundervoice.app/guides/yoodli-alternatives): Recording analysers, meeting copilots and roleplay simulators compared by situation.
+- [Best AI Communication Coach: How to Choose](https://foundervoice.app/guides/best-ai-communication-coach): Which of the three categories fits which failure, and the five checks that eliminate most of them.
+- [Free AI Communication Coach, No Sign Up](https://foundervoice.app/guides/free-ai-communication-coach-no-signup): The three things free is used to mean, and what genuinely runs with no account.
 
 ## Product
 
