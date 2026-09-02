@@ -24,7 +24,18 @@ export type ReplyReason =
   | "blocked" /* the microphone was refused */
   | "unsupported"; /* this browser has no speech recognition */
 
-export type Reply = { text: string; reason: ReplyReason };
+export type Reply = {
+  text: string;
+  reason: ReplyReason;
+  /**
+   * Milliseconds between the question ending and the first word arriving.
+   *
+   * Under investor questioning this is the tell. Someone who knows the number
+   * starts inside a second; someone assembling an answer takes three, and the
+   * room notices even when the words that follow are fine.
+   */
+  latencyMs: number;
+};
 
 export function speechInputSupported(): boolean {
   if (typeof window === "undefined") return false;
@@ -62,7 +73,7 @@ export function useVoiceReply() {
         /* already gone */
       }
     }
-    finish({ text: "", reason: "stopped" });
+    finish({ text: "", reason: "stopped", latencyMs: 0 });
   }, [finish]);
 
   const listen = useCallback(
@@ -74,7 +85,7 @@ export function useVoiceReply() {
         typeof window === "undefined"
           ? undefined
           : window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!Recognition) return Promise.resolve({ text: "", reason: "unsupported" });
+      if (!Recognition) return Promise.resolve({ text: "", reason: "unsupported", latencyMs: 0 });
 
       cancel();
       setHeard("");
@@ -84,6 +95,8 @@ export function useVoiceReply() {
         let said = "";
         let quiet = 0;
         let cap = 0;
+        const asked = Date.now();
+        let firstWordAt = 0;
 
         const done = (reason: ReplyReason) => {
           window.clearTimeout(quiet);
@@ -100,7 +113,11 @@ export function useVoiceReply() {
             }
           }
           const text = said.trim();
-          finish({ text, reason: text ? "spoken" : reason });
+          finish({
+            text,
+            reason: text ? "spoken" : reason,
+            latencyMs: firstWordAt ? firstWordAt - asked : 0,
+          });
         };
 
         const recognition = new Recognition();
@@ -116,6 +133,7 @@ export function useVoiceReply() {
             if (result.isFinal) complete += result[0].transcript;
             else partial += result[0].transcript;
           }
+          if (!firstWordAt && (complete || partial)) firstWordAt = Date.now();
           said = complete;
           setHeard((complete + " " + partial).trim());
           window.clearTimeout(quiet);

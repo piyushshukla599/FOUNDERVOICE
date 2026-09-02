@@ -266,8 +266,13 @@ def build_script(
         ]
     )
 
+    hedged = False
     for idx, event in enumerate(ranked[:MAX_ISSUES], start=1):
         headline = str(event.get("observation") or event.get("label") or "").strip()
+        # The analyser marks its softer findings "(estimate)". tts.speakable
+        # takes the parenthesis out of the sentence; the honesty is owed back,
+        # once, in words a person would actually use.
+        hedged = hedged or bool(re.search(r"\(estimat", headline, re.I))
         cause = str(event.get("cause") or "").strip()
         fix = str(event.get("fix") or "").strip()
         lead = "The main thing" if idx == 1 else "The other one"
@@ -283,6 +288,15 @@ def build_script(
             )
         if fix:
             lines.append(_line(f"fix-{idx}", "fix", f"So next take, {fix[0].lower()}{fix[1:]}"))
+
+    if hedged:
+        lines.append(
+            _line(
+                "hedge",
+                "aside",
+                "That last one is my read rather than a measurement, so take it as a direction.",
+            )
+        )
 
     if not ranked and not fillers and not certainty:
         lines.append(

@@ -13,17 +13,28 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { SpokenLine } from "@/lib/api";
 import {
   browserSpeechSupported,
+  DEFAULT_RATE,
+  deliveryFor,
   listVoices,
   onVoicesReady,
   preferredVoiceName,
   say,
   sayAll,
   setPreferredVoice,
+  setSpeechRate,
+  speechRate,
   stopSpeaking,
   unlock,
 } from "@/lib/voice";
 
 const MUTE_KEY = "fv.voice.muted";
+
+/** Slow, normal, brisk. Three is a choice; a slider is a fiddle. */
+export const SPEEDS: { label: string; rate: number }[] = [
+  { label: "Slower", rate: 0.78 },
+  { label: "Normal", rate: DEFAULT_RATE },
+  { label: "Faster", rate: 1.02 },
+];
 
 export type VoiceChoice = { name: string; lang: string };
 
@@ -34,6 +45,7 @@ export function useCoachVoice() {
   const [speakingId, setSpeakingId] = useState<string | null>(null);
   const [voices, setVoices] = useState<VoiceChoice[]>([]);
   const [voiceName, setVoiceName] = useState("");
+  const [rate, setRate] = useState(DEFAULT_RATE);
   const run = useRef(0);
 
   useEffect(() => {
@@ -42,6 +54,7 @@ export function useCoachVoice() {
     } catch {
       /* storage disabled, the coach speaks by default */
     }
+    setRate(speechRate());
     const load = () => {
       const found = listVoices().map((v) => ({ name: v.name, lang: v.lang }));
       setVoices(found);
@@ -82,14 +95,22 @@ export function useCoachVoice() {
     setVoiceName(name);
   }, []);
 
-  /** Say one line — a prompt, a countdown, a single note. */
+  const chooseSpeed = useCallback((next: number) => {
+    setSpeechRate(next);
+    setRate(next);
+  }, []);
+
+  /**
+   * Say one line. `kind` is what the line is doing — a question, a verdict, an
+   * aside — and it decides the pace, the pitch and the silence afterwards.
+   */
   const speak = useCallback(
-    async (text: string) => {
+    async (text: string, kind = "read") => {
       if (muted || !text) return;
       unlock();
       const mine = ++run.current;
       setPlaying(true);
-      await say(text);
+      await say(text, deliveryFor(kind, text));
       if (run.current === mine) setPlaying(false);
     },
     [muted],
@@ -121,6 +142,7 @@ export function useCoachVoice() {
     speakingId,
     voices,
     voiceName,
+    rate,
     /** False in browsers with no speech synthesis at all (older Firefox on Linux). */
     supported: browserSpeechSupported(),
     speak,
@@ -128,6 +150,7 @@ export function useCoachVoice() {
     stop,
     toggleMute,
     chooseVoice,
+    chooseSpeed,
     /** Spend a real user gesture unlocking audio for the rest of the flow. */
     unlock,
   };

@@ -31,7 +31,8 @@ import { QuotaMeter, UpgradeGate } from "@/components/UpgradeGate";
 import { useCoachVoice } from "@/hooks/useCoachVoice";
 import { usePracticeRecorder } from "@/hooks/usePracticeRecorder";
 import { useVoiceReply } from "@/hooks/useVoiceReply";
-import { api, QuotaError, type QuotaState } from "@/lib/api";
+import { api, QuotaError, type QuotaState, type SessionDetail } from "@/lib/api";
+import { answerVerdict, readAnswer, type AnswerSignal } from "@/lib/answerRead";
 import {
   detectPurpose,
   greeting,
@@ -41,6 +42,8 @@ import {
   PURPOSE_QUESTION,
   PURPOSE_REASK,
   purposeFromAside,
+  wantsShort,
+  yesNo,
   type Purpose,
 } from "@/lib/coachTalk";
 import { usePrefs } from "@/lib/prefs";
@@ -48,6 +51,9 @@ import { cn } from "@/lib/utils";
 
 /** Long enough for a real pitch, short enough that nobody uploads a podcast. */
 const MAX_SECONDS = 180;
+
+/** How many times the investor pushes back. Three is an interview, two is a test. */
+const QUESTIONS = 2;
 
 type Stage =
   | "idle"
@@ -112,13 +118,19 @@ export default function TalkPage() {
 
   /* ----------------------------------------------------------- the coach */
 
+  /**
+   * `kind` is what the sentence is doing — asking, judging, throwing something
+   * away — and it decides the pace, the pitch and the silence after it. A coach
+   * that says eleven sentences at one speed with no gaps is reading a list, and
+   * everyone hears that immediately.
+   */
   const say = useCallback(
-    async (text: string) => {
+    async (text: string, kind = "read") => {
       if (!text) return;
       push("coach", text);
       setSaying(text);
       if (voice.muted) await wait(Math.min(4200, 900 + text.length * 42));
-      else await voice.speak(text);
+      else await voice.speak(text, kind);
       setSaying("");
     },
     [push, voice],
@@ -131,18 +143,105 @@ export default function TalkPage() {
    * mic can be busy, the room can be loud, and a person who would rather type
    * should not have to sit through a failed listen to be allowed to.
    */
-  const hear = useCallback(async (): Promise<string> => {
+  const hear = useCallback(async (): Promise<{ text: string; pauseMs: number }> => {
     setStage("listening");
+    const asked = Date.now();
     const spoken = reply.listen();
     const written = new Promise<string>((resolve) => {
       answer.current = resolve;
     });
-    const text = await Promise.race([spoken.then((r) => r.text), written]);
+    let pauseMs = 0;
+    const text = await Promise.race([
+      spoken.then((r) => {
+        pauseMs = r.latencyMs;
+        return r.text;
+      }),
+      // A typed answer has no hesitation to measure that means anything, so it
+      // is timed from the question and left to the reader to discount.
+      written.then((t) => {
+        pauseMs = Date.now() - asked;
+        return t;
+      }),
+    ]);
     answer.current = null;
     reply.cancel();
     push("you", text);
-    return text.trim();
+    return { text: text.trim(), pauseMs };
   }, [push, reply]);
+
+  /* ---------------------------------------------------- the hard questions */
+
+  /**
+   * The part that actually decides a meeting.
+   *
+   * Nobody loses the room during the pitch — they lose it in the four minutes
+   * afterwards, when someone asks why the growth is slow and the answer starts
+   * with "I think". So the coach turns into the person across the table: it
+   * asks about the pitch it just heard, listens to the answer, reacts to it,
+   * pushes again, and then says how the answers held up.
+   *
+   * The questions come from the existing practice engine seeded with the real
+   * transcript, so they are about this pitch and not a generic list. The
+   * answers are read locally (hedging, hesitation, length) rather than
+   * uploaded — four short recordings would cost more than they tell us.
+   */
+  const crossExamine = useCallback(
+    async (context: string, mine: number) => {
+      const signals: AnswerSignal[] = [];
+      let history: { role: string; content: string }[] = [];
+      let confidence: number | undefined;
+
+      try {
+        const opened = await api.practiceStart(context || "A founder pitching their startup.");
+        history = opened.history;
+        confidence = opened.scores?.confidence;
+        await say(opened.reply, "ask");
+      } catch (e) {
+        if (e instanceof QuotaError) {
+          await say(
+            "I'd push back with questions here, but your free practice rounds are spent for today.",
+            "aside",
+          );
+        }
+        return;
+      }
+
+      for (let asked = 0; asked < QUESTIONS; asked += 1) {
+        if (run.current !== mine) return;
+        const answered = await hear();
+        if (run.current !== mine) return;
+        setStage("feedback");
+
+        if (!answered.text) {
+          await say("Silence is an answer too, and not the one you want. Let's move on.", "aside");
+          break;
+        }
+        signals.push(readAnswer(answered.text, answered.pauseMs));
+
+        try {
+          const turn = await api.practiceTurn({
+            pitch_context: context,
+            history,
+            founder_message: answered.text,
+          });
+          history = turn.history;
+          confidence = turn.scores?.confidence ?? confidence;
+          // The last reply would end on a fresh question nobody is going to
+          // answer, so it is dropped in favour of the read on the answers.
+          if (asked < QUESTIONS - 1) {
+            if (run.current !== mine) return;
+            await say(turn.reply, "ask");
+          }
+        } catch {
+          break; // a spent turn allowance ends the round, it does not break it
+        }
+      }
+
+      if (run.current !== mine) return;
+      await say(answerVerdict(signals, confidence), "issue");
+    },
+    [hear, say],
+  );
 
   /* ------------------------------------------------------- the recording */
 
@@ -166,8 +265,11 @@ export default function TalkPage() {
         setSessionId(session_id);
         setStage("analyzing");
 
+        // Kept after the loop: the transcript is what seeds the investor's
+        // questions, so they are about this pitch rather than any pitch.
+        let detail: SessionDetail | null = null;
         for (let tries = 0; tries < 160; tries += 1) {
-          const detail = await api.session(session_id);
+          detail = await api.session(session_id);
           const status = detail.session.status;
           if (status !== "pending" && status !== "analyzing") break;
           await wait(2500);
@@ -177,10 +279,61 @@ export default function TalkPage() {
         const script = await api.voiceScript(session_id, chosen.key);
         if (run.current !== mine) return;
         setStage("feedback");
-        for (const line of script.lines) {
+
+        /* The verdict first, then it stops and asks — because a coach that
+           delivers eleven findings without drawing breath is reading a report
+           at you, and you stopped listening around the fourth one. */
+        const lines = script.lines;
+        const cut = lines.findIndex((l) => l.kind === "verdict");
+        const opening = cut >= 0 ? lines.slice(0, cut + 1) : lines.slice(0, 2);
+        for (const line of opening) {
           if (run.current !== mine) return;
-          await say(line.text);
+          await say(line.text, line.kind);
         }
+
+        if (run.current !== mine) return;
+        await say("Want me to go through what I heard?", "ask");
+        if (run.current !== mine) return;
+        const wants = await hear();
+        if (run.current !== mine) return;
+        setStage("feedback");
+
+        const rest = lines.slice(opening.length);
+        // "No" is not "say nothing" — it's "spare me the tour". They still get
+        // the thing that matters, which is the one they can act on.
+        const brief = yesNo(wants.text) === "no" || wantsShort(wants.text);
+        const chosenLines = brief
+          ? rest.filter((l) => ["issue", "fix", "lab"].includes(l.kind)).slice(0, 3)
+          : rest;
+        for (const line of chosenLines) {
+          if (run.current !== mine) return;
+          await say(line.text, line.kind);
+        }
+
+        /* Delivery was only half of it. The meeting is decided by what happens
+           when someone pushes back, so offer that rather than assume it. */
+        if (run.current !== mine) return;
+        await say("Now the real test. Want me to push back on it, the way they will?", "ask");
+        if (run.current !== mine) return;
+        const pushBack = await hear();
+        if (run.current !== mine) return;
+        setStage("feedback");
+        if (yesNo(pushBack.text) !== "no") {
+          const spoken = detail?.session.transcript?.text || "";
+          await crossExamine(spoken, mine);
+        }
+
+        if (run.current !== mine) return;
+        await say("Do you want to run it again?", "ask");
+        if (run.current !== mine) return;
+        const again = await hear();
+        if (run.current !== mine) return;
+        if (yesNo(again.text) === "yes") {
+          finishing.current = false;
+          void startRef.current();
+          return;
+        }
+        await say("Alright. It'll be here when you are.", "close");
         setStage("done");
       } catch (e) {
         if (e instanceof QuotaError) setLocked(e.quota);
@@ -190,9 +343,12 @@ export default function TalkPage() {
         finishing.current = false;
       }
     },
-    [rec, say, voice],
+    [crossExamine, hear, rec, say, voice],
   );
 
+  /* `finish` ends by offering another round, and `start` is declared below it.
+     A ref breaks the circle without either of them lying about its deps. */
+  const startRef = useRef<() => void>(() => undefined);
   const finishRef = useRef(finish);
   finishRef.current = finish;
 
@@ -208,11 +364,11 @@ export default function TalkPage() {
       const mine = run.current;
       setPurpose(chosen);
       setStage("talking");
-      await say(chosen.heard);
+      await say(chosen.heard, "read");
       if (run.current !== mine) return;
-      await say(chosen.bar);
+      await say(chosen.bar, "aside");
       if (run.current !== mine) return;
-      await say(`${chosen.prompt} Take your time, and press done when you finish.`);
+      await say(`${chosen.prompt} Take your time, and press done when you finish.`, "fix");
       if (run.current !== mine) return;
 
       setStage("arming");
@@ -238,41 +394,42 @@ export default function TalkPage() {
     voice.unlock();
 
     setStage("talking");
-    await say(greeting(prefs.name));
+    await say(greeting(prefs.name), "ask");
     if (!live()) return;
 
     const mood = await hear();
     if (!live()) return;
     setStage("talking");
-    await say(moodAck(mood));
+    await say(moodAck(mood.text));
     if (!live()) return;
 
     // They may have said what they're here for while answering how they are.
     // Asking again would prove the coach wasn't listening.
-    let chosen = detectPurpose(mood);
+    let chosen = detectPurpose(mood.text);
     if (chosen) {
-      await say(purposeFromAside(chosen));
+      await say(purposeFromAside(chosen), "read");
       if (!live()) return;
     } else {
       for (const prompt of [PURPOSE_QUESTION, PURPOSE_REASK]) {
-        await say(prompt);
+        await say(prompt, "ask");
         if (!live()) return;
         const said = await hear();
         if (!live()) return;
-        chosen = detectPurpose(said);
+        chosen = detectPurpose(said.text);
         if (chosen) break;
         setStage("talking");
       }
     }
 
     if (!chosen) {
-      await say(PURPOSE_GIVE_UP);
+      await say(PURPOSE_GIVE_UP, "aside");
       if (!live()) return;
       setStage("choosing");
       return; // resumed when they press one of the chips
     }
     await takeTheFloor(chosen);
   }, [hear, prefs.name, say, takeTheFloor, voice]);
+  startRef.current = () => void start();
 
   const restart = useCallback(() => {
     run.current += 1;

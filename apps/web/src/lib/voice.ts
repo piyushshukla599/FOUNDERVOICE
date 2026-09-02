@@ -31,6 +31,75 @@ const SILENT_WAV =
 /** Chrome stops a long utterance dead at roughly 15 seconds. Speak in pieces. */
 const CHUNK_CHARS = 180;
 
+const RATE_KEY = "fv.voice.rate";
+
+/**
+ * Slower than conversation on purpose. This is coaching: you are meant to be
+ * able to act on the sentence, not admire the delivery. It is also the single
+ * thing that most separates a voice you listen to from a voice you switch off.
+ */
+export const DEFAULT_RATE = 0.9;
+
+export type Delivery = {
+  /** Multiplies the user's base rate. */
+  rate?: number;
+  pitch?: number;
+  volume?: number;
+  /** Silence held after this line, in ms. Where "reading" becomes "talking". */
+  pauseAfter?: number;
+};
+
+/**
+ * How each kind of line is said.
+ *
+ * A voice that delivers eleven sentences at one speed, one pitch and no gaps is
+ * reading a list, and everybody hears that instantly. People do not do that: a
+ * verdict slows down and drops, a question rises, an aside is thrown away
+ * faster and quieter, and the beat *after* a sentence is what tells you it
+ * mattered. None of this is a better engine — it is the same free browser
+ * voice, given the timing a person would use.
+ */
+const DELIVERY: Record<string, Delivery> = {
+  open: { rate: 1, pitch: 1, pauseAfter: 380 },
+  verdict: { rate: 0.93, pitch: 0.97, pauseAfter: 720 },
+  read: { rate: 0.98, pitch: 1, pauseAfter: 560 },
+  issue: { rate: 0.94, pitch: 1.03, pauseAfter: 620 },
+  cause: { rate: 1, pitch: 0.98, pauseAfter: 400 },
+  fix: { rate: 1.02, pitch: 1.04, pauseAfter: 680 },
+  aside: { rate: 1.06, pitch: 0.96, volume: 0.85, pauseAfter: 420 },
+  lab: { rate: 0.98, pitch: 1.01, pauseAfter: 520 },
+  ask: { rate: 1, pitch: 1.07, pauseAfter: 160 },
+  close: { rate: 0.95, pitch: 1, pauseAfter: 0 },
+};
+
+export function deliveryFor(kind: string, text = ""): Delivery {
+  const base = DELIVERY[kind] || DELIVERY.read;
+  // A question is a question whatever the line was tagged as, and a coach who
+  // ends one flat sounds like it is not expecting an answer.
+  if (text.trim().endsWith("?")) return { ...base, pitch: (base.pitch ?? 1) + 0.06, pauseAfter: 160 };
+  return base;
+}
+
+/** How fast the coach speaks, as chosen by the listener. */
+export function speechRate(): number {
+  if (typeof window === "undefined") return DEFAULT_RATE;
+  try {
+    const stored = Number(window.localStorage.getItem(RATE_KEY));
+    return stored >= 0.6 && stored <= 1.3 ? stored : DEFAULT_RATE;
+  } catch {
+    return DEFAULT_RATE;
+  }
+}
+
+export function setSpeechRate(rate: number): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(RATE_KEY, String(rate));
+  } catch {
+    /* the choice lasts for this tab only */
+  }
+}
+
 let serverSpeech = true;
 let generation = 0;
 let element: HTMLAudioElement | null = null;
@@ -113,16 +182,31 @@ export function stopSpeaking(): void {
  * It resolves rather than rejects on failure: a review is a queue of lines, and
  * one line that will not synthesise must not silence the rest of the coaching.
  */
-export async function say(text: string): Promise<void> {
+export async function say(text: string, delivery: Delivery = {}): Promise<void> {
   const line = (text || "").trim();
   if (!line) return;
   const mine = generation;
 
   if (serverSpeech) {
     const played = await sayFromServer(line, mine);
-    if (played || generation !== mine) return;
+    if (played || generation !== mine) {
+      if (generation === mine) await hold(delivery.pauseAfter, mine);
+      return;
+    }
   }
-  await sayInBrowser(line, mine);
+  await sayInBrowser(line, mine, delivery);
+  await hold(delivery.pauseAfter, mine);
+}
+
+/** The silence after a sentence. Cut short the moment the run is cancelled. */
+async function hold(ms: number | undefined, mine: number): Promise<void> {
+  const wait = ms ?? 0;
+  if (wait <= 0) return;
+  const until = Date.now() + wait;
+  while (Date.now() < until) {
+    if (generation !== mine) return;
+    await new Promise((r) => setTimeout(r, Math.min(120, until - Date.now())));
+  }
 }
 
 async function sayFromServer(line: string, mine: number): Promise<boolean> {
@@ -267,15 +351,19 @@ function chunk(line: string): string[] {
   return out;
 }
 
-async function sayInBrowser(line: string, mine: number): Promise<void> {
+async function sayInBrowser(line: string, mine: number, delivery: Delivery): Promise<void> {
   if (!browserSpeechSupported()) return;
-  for (const piece of chunk(line)) {
+  const pieces = chunk(line);
+  for (let i = 0; i < pieces.length; i += 1) {
     if (generation !== mine) return;
-    await speakChunk(piece, mine);
+    await speakChunk(pieces[i], mine, delivery);
+    // A breath between sentences inside one thought — shorter than the beat
+    // between thoughts, but the difference is what stops it sounding recited.
+    if (i < pieces.length - 1) await hold(180, mine);
   }
 }
 
-function speakChunk(piece: string, mine: number): Promise<void> {
+function speakChunk(piece: string, mine: number, delivery: Delivery): Promise<void> {
   return new Promise<void>((resolve) => {
     let settled = false;
     const finish = () => {
@@ -291,15 +379,19 @@ function speakChunk(piece: string, mine: number): Promise<void> {
       utterance.voice = voice;
       utterance.lang = voice.lang;
     }
-    // Slightly under natural pace: this is coaching, and the listener is
-    // supposed to be able to act on it rather than admire the delivery.
-    utterance.rate = 0.97;
-    utterance.pitch = 1;
+    const rate = Math.max(0.5, Math.min(1.4, speechRate() * (delivery.rate ?? 1)));
+    utterance.rate = rate;
+    utterance.pitch = Math.max(0.5, Math.min(1.6, delivery.pitch ?? 1));
+    utterance.volume = Math.max(0.2, Math.min(1, delivery.volume ?? 1));
     utterance.onend = finish;
     utterance.onerror = finish;
     // Chrome drops `onend` often enough that a queue built on it alone stalls
-    // forever. Estimate the duration and move on regardless.
-    const guard = window.setTimeout(finish, 1200 + piece.split(/\s+/).length * 420);
+    // forever. Estimate the duration and move on regardless — and scale it by
+    // the rate, or a slow voice gets cut off by its own safety net.
+    const guard = window.setTimeout(
+      finish,
+      1200 + (piece.split(/\s+/).length * 480) / rate,
+    );
     const watch = window.setInterval(() => {
       if (generation !== mine) {
         try {
@@ -328,7 +420,7 @@ export async function sayAll(
   for (const line of lines) {
     if (generation !== mine) break;
     onLine?.(line);
-    await say(line.text);
+    await say(line.text, deliveryFor(line.kind, line.text));
   }
   if (generation === mine) onLine?.(null);
 }

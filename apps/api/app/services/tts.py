@@ -119,6 +119,10 @@ def speakable(text: str) -> str:
     out = str(text or "")
     out = re.sub(r"```.*?```", " ", out, flags=re.S)
     out = re.sub(r"[*_`#>]+", " ", out)
+    # "(estimate)" is an honest hedge on a page you can scan. Spoken, it is a
+    # word nobody says out loud, and it lands mid-sentence as a stumble. The
+    # hedge itself is not dropped - spoken_coach says it in English instead.
+    out = re.sub(r"\s*\((?:model\s+)?estimat\w*\.?\)", "", out, flags=re.I)
     out = re.sub(r"\bWPM\b", "words per minute", out, flags=re.I)
     out = re.sub(r"\s*[—–-]\s*", ", ", out)
     out = re.sub(r"\s+", " ", out).strip()

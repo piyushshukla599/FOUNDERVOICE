@@ -13,8 +13,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Pause, Play, Volume2, VolumeX } from "lucide-react";
-import { Button } from "@/components/ui";
-import { useCoachVoice } from "@/hooks/useCoachVoice";
+import { Button, Chip } from "@/components/ui";
+import { SPEEDS, useCoachVoice } from "@/hooks/useCoachVoice";
 import { api, type SpokenLine, type VoiceStatus } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
@@ -104,25 +104,37 @@ export function CoachVoice({
           {muted ? "Voice off" : "Voice on"}
         </Button>
 
-        {/* Only when the browser is doing the speaking: with a hosted voice
-            the operator has already chosen one, and this list would not
-            change what you hear. */}
-        {!server?.tts && voice.voices.length > 1 && (
-          <label className="ml-auto flex items-center gap-2 text-[12px] text-[var(--muted)]">
-            <span className="sr-only">Coach voice</span>
-            <select
-              value={voice.voiceName}
-              onChange={(e) => voice.chooseVoice(e.target.value)}
-              className="rounded-[var(--r-full)] border border-[var(--line)] bg-[var(--bg)] px-3 py-1.5 text-[12px] text-[var(--ink)]"
+        <div className="ml-auto flex items-center gap-2">
+          {SPEEDS.map((speed) => (
+            <Chip
+              key={speed.label}
+              selected={Math.abs(voice.rate - speed.rate) < 0.02}
+              onClick={() => voice.chooseSpeed(speed.rate)}
             >
-              {voice.voices.map((v) => (
-                <option key={v.name} value={v.name}>
-                  {v.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
+              {speed.label}
+            </Chip>
+          ))}
+
+          {/* Only when the browser is doing the speaking: with a hosted voice
+              the operator has already chosen one, and this list would not
+              change what you hear. */}
+          {!server?.tts && voice.voices.length > 1 && (
+            <label className="flex items-center gap-2 text-[12px] text-[var(--muted)]">
+              <span className="sr-only">Coach voice</span>
+              <select
+                value={voice.voiceName}
+                onChange={(e) => voice.chooseVoice(e.target.value)}
+                className="rounded-[var(--r-full)] border border-[var(--line)] bg-[var(--bg)] px-3 py-1.5 text-[12px] text-[var(--ink)]"
+              >
+                {voice.voices.map((v) => (
+                  <option key={v.name} value={v.name}>
+                    {v.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+        </div>
       </div>
 
       {loading ? (

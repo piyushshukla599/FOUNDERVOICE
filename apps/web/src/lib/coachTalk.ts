@@ -135,6 +135,26 @@ export function purposeFromAside(purpose: Purpose): string {
   return `You already told me: ${purpose.label.toLowerCase()}. ${purpose.heard.split(". ").slice(1).join(". ")}`.trim();
 }
 
+export type Answer = "yes" | "no" | "unclear";
+
+/** Enough to tell "go on" from "that's enough". Not a language model. */
+export function yesNo(said: string): Answer {
+  const text = ` ${said.toLowerCase().replace(/[^a-z\s']/g, " ").replace(/\s+/g, " ")} `;
+  if (!text.trim()) return "unclear";
+  if (/ (no|nope|nah|not now|later|skip|stop|enough|done|i'm good|im good|thats fine) /.test(text)) {
+    return "no";
+  }
+  if (/ (yes|yeah|yep|yup|sure|ok|okay|go on|go ahead|please|do it|definitely|absolutely|course|alright|right) /.test(text)) {
+    return "yes";
+  }
+  return "unclear";
+}
+
+/** "Just give me the main thing" — a real answer, and not a no. */
+export function wantsShort(said: string): boolean {
+  return /(just|only|main thing|quick|short|summar|headline|top one|one thing)/i.test(said);
+}
+
 /**
  * React to how they said they were, the way a person would.
  *

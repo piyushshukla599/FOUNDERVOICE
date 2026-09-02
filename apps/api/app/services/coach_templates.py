@@ -394,7 +394,17 @@ def build_practice_reply(
     history: list[dict[str, str]],
     pitch_context: str,
 ) -> dict[str, Any]:
-    turns = [h for h in history if h.get("role") == "user"]
+    # The round is opened by a seeded user message telling the investor to
+    # start. Counting it as an answer had two costs: the very first question
+    # arrived with a critique of something nobody had said yet ("Too thin. I
+    # need a concrete example"), and the question index was permanently one
+    # ahead, so the first real answer got asked the same question again.
+    turns = [
+        h
+        for h in history
+        if h.get("role") == "user"
+        and "start the mock investor meeting" not in (h.get("content") or "").lower()
+    ]
     n = len(turns)
     q = _PRACTICE_QUESTIONS[n % len(_PRACTICE_QUESTIONS)]
 
@@ -433,9 +443,11 @@ def build_practice_reply(
         ctx_hint = f" Given your context (“{first}…”),"
 
     if n == 0:
-        reply = (
-            f"Thanks for the setup.{ctx_hint} Before we go further — {q}"
-        )
+        # The context hint ends in a comma, so the clause after it continues
+        # the sentence rather than starting a new one. Read aloud, the capital
+        # "Before" mid-sentence was audible as a stumble.
+        opener = f"Thanks for the setup.{ctx_hint} before we go further — " if ctx_hint else "Thanks for the setup. Before we go further — "
+        reply = opener + q
     else:
         reply = f"{critique} Follow-up: {q}"
 
