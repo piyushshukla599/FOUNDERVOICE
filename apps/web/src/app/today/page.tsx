@@ -260,9 +260,16 @@ export default function TodayPage() {
           />
         ) : (
           <div className="fv-enter flex flex-col items-center">
-            <HeroLink href={focus?.labKey ? `/trainer?lab=${encodeURIComponent(focus.labKey)}` : "/trainer"}>
-              Practice now
-            </HeroLink>
+            <div className="flex flex-wrap items-center justify-center gap-x-7 gap-y-3">
+              <HeroLink href={focus?.labKey ? `/trainer?lab=${encodeURIComponent(focus.labKey)}` : "/trainer"}>
+                Practice now
+              </HeroLink>
+              {/* The drill and the conversation are two different appetites, and
+                  a person arriving on Today already knows which one they have.
+                  Making them find the coach through a lab first is a menu
+                  standing in front of the thing they came for. */}
+              <HeroLink href="/talk">Talk to your coach</HeroLink>
+            </div>
             <p className="mt-3.5 text-[12.5px] text-[var(--faint)]">
               {prefs.sessionLength} min · {goalLabel(prefs.goal)}
             </p>
