@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { AnalyticsBridge } from "@/components/AnalyticsBridge";
+import { UsageBeacon } from "@/components/UsageBeacon";
 import { AppShell } from "@/components/AppShell";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { BRAND, ORG_ID, SITE_URL, organizationNode, webSiteNode } from "@/lib/schema";
@@ -80,6 +81,12 @@ export const metadata: Metadata = {
     "free ai tool for communication skills",
     "free ai for public speaking",
     "ai speaking partner",
+    "ai communication coach",
+    "free ai communication coach no sign up",
+    "public speaking practice online",
+    "presentation practice tool",
+    "speaking skills in communication",
+    "what to do before an investor pitch",
   ],
   openGraph: {
     type: "website",
@@ -174,6 +181,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       </head>
       <body className="antialiased">
         <AnalyticsBridge />
+        <UsageBeacon />
         <ErrorBoundary>
           <AppShell>{children}</AppShell>
         </ErrorBoundary>

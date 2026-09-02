@@ -306,6 +306,19 @@ CREATE TABLE IF NOT EXISTS usage_quota (
     window_started TEXT,
     PRIMARY KEY (bucket, feature)
 );
+
+CREATE TABLE IF NOT EXISTS analytics_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace TEXT NOT NULL,
+    path TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    seconds REAL NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_analytics_created ON analytics_events (created_at);
+CREATE INDEX IF NOT EXISTS idx_analytics_ws ON analytics_events (workspace);
+CREATE INDEX IF NOT EXISTS idx_analytics_path ON analytics_events (path);
 """
 
 

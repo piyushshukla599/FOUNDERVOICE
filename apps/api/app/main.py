@@ -19,7 +19,7 @@ from . import legacy, workspace
 from .config import get_settings
 from .db import init_shared_db
 from .middleware_security import RequestLogMiddleware
-from .routers import contact, listening, memory, practice, sessions, voice
+from .routers import analytics as analytics_router, contact, listening, memory, practice, sessions, voice
 from .services import jobs, quota, tts
 
 logging.basicConfig(
@@ -149,6 +149,7 @@ app.include_router(memory.router, prefix="/api")
 app.include_router(practice.router, prefix="/api")
 app.include_router(contact.router, prefix="/api")
 app.include_router(voice.router, prefix="/api")
+app.include_router(analytics_router.router, prefix="/api")
 
 
 @app.get("/api/quota")

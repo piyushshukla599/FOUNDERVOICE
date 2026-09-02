@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     coach_mode: str = "local"
     # Smart Session clips: collect metrics only; full verdict after exercise.
     listening_light_analysis: bool = True
+    # Set to enable the usage dashboard. Unset means the endpoint 404s, which
+    # is the right default for a report that spans every visitor on the box.
+    admin_token: str = ""
 
     # "local" loads faster-whisper in-process and needs ~2 GB of RAM.
     # "groq" calls a hosted Whisper instead, so the box stays small.
