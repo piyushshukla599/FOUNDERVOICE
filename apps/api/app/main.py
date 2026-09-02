@@ -19,8 +19,8 @@ from . import legacy, workspace
 from .config import get_settings
 from .db import init_shared_db
 from .middleware_security import RequestLogMiddleware
-from .routers import contact, listening, memory, practice, sessions
-from .services import jobs, quota
+from .routers import contact, listening, memory, practice, sessions, voice
+from .services import jobs, quota, tts
 
 logging.basicConfig(
     level=logging.INFO,
@@ -148,6 +148,7 @@ app.include_router(listening.router, prefix="/api")
 app.include_router(memory.router, prefix="/api")
 app.include_router(practice.router, prefix="/api")
 app.include_router(contact.router, prefix="/api")
+app.include_router(voice.router, prefix="/api")
 
 
 @app.get("/api/quota")
@@ -175,6 +176,9 @@ def health():
         "asr_provider": _asr_provider,
         "asr_model": settings.groq_model if _asr_provider == "groq" else settings.whisper_model,
         "analysis_queue": jobs.queue_depth(),
+        # False is not a broken install: the browser speaks the same script
+        # with its own voice. It only tells the app which one it will hear.
+        "coach_voice": tts.status(),
         "listening_light_analysis": settings.listening_light_analysis,
         # Truthful per deployment: audio only stays put when Whisper runs here.
         "privacy": "local-first" if _asr_provider == "local" else "hosted-asr",

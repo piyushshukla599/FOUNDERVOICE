@@ -18,6 +18,7 @@ import {
 } from "@/components/ui";
 import { AudioPlayer, type AudioHandle } from "@/components/AudioPlayer";
 import { CoachSummary } from "@/components/CoachSummary";
+import { CoachVoice } from "@/components/CoachVoice";
 import { SessionTimeline } from "@/components/SessionTimeline";
 import { ProfessionalVoiceReport, RootCauseFinding } from "@/components/ProfessionalVoiceReport";
 import { RecommendedLabs } from "@/components/RecommendedLabs";
@@ -496,7 +497,18 @@ function SessionPage() {
         <RecommendedLabs items={data.lab_recs || []} heading="More labs like this" />
       )}
 
-      {/* 6. Everything else, on request. */}
+      {/* 6. The same findings, said out loud. Reading a report is work; being
+             told what went wrong is what a coach is for. */}
+      <section>
+        <SectionTitle
+          eyebrow="Spoken review"
+          title="Hear it from the coach"
+          sub="The same findings, in the order a person would say them."
+        />
+        <CoachVoice sessionId={id} />
+      </section>
+
+      {/* 7. Everything else, on request. */}
       <Disclosure
         label="View detailed analysis"
         sub="Every metric, the professional voice report, and all findings."

@@ -256,6 +256,15 @@ export const api = {
       { method: "POST", body: fd },
     );
   },
+  /** Whether the server can speak, or whether the browser has to. */
+  voiceStatus: () => request<VoiceStatus>("/api/voice/status"),
+  voiceBrief: (seconds = 45, name = "") =>
+    request<{ seconds: number; lines: SpokenLine[] }>(
+      `/api/voice/brief?seconds=${seconds}&name=${encodeURIComponent(name)}`,
+    ),
+  /** The spoken review of a finished session, as lines to say one at a time. */
+  voiceScript: (id: string) =>
+    request<{ status: string; lines: SpokenLine[]; voice: VoiceStatus }>(`/api/voice/script/${id}`),
   practiceStart: (pitch_context: string) =>
     request<PracticeResult>("/api/practice/start", {
       method: "POST",
@@ -272,6 +281,30 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     }),
+};
+
+/**
+ * One thing the coach says. The script is a list of these rather than a
+ * paragraph so the page can highlight the sentence being spoken, let a listener
+ * skip to the fix, and still read as a review when there is no audio at all.
+ */
+export type SpokenLine = {
+  id: string;
+  /** open | verdict | read | issue | cause | fix | lab | close */
+  kind: string;
+  text: string;
+  score?: number;
+  severity?: number;
+  lab_key?: string;
+  lab_title?: string;
+};
+
+export type VoiceStatus = {
+  /** False means the browser speaks it — the free path, and the default. */
+  tts: boolean;
+  provider: string;
+  voice: string;
+  max_chars?: number;
 };
 
 export type SessionRow = {

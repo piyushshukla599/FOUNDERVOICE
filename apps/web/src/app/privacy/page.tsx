@@ -66,6 +66,15 @@ export default function PrivacyPage() {
           the built-in templates instead.
         </p>
 
+        <h2 className="text-lg text-[var(--ink)]">The coach&rsquo;s spoken voice</h2>
+        <p>
+          When the coach reads your review aloud, the speaking happens in your own browser using the
+          voice already installed on your device. Nothing is sent anywhere to produce it, and your
+          recording is never used to make the voice. An operator can optionally switch the API to a
+          hosted speech provider, in which case the coaching text &mdash; never the audio &mdash; is
+          sent there to be spoken.
+        </p>
+
         <h2 className="text-lg text-[var(--ink)]">Contact form</h2>
         <p>
           If you submit the in-app contact or feedback form, we receive the details you enter (name,

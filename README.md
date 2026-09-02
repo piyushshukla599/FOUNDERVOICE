@@ -59,6 +59,32 @@ the real address out of scrapers' reach:
 echo NEXT_PUBLIC_FORMSUBMIT_ENDPOINT=abc123yourhash >> .env.local
 ```
 
+
+#### The coach's voice, and what it costs
+
+The coach speaks its review as well as writing it — on `/pitch` it briefs you,
+counts you in and reads the verdict back, and every session report carries a
+**Hear it from the coach** player.
+
+**The default costs nothing.** With no configuration the browser speaks the
+lines itself via the Web Speech API: no key, no account, no per-character bill,
+and it works offline. Edge, macOS and iOS ship neural voices that genuinely
+pass for a person; where a browser offers several, the picker beside the player
+lets you choose, and the choice is remembered.
+
+Hosted voices (ElevenLabs, OpenAI, Groq PlayAI) are an opt-in upgrade, off by
+default so that a `GROQ_API_KEY` set for transcription can never quietly start
+billing for speech. Turn one on in `apps/api/.env`:
+
+```env
+TTS_PROVIDER=auto
+ELEVENLABS_API_KEY=...
+```
+
+Either way the audio is never uploaded — only the finished coaching text is
+sent, the same line `AGENTS.md` draws for DeepSeek. Synthesised lines are cached
+under `data/<workspace>/tts`, so replaying a review does not pay twice.
+
 ### Docker (API only)
 
 ```powershell
@@ -74,6 +100,7 @@ Data persists in the `fv_data` volume. Point the web app at `http://127.0.0.1:80
 | Area | Included |
 |------|----------|
 | Today | 60s check, score, recommended labs in plain words |
+| 45s Pitch | Spoken brief, 45-second clock, spoken verdict — hands free |
 | Listen | Real talk (earbuds/mic); verdict after a Labs drill |
 | Labs | Speak this / how / what it means; similar labs next |
 | Practice | Standup → hard Q → investor; voice report + lab recs |

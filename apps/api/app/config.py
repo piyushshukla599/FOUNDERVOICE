@@ -34,6 +34,40 @@ class Settings(BaseSettings):
     whisper_device: str = "cpu"
     whisper_compute_type: str = "int8"
 
+    # --- Coach voice (text to speech) -------------------------------------
+    # The coach speaks its review as well as writing it, and by default that
+    # costs nothing: "off" means the browser says the lines with its own
+    # built-in voice — free, offline, no account, and on Edge/macOS/iOS a
+    # neural voice that genuinely passes for a person.
+    #
+    # The hosted providers below are the paid upgrade, and they are opt-in for
+    # exactly that reason: a key sitting in .env for ASR must never quietly
+    # start billing for speech. Set TTS_PROVIDER=auto (or name one) to use
+    # them. Only finished coaching text is sent — never audio, same line
+    # AGENTS.md draws for DeepSeek.
+    tts_provider: str = "off"
+    tts_timeout: float = 45.0
+
+    elevenlabs_api_key: str = ""
+    # Rachel, the stock ElevenLabs voice. This single value is most of what
+    # decides whether the coach sounds like someone you would take notes from,
+    # so point it at a voice from your own library when you have one.
+    elevenlabs_voice_id: str = "21m00Tcm4TlvDq8ikWAM"
+    elevenlabs_model: str = "eleven_turbo_v2_5"
+
+    openai_api_key: str = ""
+    openai_base_url: str = "https://api.openai.com/v1"
+    openai_tts_model: str = "gpt-4o-mini-tts"
+    openai_tts_voice: str = "onyx"
+    openai_tts_instructions: str = (
+        "Speak like a calm, direct executive speech coach sitting across the table. "
+        "Warm but unsentimental. Land the last word of each sentence."
+    )
+
+    # Reuses GROQ_API_KEY when one is already set for ASR.
+    groq_tts_model: str = "playai-tts"
+    groq_tts_voice: str = "Fritz-PlayAI"
+
     data_dir: str = str(ROOT / "data")
     cors_origins: str = (
         "http://localhost:3000,http://127.0.0.1:3000,"
