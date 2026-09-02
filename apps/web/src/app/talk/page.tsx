@@ -60,6 +60,7 @@ type Stage =
   | "talking" /* coach is asking or answering */
   | "listening" /* waiting for a spoken answer */
   | "choosing" /* it gave up on hearing the answer; buttons instead */
+  | "stalled" /* heard nothing; waiting to be resumed rather than restarted */
   | "arming" /* opening the microphone for the real take */
   | "recording"
   | "sending"
@@ -94,6 +95,10 @@ export default function TalkPage() {
   const run = useRef(0);
   const finishing = useRef(false);
   const answer = useRef<((text: string) => void) | null>(null);
+  /** Set while a question is stalled: pressing Resume re-asks and listens again. */
+  const resume = useRef<(() => void) | null>(null);
+  /** The last thing the coach asked, so Resume can repeat it rather than wait mutely. */
+  const lastAsk = useRef("");
   const thread = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -127,6 +132,7 @@ export default function TalkPage() {
   const say = useCallback(
     async (text: string, kind = "read") => {
       if (!text) return;
+      if (kind === "ask") lastAsk.current = text;
       push("coach", text);
       setSaying(text);
       if (voice.muted) await wait(Math.min(4200, 900 + text.length * 42));
@@ -143,31 +149,65 @@ export default function TalkPage() {
    * mic can be busy, the room can be loud, and a person who would rather type
    * should not have to sit through a failed listen to be allowed to.
    */
-  const hear = useCallback(async (): Promise<{ text: string; pauseMs: number }> => {
-    setStage("listening");
-    const asked = Date.now();
-    const spoken = reply.listen();
-    const written = new Promise<string>((resolve) => {
-      answer.current = resolve;
-    });
-    let pauseMs = 0;
-    const text = await Promise.race([
-      spoken.then((r) => {
-        pauseMs = r.latencyMs;
-        return r.text;
-      }),
-      // A typed answer has no hesitation to measure that means anything, so it
-      // is timed from the question and left to the reader to discount.
-      written.then((t) => {
-        pauseMs = Date.now() - asked;
-        return t;
-      }),
-    ]);
-    answer.current = null;
-    reply.cancel();
-    push("you", text);
-    return { text: text.trim(), pauseMs };
-  }, [push, reply]);
+  const hear = useCallback(
+    async ({ allowSilence = false } = {}): Promise<{ text: string; pauseMs: number }> => {
+      const asked = Date.now();
+      for (;;) {
+        setStage("listening");
+        let pauseMs = 0;
+        const spoken = reply.listen();
+        const written = new Promise<string>((resolve) => {
+          answer.current = resolve;
+        });
+        const text = await Promise.race([
+          spoken.then((r) => {
+            pauseMs = r.latencyMs;
+            return r.text;
+          }),
+          // A typed answer has no hesitation to measure that means anything, so
+          // it is timed from the question and left to the reader to discount.
+          written.then((t) => {
+            pauseMs = Date.now() - asked;
+            return t;
+          }),
+        ]);
+        answer.current = null;
+        reply.cancel();
+
+        const said = text.trim();
+        if (said) {
+          push("you", said);
+          return { text: said, pauseMs };
+        }
+
+        // Nothing came back. Some callers want that as an answer in itself —
+        // the purpose question falls through to on-screen buttons, and silence
+        // under cross-examination is a finding. Everywhere else, barrelling on
+        // to the next question is the coach talking over you, and the whole
+        // conversation is then spent in the wrong place with no way back to
+        // this question except starting the session again.
+        if (allowSilence || !reply.supported) return { text: "", pauseMs };
+
+        setStage("stalled");
+        const second = await new Promise<string>((resolve) => {
+          resume.current = () => resolve("");
+          answer.current = resolve;
+        });
+        resume.current = null;
+        answer.current = null;
+
+        const typedNow = second.trim();
+        if (typedNow) {
+          push("you", typedNow);
+          return { text: typedNow, pauseMs: Date.now() - asked };
+        }
+        // Resumed: ask it again rather than listening at them in silence.
+        const again = lastAsk.current;
+        if (again) await voice.speak(again, "ask");
+      }
+    },
+    [push, reply, voice],
+  );
 
   /* ---------------------------------------------------- the hard questions */
 
@@ -208,7 +248,7 @@ export default function TalkPage() {
 
       for (let asked = 0; asked < QUESTIONS; asked += 1) {
         if (run.current !== mine) return;
-        const answered = await hear();
+        const answered = await hear({ allowSilence: true });
         if (run.current !== mine) return;
         setStage("feedback");
 
@@ -413,7 +453,7 @@ export default function TalkPage() {
       for (const prompt of [PURPOSE_QUESTION, PURPOSE_REASK]) {
         await say(prompt, "ask");
         if (!live()) return;
-        const said = await hear();
+        const said = await hear({ allowSilence: true });
         if (!live()) return;
         chosen = detectPurpose(said.text);
         if (chosen) break;
@@ -586,6 +626,32 @@ export default function TalkPage() {
                 />
                 <Button variant="secondary" size="sm" onClick={sendTyped}>
                   <Send size={14} />
+                </Button>
+              </div>
+            </>
+          )}
+
+          {stage === "stalled" && (
+            <>
+              <p className="max-w-md text-[14px] leading-relaxed text-[var(--muted)]">
+                I didn&rsquo;t catch that. Pick it up where we left off — I&rsquo;ll ask again.
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <Button size="lg" onClick={() => resume.current?.()}>
+                  <RotateCcw size={17} />
+                  Resume
+                </Button>
+              </div>
+              <div className="flex w-full max-w-md items-center gap-2">
+                <input
+                  value={typed}
+                  onChange={(e) => setTyped(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && sendTyped()}
+                  placeholder="…or type your answer"
+                  className="flex-1 rounded-[var(--r-full)] border border-[var(--line)] bg-[var(--bg)] px-4 py-2 text-[13px] text-[var(--ink)] outline-none focus:border-[var(--accent-line)]"
+                />
+                <Button variant="secondary" size="sm" onClick={sendTyped}>
+                  <Send size={15} />
                 </Button>
               </div>
             </>
