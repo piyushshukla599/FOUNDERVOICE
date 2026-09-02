@@ -24,6 +24,6 @@ export const PRIVATE_ROUTES = [
   "/practice",
   "/listen",
   "/record",
-  "/pitch",
+  "/talk",
   "/dashboard",
 ] as const;

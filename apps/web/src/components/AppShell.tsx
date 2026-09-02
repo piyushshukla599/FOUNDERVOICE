@@ -11,7 +11,6 @@ import {
   Brain,
   Dumbbell,
   MessagesSquare,
-  Timer,
   Sparkles,
   Ear,
   MessageCircle,
@@ -48,7 +47,7 @@ const NAV: NavGroup[] = [
     icon: Mic,
     items: [
       { href: "/record", label: "Record", icon: Mic },
-      { href: "/pitch", label: "45s Pitch", icon: Timer },
+      { href: "/talk", label: "Talk", icon: MessageCircle },
       { href: "/trainer", label: "Labs", icon: Dumbbell },
       { href: "/practice", label: "Practice", icon: MessagesSquare },
       { href: "/listen", label: "Listen", icon: Ear },

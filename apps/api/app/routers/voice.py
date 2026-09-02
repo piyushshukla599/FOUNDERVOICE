@@ -31,8 +31,10 @@ _SCRIPTS: OrderedDict[str, list[dict[str, Any]]] = OrderedDict()
 _SCRIPT_LIMIT = 128
 
 
-def _script_key(session_id: str, session: dict[str, Any], events: list[dict[str, Any]]) -> str:
-    stamp = f"{session.get('coach_summary') or ''}|{len(events)}|{session.get('status')}"
+def _script_key(
+    session_id: str, session: dict[str, Any], events: list[dict[str, Any]], purpose: str
+) -> str:
+    stamp = f"{session.get('coach_summary') or ''}|{len(events)}|{session.get('status')}|{purpose}"
     digest = hashlib.sha256(stamp.encode("utf-8")).hexdigest()[:16]
     return f"{workspace.get_workspace() or 'default'}:{session_id}:{digest}"
 
@@ -83,8 +85,14 @@ async def speak(request: Request, body: SpeakBody) -> Response:
 
 
 @router.get("/script/{session_id}")
-async def voice_script(session_id: str) -> dict[str, Any]:
-    """The spoken review of one finished session."""
+async def voice_script(session_id: str, purpose: str = "") -> dict[str, Any]:
+    """The spoken review of one finished session.
+
+    `purpose` is what the speaker said they were practising for. It only
+    changes the closing line, but the closing line is the one that says what to
+    do next, and "before you're in front of the class" is not advice you give
+    someone raising a seed round.
+    """
     # Imported here rather than at module scope: routers/sessions.py pulls in
     # the analysis stack, and importing it eagerly from a sibling router makes
     # startup order matter for no reason.
@@ -109,7 +117,8 @@ async def voice_script(session_id: str) -> dict[str, Any]:
         }
 
     events = detail.get("events") or []
-    key = _script_key(session_id, session, events)
+    purpose = (purpose or "").strip().lower()[:32]
+    key = _script_key(session_id, session, events, purpose)
     cached = _SCRIPTS.get(key)
     if cached is not None:
         _SCRIPTS.move_to_end(key)
@@ -120,6 +129,7 @@ async def voice_script(session_id: str) -> dict[str, Any]:
         detail.get("metrics") or {},
         events,
         detail.get("lab_recs") or [],
+        purpose=purpose,
     )
     lines = await spoken_coach.humanize(lines)
     _SCRIPTS[key] = lines

@@ -22,6 +22,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+from collections import Counter
 from typing import Any
 
 from . import tts
@@ -124,17 +125,97 @@ def _verdict(score: int) -> str:
     return "Honestly, that one got away from you. Let's find out where."
 
 
+# The pace a room is comfortable with. Stated out loud every time it is missed,
+# because "you spoke too fast" is an opinion and "177 against 130 to 145" is not.
+GOOD_PACE = "130 to 145"
+
+
 def _pace_note(wpm: float | None) -> str:
     if wpm is None:
         return ""
     speed = int(round(wpm))
     if wpm > 168:
-        return f"You ran at about {speed} words a minute. That's a pitch under pressure, not a pitch in control."
+        return (
+            f"Your pace was {speed} words a minute. A room wants about {GOOD_PACE}, "
+            "so you're well over it, and that fast reads as nervous rather than urgent."
+        )
     if wpm > 152:
-        return f"About {speed} words a minute. A shade fast, so your best lines don't get room to land."
+        return (
+            f"You ran at {speed} words a minute, against a comfortable {GOOD_PACE}. "
+            "A shade fast, so your best lines don't get room to land."
+        )
     if wpm < 105:
-        return f"About {speed} words a minute. That's careful, and careful reads as unsure."
-    return f"About {speed} words a minute, which is a good room pace. Keep that."
+        return (
+            f"You were at {speed} words a minute, where a room wants {GOOD_PACE}. "
+            "That's careful, and careful reads as unsure."
+        )
+    if wpm < 128:
+        # Close enough not to be a fault, far enough that calling it "right in
+        # the range" would be a lie the listener can check.
+        return (
+            f"Your pace was {speed} words a minute, just under the {GOOD_PACE} a room "
+            "settles into. Comfortable. Don't let it drift any slower."
+        )
+    return f"Your pace was {speed} words a minute, right in the {GOOD_PACE} a room wants. Keep that."
+
+
+def _filler_note(events: list[dict[str, Any]], metrics: dict[str, Any]) -> str:
+    """Name the word, not the category.
+
+    "Eight fillers" is a score. "You said um six times" is something you can
+    hear yourself doing, which is the only version anyone acts on.
+    """
+    counts: Counter[str] = Counter()
+    for event in events:
+        if str(event.get("kind") or "") != "filler":
+            continue
+        meta = event.get("meta") or {}
+        phrase = str(meta.get("phrase") or "").strip()
+        if phrase:
+            counts[phrase] += 1
+
+    total = int(_num(metrics.get("filler_count"), 0) or 0) or sum(counts.values())
+    if total < 2:
+        return ""
+
+    if counts:
+        word, times = counts.most_common(1)[0]
+        rest = total - times
+        line = f'You said "{word}" {times} times'
+        if rest > 0:
+            line += f", and {total} fillers altogether"
+        return (
+            line + ". Every one of them sits where you weren't sure yet, "
+            "and that's what a listener hears as low confidence."
+        )
+    return (
+        f"I counted {total} filler words. Each one is a place you could have "
+        "just stopped talking for half a second instead."
+    )
+
+
+def _certainty_note(metrics: dict[str, Any]) -> str:
+    """Only spoken when something is actually off. Silence beats filler praise."""
+    confidence = _num(metrics.get("confidence_est"))
+    monotone = _num(metrics.get("monotone_score"))
+    if monotone is not None and monotone >= 60:
+        return (
+            "Your pitch barely moved through that. When every word gets the same "
+            "note, nothing sounds important, so the room stops picking out your point."
+        )
+    if confidence is not None and confidence < 52:
+        return (
+            f"Certainty came out around {int(round(confidence))} out of a hundred — an estimate, "
+            "but it's the sound of sentences trailing off before they finish."
+        )
+    return ""
+
+
+CLOSERS = {
+    "investor": "Run it again before you're in a room with anyone holding a chequebook.",
+    "class": "Run it again before you're standing in front of the class.",
+    "job": "Run it again before the day. Same script, one thing changed.",
+}
 
 
 def build_script(
@@ -144,13 +225,14 @@ def build_script(
     lab_recs: list[dict[str, Any]] | None,
     *,
     seconds: int | None = None,
+    purpose: str = "",
 ) -> list[dict[str, Any]]:
     """The spoken review, as ordered lines the player speaks one at a time."""
     from .founder_verdict import founder_voice_score
 
     m = dict(metrics or {})
     sess = dict(session or {})
-    ranked = _group([e for e in (events or []) if e.get("label") or e.get("observation")])
+    raw = list(events or [])
     score = founder_voice_score(m)
     lines: list[dict[str, Any]] = []
 
@@ -165,17 +247,24 @@ def build_script(
     if pace:
         lines.append(_line("pace", "read", pace))
 
-    fillers = _num(m.get("filler_count"))
-    if fillers and fillers >= 3:
-        count = int(fillers)
-        lines.append(
-            _line(
-                "fillers",
-                "read",
-                f"I counted {count} filler words. Every one of them is a place you could have "
-                "just stopped talking for half a second.",
-            )
-        )
+    fillers = _filler_note(raw, m)
+    if fillers:
+        lines.append(_line("fillers", "read", fillers))
+
+    certainty = _certainty_note(m)
+    if certainty:
+        lines.append(_line("certainty", "read", certainty))
+
+    # Fillers were just named word by word; repeating them as a ranked finding
+    # is the coach saying the same thing twice in different clothes.
+    ranked = _group(
+        [
+            e
+            for e in raw
+            if (e.get("label") or e.get("observation"))
+            and not (fillers and str(e.get("kind") or "") == "filler")
+        ]
+    )
 
     for idx, event in enumerate(ranked[:MAX_ISSUES], start=1):
         headline = str(event.get("observation") or event.get("label") or "").strip()
@@ -195,7 +284,7 @@ def build_script(
         if fix:
             lines.append(_line(f"fix-{idx}", "fix", f"So next take, {fix[0].lower()}{fix[1:]}"))
 
-    if not ranked:
+    if not ranked and not fillers and not certainty:
         lines.append(
             _line(
                 "issue-none",
@@ -225,7 +314,8 @@ def build_script(
         _line(
             "close",
             "close",
-            "Then run it again. Same 45 seconds, same pitch, one thing changed. That's how this moves.",
+            CLOSERS.get(purpose)
+            or "Then run it again. Same script, one thing changed. That's how this moves.",
         )
     )
     return [ln for ln in lines if ln["text"]]

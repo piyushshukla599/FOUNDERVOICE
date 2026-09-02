@@ -262,9 +262,15 @@ export const api = {
     request<{ seconds: number; lines: SpokenLine[] }>(
       `/api/voice/brief?seconds=${seconds}&name=${encodeURIComponent(name)}`,
     ),
-  /** The spoken review of a finished session, as lines to say one at a time. */
-  voiceScript: (id: string) =>
-    request<{ status: string; lines: SpokenLine[]; voice: VoiceStatus }>(`/api/voice/script/${id}`),
+  /**
+   * The spoken review of a finished session, as lines to say one at a time.
+   * `purpose` is what the speaker said they were rehearsing for, which decides
+   * what the coach tells them to do next.
+   */
+  voiceScript: (id: string, purpose = "") =>
+    request<{ status: string; lines: SpokenLine[]; voice: VoiceStatus }>(
+      `/api/voice/script/${id}${purpose ? `?purpose=${encodeURIComponent(purpose)}` : ""}`,
+    ),
   practiceStart: (pitch_context: string) =>
     request<PracticeResult>("/api/practice/start", {
       method: "POST",
