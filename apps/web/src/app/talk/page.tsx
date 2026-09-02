@@ -23,7 +23,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Mic, RotateCcw, Send, Square } from "lucide-react";
+import { Loader2, Mic, RotateCcw, Send, Square, Volume2, VolumeX } from "lucide-react";
 import { FeatureIntro } from "@/components/FeatureIntro";
 import { VoiceViz } from "@/components/VoiceViz";
 import { Button, Chip, ErrorBanner, PageHeader, Panel, SectionTitle } from "@/components/ui";
@@ -482,7 +482,26 @@ export default function TalkPage() {
         eyebrow="Speak"
         title="Talk to your coach"
         sub="It asks, you answer out loud, then it listens to you present and tells you what it heard."
-        actions={<QuotaMeter quota={quota} />}
+        actions={
+          <div className="flex items-center gap-2">
+            {/* The mute preference is shared with the review screen and remembered
+                across visits, so without a control here a coach silenced once is
+                silent forever on the page whose whole point is that it talks. */}
+            {voice.supported && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={voice.toggleMute}
+                aria-pressed={voice.muted}
+                title={voice.muted ? "Let the coach speak" : "Silence the coach"}
+              >
+                {voice.muted ? <VolumeX size={15} /> : <Volume2 size={15} />}
+                {voice.muted ? "Voice off" : "Voice on"}
+              </Button>
+            )}
+            <QuotaMeter quota={quota} />
+          </div>
+        }
       />
 
       <FeatureIntro
