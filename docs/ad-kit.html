@@ -1,0 +1,403 @@
+<title>FounderVoice Ad Kit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300&display=swap">
+
+<style>
+  :root{
+    --bg:#07080D; --surface:#0D0F18; --surface-2:#141726;
+    --ink:#F4F3FB; --dim:#C2C1D6; --muted:#8B8AA3; --faint:#5C5B74;
+    --line:rgba(244,243,251,.08); --line-strong:rgba(244,243,251,.16);
+    --violet:#8B5CF6; --violet-bright:#A78BFA; --magenta:#E056A0;
+    --emerald:#3FD69A; --gold:#E9C27B; --danger:#F2617A;
+    --grad:linear-gradient(120deg,#8B5CF6 0%,#5B7CFA 45%,#E056A0 100%);
+    --mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+    --sans:'Archivo','Segoe UI',system-ui,-apple-system,sans-serif;
+    --serif:'Newsreader',Georgia,'Times New Roman',serif;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:var(--sans); font-size:15.5px; line-height:1.6;
+    -webkit-font-smoothing:antialiased; margin:0;
+  }
+  .wrap{max-width:70rem;margin:0 auto;padding:0 clamp(1.1rem,4vw,3rem) 6rem}
+  p{margin:0}
+  a{color:var(--violet-bright);text-underline-offset:3px}
+  a:focus-visible,summary:focus-visible{outline:2px solid var(--violet-bright);outline-offset:3px;border-radius:4px}
+
+  /* masthead */
+  .mast{padding:clamp(3.5rem,8vw,6.5rem) 0 clamp(2rem,4vw,3rem);border-bottom:1px solid var(--line-strong)}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--violet-bright);margin:0}
+  h1{
+    font-family:var(--sans);font-weight:800;font-size:clamp(2.4rem,6.4vw,4.6rem);
+    line-height:1.03;letter-spacing:-.035em;text-wrap:balance;margin:1.1rem 0 0;max-width:17ch;
+  }
+  h1 em{font-style:normal;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .stand{font-family:var(--serif);font-weight:300;font-size:clamp(1.05rem,2.1vw,1.32rem);line-height:1.55;color:var(--dim);max-width:52ch;margin-top:1.6rem}
+  .mast-meta{display:flex;flex-wrap:wrap;gap:.6rem 2.2rem;margin-top:2.4rem;font-family:var(--mono);font-size:11.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint)}
+  .mast-meta b{color:var(--dim);font-weight:500}
+
+  /* sections */
+  section{padding-top:clamp(3.2rem,7vw,5.5rem)}
+  .shead{display:grid;grid-template-columns:3.4rem 1fr;gap:1rem;align-items:baseline;border-top:1px solid var(--line);padding-top:1.2rem}
+  section:first-of-type .shead{border-top:0}
+  .snum{font-family:var(--mono);font-size:12px;color:var(--violet);letter-spacing:.1em}
+  h2{font-size:clamp(1.5rem,3.2vw,2.1rem);font-weight:700;letter-spacing:-.028em;line-height:1.12;margin:0;text-wrap:balance}
+  .sdek{grid-column:2;font-family:var(--serif);font-weight:300;font-size:1.02rem;color:var(--muted);max-width:58ch;margin-top:.55rem}
+  .body{padding-top:1.8rem}
+  @media(min-width:760px){.body{margin-left:4.4rem}}
+  .prose{font-family:var(--serif);font-weight:300;font-size:1.05rem;line-height:1.68;color:var(--dim);max-width:62ch}
+  .prose + .prose{margin-top:1rem}
+  h3{font-size:1rem;font-weight:600;letter-spacing:-.01em;margin:0 0 .5rem}
+  .lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint);margin:0 0 .5rem}
+
+  .panel{background:linear-gradient(180deg,rgba(244,243,251,.045),rgba(244,243,251,.014));border:1px solid var(--line);border-radius:16px;padding:1.4rem 1.5rem}
+  .grid{display:grid;gap:1rem}
+  @media(min-width:700px){.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}}
+
+  /* thesis */
+  .thesis{display:grid;gap:1.8rem;align-items:start}
+  @media(min-width:820px){.thesis{grid-template-columns:1.25fr .95fr;gap:2.6rem}}
+  .claim{font-family:var(--sans);font-weight:600;font-size:clamp(1.25rem,2.6vw,1.7rem);line-height:1.28;letter-spacing:-.025em;text-wrap:balance}
+  .claim span{color:var(--muted)}
+  .readout{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:1.1rem 0;margin:1.4rem 0 0}
+  .readout dt{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint)}
+  .readout dd{margin:.35rem 0 0;font-family:var(--mono);font-weight:600;font-size:1.35rem;font-variant-numeric:tabular-nums;color:var(--ink)}
+  .readout dd i{font-style:normal;font-size:10.5px;color:var(--faint);letter-spacing:.05em;margin-left:.3rem}
+
+  /* scenes */
+  .script{border-top:1px solid var(--line-strong);margin-top:1.4rem}
+  .scene{display:grid;gap:.7rem 1.6rem;padding:1.35rem 0;border-bottom:1px solid var(--line)}
+  @media(min-width:820px){.scene{grid-template-columns:5.4rem 1fr 1.08fr}}
+  .tc{font-family:var(--mono);font-size:12px;font-variant-numeric:tabular-nums;color:var(--violet-bright);letter-spacing:.02em}
+  .tc span{display:block;color:var(--faint);font-size:10.5px;margin-top:.25rem}
+  .vis p{font-size:14.5px;color:var(--dim)}
+  .vo q{font-family:var(--serif);font-weight:300;font-size:1.12rem;line-height:1.5;color:var(--ink)}
+  .ost{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--gold);margin-top:.7rem;text-transform:uppercase;line-height:1.5}
+  .beat{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint);margin-bottom:.4rem}
+
+  /* tables */
+  .scroll{overflow-x:auto;margin-top:1.2rem;border:1px solid var(--line);border-radius:14px}
+  table{border-collapse:collapse;width:100%;min-width:46rem;font-size:14px}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);text-align:left;font-weight:500;padding:.85rem 1.1rem;background:rgba(244,243,251,.03);border-bottom:1px solid var(--line)}
+  td{padding:.95rem 1.1rem;border-bottom:1px solid var(--line);color:var(--dim);vertical-align:top}
+  tr:last-child td{border-bottom:0}
+  td b{color:var(--ink);font-weight:600}
+  td .route{font-family:var(--mono);font-size:11.5px;color:var(--violet-bright);display:block;margin-top:.2rem}
+
+  /* cards */
+  .who{display:grid;gap:.9rem}
+  @media(min-width:720px){.who{grid-template-columns:1fr 1fr}}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:1.15rem 1.25rem}
+  .card h3{display:flex;align-items:baseline;gap:.6rem}
+  .card h3 i{font-family:var(--mono);font-style:normal;font-size:11px;color:var(--violet);letter-spacing:.1em}
+  .card p{font-size:14px;color:var(--muted);line-height:1.55}
+  .card .trig{display:block;margin-top:.6rem;font-family:var(--serif);font-style:italic;font-weight:300;font-size:15px;color:var(--dim)}
+
+  /* rules */
+  .rules{display:grid;gap:.9rem}
+  @media(min-width:760px){.rules{grid-template-columns:1fr 1fr}}
+  .rule{border-radius:14px;padding:1.15rem 1.25rem;border:1px solid var(--line);background:var(--surface)}
+  .rule.no{border-left:2px solid var(--danger)}
+  .rule.yes{border-left:2px solid var(--emerald)}
+  .rule ul{margin:.6rem 0 0;padding-left:1.1rem;font-size:14px;color:var(--dim)}
+  .rule li{margin-bottom:.45rem}
+  .rule li s{color:var(--faint);text-decoration-color:var(--danger)}
+
+  ul.plain{list-style:none;padding:0;margin:.8rem 0 0;font-size:14.5px;color:var(--dim)}
+  ul.plain li{padding:.62rem 0 .62rem 1.5rem;border-bottom:1px solid var(--line);position:relative;line-height:1.55}
+  ul.plain li:last-child{border-bottom:0}
+  ul.plain li::before{content:'';position:absolute;left:0;top:1.05rem;width:6px;height:6px;border-radius:99px;background:var(--violet)}
+  ul.plain b{color:var(--ink);font-weight:600}
+
+  .callout{border-left:2px solid var(--gold);background:rgba(233,194,123,.05);border-radius:0 12px 12px 0;padding:1.05rem 1.25rem;margin-top:1.4rem}
+  .callout p{font-size:14.5px;color:var(--dim);line-height:1.6;max-width:66ch}
+  .callout b{color:var(--gold);font-weight:600}
+
+  details{border-bottom:1px solid var(--line)}
+  summary{cursor:pointer;padding:.95rem 0;font-weight:600;font-size:15px;list-style:none;display:flex;justify-content:space-between;gap:1rem;align-items:center}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:'+';font-family:var(--mono);color:var(--violet);font-size:16px}
+  details[open] summary::after{content:'\2013'}
+  details > div{padding:0 0 1.1rem}
+
+  footer{margin-top:5rem;border-top:1px solid var(--line-strong);padding-top:1.6rem;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);display:flex;flex-wrap:wrap;gap:.6rem 2rem}
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="mast">
+  <p class="eyebrow">Production brief &middot; Ad + walkthrough &middot; 23 Aug 2026</p>
+  <h1>Every feature, and <em>the line that sells it</em></h1>
+  <p class="stand">Three cut-downs, a full-product walkthrough, the audiences to buy against, and the words the brand is not allowed to say. Written from the shipped product, so nothing here needs to be built before it can be shot.</p>
+  <div class="mast-meta">
+    <span><b>3</b> cuts &mdash; :30 / :60 / 3:30</span>
+    <span><b>14</b> product surfaces</span>
+    <span><b>6</b> buying audiences</span>
+    <span><b>8</b> hooks to test</span>
+  </div>
+</header>
+
+<section>
+  <div class="shead"><span class="snum">01</span><h2>The one thing the ad has to land</h2>
+    <p class="sdek">If a viewer remembers a single sentence, it is this one. Everything else in the film is evidence for it.</p></div>
+  <div class="body">
+    <div class="thesis">
+      <div>
+        <p class="claim">Most tools tell you that you spoke too fast. <span>FounderVoice tells you why it happened, what it cost you, and the exact drill that fixes it &mdash; measured against your own history, not an average.</span></p>
+        <p class="prose" style="margin-top:1.4rem">The demo does the arguing. Show a real sixty-second recording, then the report naming a habit the speaker did not know they had, then click the timestamp so the viewer <em>hears</em> the moment. Proof beats adjectives, and this product's proof fits inside twenty seconds of screen recording.</p>
+      </div>
+      <div class="panel">
+        <p class="lbl">Hero readout &mdash; the shot the ad hangs on</p>
+        <dl class="readout">
+          <div><dt>Pace</dt><dd>178<i>wpm</i></dd></div>
+          <div><dt>Fillers</dt><dd>11<i>in 0:58</i></dd></div>
+          <div><dt>Pause</dt><dd>0.3<i>sec</i></dd></div>
+        </dl>
+        <p style="margin-top:1.1rem;font-size:14px;color:var(--muted)">Fix first: <b style="color:var(--ink);font-weight:600">the pause you never take before a number.</b></p>
+        <p style="margin-top:1rem;font-size:12.5px;color:var(--faint);font-family:var(--mono);line-height:1.55">Same figures as the live site's sample report. Keep them identical across ad, landing page and thumbnail.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="shead"><span class="snum">02</span><h2>Who to point this at</h2>
+    <p class="sdek">Segments defined by the moment, not the person &mdash; which is also what the ad platforms let you target on interest and job title.</p></div>
+  <div class="body">
+    <div class="who">
+      <div class="card"><h3><i>A</i>Founders raising now</h3><p>Pre-seed to Series A. Demo day is dated, the deck is done, the delivery is not. Highest intent, shortest consideration window.</p><span class="trig">Trigger: a meeting on the calendar next week.</span></div>
+      <div class="card"><h3><i>B</i>Technical founders in the pitching seat</h3><p>Built the product, now has to sell it. Knows the material cold and still rushes it. Responds to measurement, distrusts vibes-based coaching.</p><span class="trig">Trigger: &ldquo;you lost them in the first minute&rdquo;.</span></div>
+      <div class="card"><h3><i>C</i>Solo founders running their own demos</h3><p>Repeats the same explanation twenty times a week and has never once heard it back.</p><span class="trig">Trigger: a call that went quiet after the price.</span></div>
+      <div class="card"><h3><i>D</i>Anyone about to be recorded</h3><p>Podcast guests, panel speakers, conference talks, press. Long-form answers where rambling costs them the edit.</p><span class="trig">Trigger: an invite with a date on it.</span></div>
+      <div class="card"><h3><i>E</i>Operators giving board updates and standups</h3><p>Short status that has to land without filler. The everyday case that decides how someone is read internally.</p><span class="trig">Trigger: a promotion into the room where they now speak.</span></div>
+      <div class="card"><h3><i>F</i>Job seekers with an interview booked</h3><p>Talking about your own work under pressure is the same skill as the pitch. Big volume, cheapest clicks, fastest activation.</p><span class="trig">Trigger: &ldquo;tell me about yourself&rdquo;.</span></div>
+    </div>
+    <div class="callout">
+      <p><b>Not the audience, and never implied to be.</b> This is not an English tutor, an accent-reduction app or a language product. Targeting &ldquo;learn English&rdquo;, &ldquo;ESL&rdquo; or &ldquo;fluency&rdquo; pulls a user the product will not serve and breaks the positioning. Target the moment &mdash; investor pitch, demo day, interview, board update &mdash; every time.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="shead"><span class="snum">03</span><h2>The full feature map</h2>
+    <p class="sdek">Every surface in the product, what to show on screen, and the one sentence that earns it. Source material for the long walkthrough and the raw list to cut promos from.</p></div>
+  <div class="body">
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Surface</th><th>What to show on screen</th><th>The line</th></tr></thead>
+        <tbody>
+          <tr><td><b>First check</b><span class="route">/onboarding</span></td><td>Prompt appears, record dot, sixty-second timer, waveform moving. No signup wall &mdash; that is the point of the shot.</td><td>&ldquo;Answer one question out loud. Sixty seconds is enough.&rdquo;</td></tr>
+          <tr><td><b>Today</b><span class="route">/</span></td><td>Founder Voice score, 7-day against 30-day, streak, daily prompt, recommended labs written in plain words.</td><td>&ldquo;One check a day. Your score, and what your voice is doing right now.&rdquo;</td></tr>
+          <tr><td><b>Record</b><span class="route">/record</span></td><td>Mic picker, start / pause / stop, push-to-talk, drag-drop a file up to 100&nbsp;MB.</td><td>&ldquo;Record the long version &mdash; or drop in a file you already have.&rdquo;</td></tr>
+          <tr><td><b>Live Coach</b><span class="route">inside Record</span></td><td>In-browser pace and breath hints ticking while you are still speaking.</td><td>&ldquo;Hints while you speak. The real report comes after you stop.&rdquo;</td></tr>
+          <tr><td><b>Session report</b><span class="route">/sessions/{id}</span></td><td>Pace, fillers, clarity, pause quality, presence, monotone &mdash; then click a transcript line and it seeks and plays that second.</td><td>&ldquo;Every number carries the moment behind it, so you hear it instead of trusting a score.&rdquo;</td></tr>
+          <tr><td><b>Root-cause findings</b><span class="route">in the report</span></td><td>Observation &rarr; likely cause &rarr; the fix, stacked in three lines.</td><td>&ldquo;Not &lsquo;you spoke fast&rsquo;. Why you sped up, and where.&rdquo;</td></tr>
+          <tr><td><b>Labs</b><span class="route">/trainer</span></td><td>A drill card: the line to <em>speak</em>, <em>how</em> to speak it, <em>what it means</em>. Three levels, streak, XP, 25 drills.</td><td>&ldquo;One habit, one drill, one line to say. Not a list of twelve.&rdquo;</td></tr>
+          <tr><td><b>Practice</b><span class="route">/practice</span></td><td>Standup &rarr; hard question &rarr; investor. It asks, you answer by voice, it comes back harder.</td><td>&ldquo;Get asked the question you are dreading, before someone else asks it.&rdquo;</td></tr>
+          <tr><td><b>Listen</b><span class="route">/listen</span></td><td>Start once, take real calls, clips collect in the background; the verdict unlocks after a lab drill.</td><td>&ldquo;It listens to your real calls, not just your rehearsals.&rdquo;</td></tr>
+          <tr><td><b>Progress</b><span class="route">/dashboard</span></td><td>7 / 30 / 60-day Voice Memory curves and the patterns that keep recurring.</td><td>&ldquo;After three recordings it stops comparing you to an average and starts comparing you to you.&rdquo;</td></tr>
+          <tr><td><b>Library</b><span class="route">/library</span></td><td>Filter by Record, Labs, Practice, Smart or Pitch; open any past session.</td><td>&ldquo;Every take you have ever done, in one list.&rdquo;</td></tr>
+          <tr><td><b>Coach</b><span class="route">/coach</span></td><td>Goal picker, voice profile, development plan, your own custom filler words, Fresh start.</td><td>&ldquo;Tell it what you are training for. It builds the plan around that.&rdquo;</td></tr>
+          <tr><td><b>PDF report</b><span class="route">in the report</span></td><td>Export button, then the report as a document.</td><td>&ldquo;Take the report with you.&rdquo;</td></tr>
+          <tr><td><b>Guides</b><span class="route">/guides</span></td><td>Nineteen written guides &mdash; fillers, speaking too fast, pitch practice, investor Q&amp;A.</td><td>&ldquo;And the reading, free, if you want the theory too.&rdquo;</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout">
+      <p><b>Two truths to keep straight on camera.</b> The hosted app at foundervoice.app runs in the browser with no account and no card. The <em>local install</em> is the version where the audio, the Whisper model and the database never leave your machine. Say &ldquo;no account, nothing to install&rdquo; for the web ad; say &ldquo;runs entirely on your machine&rdquo; only when the shot is the local build. Blending the two is the one claim in this kit that would be untrue.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="shead"><span class="snum">04</span><h2>The :30 &mdash; paid social and pre-roll</h2>
+    <p class="sdek">Screen recording throughout. No face, no music bed until 0:16. One idea: your pitch, measured.</p></div>
+  <div class="body">
+    <div class="script">
+      <div class="scene"><div class="tc">00:00<span>4 sec</span></div>
+        <div class="vis"><p class="beat">Screen</p><p>Black. A waveform builds left to right, timer counting toward 0:58. Nothing else on screen.</p></div>
+        <div class="vo"><p class="beat">Voiceover</p><q>This is a founder's pitch. In the room, it sounded fine.</q></div></div>
+
+      <div class="scene"><div class="tc">00:04<span>7 sec</span></div>
+        <div class="vis"><p class="beat">Screen</p><p>The report loads. Three readings land one at a time: 178 wpm, 11 fillers, 0.3s longest pause.</p></div>
+        <div class="vo"><p class="beat">Voiceover</p><q>Here it is measured. He rushed to a hundred and seventy-eight words a minute, and never once paused before a number.</q><p class="ost">On screen: 178 WPM &middot; 11 FILLERS &middot; 0:58</p></div></div>
+
+      <div class="scene"><div class="tc">00:11<span>5 sec</span></div>
+        <div class="vis"><p class="beat">Screen</p><p>Cursor clicks a timestamped line in the transcript. The actual rushed sentence plays under the voiceover.</p></div>
+        <div class="vo"><p class="beat">Voiceover</p><q>Every number comes with the moment behind it. You hear it. You do not have to trust a score.</q></div></div>
+
+      <div class="scene"><div class="tc">00:16<span>7 sec</span></div>
+        <div class="vis"><p class="beat">Screen</p><p>A Lab card opens: the sentence to speak, how to speak it, what it means. Record dot pulses.</p></div>
+        <div class="vo"><p class="beat">Voiceover</p><q>Then one drill, for the one habit costing you the most. Not a list of twelve things to improve.</q></div></div>
+
+      <div class="scene"><div class="tc">00:23<span>7 sec</span></div>
+        <div class="vis"><p class="beat">Screen</p><p>Progress curve moving across 7 and 30 days. Cut to the end card on near-black with the gradient wordmark.</p></div>
+        <div class="vo"><p class="beat">Voiceover</p><q>Record again tomorrow. After three takes it stops comparing you to an average, and starts comparing you to you.</q><p class="ost">End card: FounderVoice &middot; Record sixty seconds &middot; Free, no account &middot; foundervoice.app</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="shead"><span class="snum">05</span><h2>The :60 &mdash; launch film</h2>
+    <p class="sdek">Same spine as the :30, plus the three features that turn a curiosity into a habit: pressure practice, real calls, and memory.</p></div>
+  <div class="body">
+    <div class="script">
+      <div class="scene"><div class="tc">00:00<span>10 sec</span></div>
+        <div class="vis"><p class="beat">Screen</p><p>Reuse the first two beats of the :30 uncut &mdash; waveform, then the three readings landing.</p></div>
+        <div class="vo"><p class="beat">Voiceover</p><q>You have practised your pitch. You have never actually heard it. This is sixty seconds of a founder explaining their company &mdash; measured.</q></div></div>
+
+      <div class="scene"><div class="tc">00:10<span>9 sec</span></div>
+        <div class="vis"><p class="beat">Screen</p><p>A root-cause finding expands: observation, cause, fix &mdash; three lines, one at a time.</p></div>
+        <div class="vo"><p class="beat">Voiceover</p><q>Being told to slow down is not coaching. It names a symptom you already know about. This names the cause, and what to do about it on Tuesday.</q></div></div>
+
+      <div class="scene"><div class="tc">00:19<span>10 sec</span></div>
+        <div class="vis"><p class="beat">Screen</p><p>Practice, investor round. The question appears &mdash; &ldquo;what happens when the incumbent copies this?&rdquo; &mdash; the user answers by voice, the follow-up comes back harder.</p></div>
+        <div class="vo"><p class="beat">Voiceover</p><q>Practise the question you are dreading. Standup, then the hard one, then the investor who does not let it go. Answer out loud. Every answer gets the same report.</q></div></div>
+
+      <div class="scene"><div class="tc">00:29<span>10 sec</span></div>
+        <div class="vis"><p class="beat">Screen</p><p>Listen: a session running, clips stacking through the day, then the verdict unlocking.</p></div>
+        <div class="vo"><p class="beat">Voiceover</p><q>Or let it listen to the real thing. Earbuds in, take your calls, and it finds the habit that shows up when nobody is rehearsing.</q></div></div>
+
+      <div class="scene"><div class="tc">00:39<span>9 sec</span></div>
+        <div class="vis"><p class="beat">Screen</p><p>The Labs grid, level one through three, streak ticking over. One card opens with its speak-this line.</p></div>
+        <div class="vo"><p class="beat">Voiceover</p><q>Twenty-five drills. Each one gives you the sentence, how to say it, and why that sentence exists.</q></div></div>
+
+      <div class="scene"><div class="tc">00:48<span>12 sec</span></div>
+        <div class="vis"><p class="beat">Screen</p><p>Voice Memory curves over thirty days, filler rate dropping. Hold, then the end card.</p></div>
+        <div class="vo"><p class="beat">Voiceover</p><q>Ten recordings a day. No account, no card, nothing to install. Record sixty seconds, and find out what you actually sound like.</q><p class="ost">End card: foundervoice.app &middot; Free, no signup</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="shead"><span class="snum">06</span><h2>The 3:30 walkthrough</h2>
+    <p class="sdek">The video that lives on the site, the Product Hunt page and the YouTube channel. One screen recording, ten chapters, markers in the description.</p></div>
+  <div class="body">
+    <details open><summary>0:00 &mdash; Cold open: the problem, in one recording</summary><div><p class="prose">Record yourself answering &ldquo;what does your company do&rdquo; with no preparation. Play four seconds of it. Say: &ldquo;That is me, unprepared. Here is what the product does with it.&rdquo; Do not explain the product first &mdash; earn the next three minutes with the recording.</p></div></details>
+
+    <details><summary>0:20 &mdash; First check: sixty seconds, no signup</summary><div><p class="prose">Open foundervoice.app cold, in a clean browser window. Show that there is no account step. Take the prompt, speak for a minute, hit stop. Say the allowance out loud while it uploads: ten recordings every 24 hours, free, no card.</p></div></details>
+
+    <details><summary>0:50 &mdash; Reading the report properly</summary><div><p class="prose">The centrepiece, and the longest chapter. Walk the top stats &mdash; pace, fillers, clarity, pause quality, presence, monotone &mdash; then scroll to the smart transcript and click a sentence so it seeks and plays. Then the root-cause finding: observation, cause, fix. Then export the PDF, so the viewer sees the report is portable.</p></div></details>
+
+    <details><summary>1:25 &mdash; Labs: turning the finding into a drill</summary><div><p class="prose">Click &ldquo;Open lab&rdquo; straight from the report, so the connection is visible rather than described. Read the three parts of the card aloud &mdash; speak this, how to speak it, what this means &mdash; record the line, and show that the review grades only that one skill. Say why: &ldquo;Pitch variation is not a failure during a pause drill. It waits for its own lab.&rdquo;</p></div></details>
+
+    <details><summary>1:55 &mdash; Practice: the investor who does not let go</summary><div><p class="prose">Pick the investor round. Answer one question by voice, badly on purpose. Let the follow-up land. Point out that the voice answer also produced a full report of its own.</p></div></details>
+
+    <details><summary>2:20 &mdash; Record: the long version, and file upload</summary><div><p class="prose">Mic picker, push-to-talk, then drag and drop an existing file up to 100&nbsp;MB &mdash; the moment for anyone with a demo-day recording already sitting on their drive. Mention Live Coach as in-browser hints, and be explicit that the real analysis happens after you stop.</p></div></details>
+
+    <details><summary>2:45 &mdash; Listen: real calls, not rehearsals</summary><div><p class="prose">Start a listening session, show clips collecting, end it, then complete a lab to unlock the verdict. Name the limitation on camera: the verdict waits for a drill so it has something clean to compare your real speech against. Explaining that honestly is more persuasive than hiding it.</p></div></details>
+
+    <details><summary>3:05 &mdash; Voice Memory, Library and Coach</summary><div><p class="prose">Progress curves over 7, 30 and 60 days with a real drop in filler rate. Then Library filtered to Labs. Then Coach: pick a goal, add your own filler words, and show Fresh start &mdash; including that it makes you type DELETE. The deletion story is a trust story.</p></div></details>
+
+    <details><summary>3:20 &mdash; Privacy and price</summary><div><p class="prose">Free tier: ten recordings every 24 hours and two investor practice rounds, no account and no card. Pro lifts both caps and is arranged through the contact form. If you are showing the local build, this is where you say the audio, the model and the database stay on your machine.</p></div></details>
+
+    <details><summary>3:30 &mdash; Close</summary><div><p class="prose">&ldquo;Record sixty seconds. Find out what you actually sound like.&rdquo; URL card, hold four seconds, out.</p></div></details>
+  </div>
+</section>
+
+<section>
+  <div class="shead"><span class="snum">07</span><h2>Hooks to test, and where each cut goes</h2>
+    <p class="sdek">Swap only the first four seconds. Everything after 0:04 stays identical, so the test measures the hook and nothing else.</p></div>
+  <div class="body">
+    <div class="grid g2">
+      <div class="panel"><p class="lbl">Eight openers</p>
+        <ul class="plain">
+          <li><b>&ldquo;You have heard your pitch. You have never seen it measured.&rdquo;</b></li>
+          <li><b>&ldquo;Eleven fillers in fifty-eight seconds.&rdquo;</b> Number first, no context. Highest scroll-stop in cold feeds.</li>
+          <li><b>&ldquo;You lost them in the first minute.&rdquo;</b> Straight into the feedback nobody ever explains.</li>
+          <li><b>&ldquo;Nobody tells a founder they talk too fast. They just pass.&rdquo;</b></li>
+          <li><b>&ldquo;Slow down is not coaching.&rdquo;</b> Argues with advice the viewer has already been given.</li>
+          <li><b>&ldquo;Your deck is done. Your delivery is not.&rdquo;</b> Best for raising founders, weakest for everyone else.</li>
+          <li><b>&ldquo;Play four seconds of yourself back.&rdquo;</b> Direct instruction; works with a face-to-camera open.</li>
+          <li><b>&ldquo;A hundred and seventy-eight words a minute is not confidence. It is nerves.&rdquo;</b></li>
+        </ul>
+      </div>
+      <div class="panel"><p class="lbl">Cut per channel</p>
+        <ul class="plain">
+          <li><b>YouTube pre-roll</b> &mdash; the :30. Skip lands at 0:05, so the readout must be on screen by 0:04.</li>
+          <li><b>Reels, Shorts, TikTok</b> &mdash; the :30 reframed 9:16, zoomed to the readout, captions burned in, nothing depending on sound.</li>
+          <li><b>X</b> &mdash; the :60 with the first frame already showing the report; autoplay is muted, so the numbers carry it.</li>
+          <li><b>LinkedIn</b> &mdash; the :60, hook D or F, aimed at operators and interviewers rather than founders.</li>
+          <li><b>Product Hunt and site hero</b> &mdash; the 3:30 walkthrough with chapter markers.</li>
+          <li><b>Landing page loop</b> &mdash; a silent twelve-second cut: waveform, readout, lab card. No voiceover, no end card.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="shead"><span class="snum">08</span><h2>Before you hit record</h2>
+    <p class="sdek">The capture checklist. Most of these are only fixable before the shoot, not in the edit.</p></div>
+  <div class="body">
+    <ul class="plain">
+      <li><b>Seed the account with at least three real sessions.</b> Voice Memory, the streak and the progress curves are all empty on a fresh install, and an empty chart is the one shot that makes a product look unfinished.</li>
+      <li><b>Give those sessions honest numbers.</b> Do the bad take first, so the improvement curve in the Progress shot is real. A curve you faked is a curve someone will ask about.</li>
+      <li><b>Capture at 1440p or better, then crop.</b> Type in this UI is small; a 1080p capture upscaled for Shorts turns the readout to mush.</li>
+      <li><b>Use the same mic in every scene.</b> The product compares takes against each other &mdash; switching mics mid-video changes the numbers on screen.</li>
+      <li><b>Hide the browser chrome and every other tab.</b> Bookmarks bar off, notifications off, one window, one profile.</li>
+      <li><b>Let the analysis finish rather than cutting around it.</b> Hold the pending state for a beat; the honest wait reads as real software.</li>
+      <li><b>Keep the real click and playback audio.</b> The timestamp-click-and-play moment needs its own sound to land.</li>
+      <li><b>Shoot the end card last</b>, once the URL, the price line and the free-tier wording are final everywhere else.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="shead"><span class="snum">09</span><h2>Say this. Never say that.</h2>
+    <p class="sdek">Straight from the brand guidelines. The right-hand column is not a style preference &mdash; those phrases put the product in a category it does not compete in and will not serve.</p></div>
+  <div class="body">
+    <div class="rules">
+      <div class="rule yes"><h3>Say</h3>
+        <ul>
+          <li>&ldquo;Founder-level communication&rdquo; &mdash; the category we claim.</li>
+          <li>Name the moment: the investor pitch, the Q&amp;A, the board update, the interview.</li>
+          <li>&ldquo;Pace, fillers, pauses, clarity, pitch variation&rdquo; &mdash; the five things actually measured.</li>
+          <li>&ldquo;Ten recordings every 24 hours. No account, no card.&rdquo;</li>
+          <li>&ldquo;Estimate&rdquo; wherever the product itself labels a number an estimate.</li>
+          <li>&ldquo;Record sixty seconds.&rdquo; Plain imperative, no exclamation mark.</li>
+        </ul>
+      </div>
+      <div class="rule no"><h3>Never say</h3>
+        <ul>
+          <li><s>Improve your English</s> &middot; <s>speak better English</s> &middot; <s>fluency</s> &mdash; out of scope entirely.</li>
+          <li><s>Non-native speaker</s> &mdash; say founders, executives, public speakers.</li>
+          <li><s>Fix your accent</s> &mdash; the product never scores anyone on sounding native.</li>
+          <li><s>Communication skills</s>, unqualified &mdash; qualify it with founder, or with the moment.</li>
+          <li><s>Revolutionary</s> &middot; <s>game-changing</s> &middot; <s>unlock</s> &middot; <s>supercharge</s> &mdash; state the actual result.</li>
+          <li><s>Powered by AI</s> &mdash; name the concrete thing it does.</li>
+          <li><s>FounderVoice AI</s> &middot; <s>Founder Voice</s> &middot; <s>Foundervoice</s> &mdash; one word, one spelling, in every caption and end card.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout">
+      <p><b>Tone direction for the voiceover.</b> Specific, causal, honest, unhurried. Short sentences, no exclamation marks, no rising sell. The read is a calm executive tool &mdash; if the voice sounds excited, the ad is contradicting the product.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="shead"><span class="snum">10</span><h2>What the ad is asking for</h2>
+    <p class="sdek">One call to action everywhere, because the product's first step is also its whole argument.</p></div>
+  <div class="body">
+    <p class="prose"><b style="color:var(--ink);font-weight:600">&ldquo;Record your first minute.&rdquo;</b> Not &ldquo;sign up&rdquo;, not &ldquo;learn more&rdquo; &mdash; what is being asked for is the thing that proves the product. Every end card points at foundervoice.app and the onboarding check behind it.</p>
+    <p class="prose">Tag every destination so the hook test is readable: one campaign per cut, one source per channel, the hook letter in the content field. The only conversion event worth optimising toward is a completed first recording &mdash; not a page view, and not a click.</p>
+    <div class="grid g3" style="margin-top:1.6rem">
+      <div class="card"><h3>Primary CTA</h3><p>Record your first minute &mdash; free, no account, ten recordings a day.</p></div>
+      <div class="card"><h3>Secondary CTA</h3><p>For the reading audience and search traffic: the nineteen guides at /guides.</p></div>
+      <div class="card"><h3>Upgrade path</h3><p>Pro lifts the daily cap and the two-round practice limit, arranged through the contact form. Mention it only in the long walkthrough.</p></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span>FounderVoice &middot; Ad kit v1</span>
+  <span>Sourced from the shipped product, 23 Aug 2026</span>
+  <span>foundervoice.app</span>
+</footer>
+
+</div>
