@@ -124,7 +124,11 @@ def speakable(text: str) -> str:
     # hedge itself is not dropped - spoken_coach says it in English instead.
     out = re.sub(r"\s*\((?:model\s+)?estimat\w*\.?\)", "", out, flags=re.I)
     out = re.sub(r"\bWPM\b", "words per minute", out, flags=re.I)
-    out = re.sub(r"\s*[—–-]\s*", ", ", out)
+    # A dash between words is a held beat and becomes a comma. A dash inside a
+    # word is part of the word: the old rule caught both, and turned
+    # "mid-sentence" into "mid, sentence" and "twenty-five" into "twenty, five".
+    out = re.sub(r"\s*[—–]\s*", ", ", out)
+    out = re.sub(r"\s+-\s+", ", ", out)
     out = re.sub(r"\s+", " ", out).strip()
     return out[:MAX_CHARS]
 

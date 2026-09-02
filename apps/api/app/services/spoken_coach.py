@@ -57,11 +57,17 @@ def _line(line_id: str, kind: str, text: str, **meta: Any) -> dict[str, Any]:
 
 
 def _sentence(text: str) -> str:
-    """Findings are written as mid-sentence fragments; spoken, they start one."""
+    """Findings are written as mid-sentence fragments; spoken, they start one.
+
+    And end one: a line with no full stop is read with the pitch still up, as
+    though more is coming, which is exactly how a coach sounds when they have
+    lost their thread.
+    """
     text = text.strip()
     if not text:
         return ""
-    return text[0].upper() + text[1:]
+    text = text[0].upper() + text[1:]
+    return text if text[-1] in ".!?…" else text + "."
 
 
 def _clause(text: str) -> str:
@@ -211,6 +217,34 @@ def _certainty_note(metrics: dict[str, Any]) -> str:
     return ""
 
 
+def _headline_note(
+    metrics: dict[str, Any], events: list[dict[str, Any]]
+) -> tuple[str, str]:
+    """The one measured thing worth saying out loud, and its line id.
+
+    All three notes are true, and saying all three is what turns coaching into a
+    read-out: six sentences of numbers before the listener reaches anything they
+    can act on. A person picks the thing that was most wrong and says that. The
+    rest is on screen, where it can be re-read without anyone waiting for it.
+    """
+    wpm = _num(metrics.get("wpm"))
+    pace = _pace_note(wpm)
+    fillers = _filler_note(events, metrics)
+    certainty = _certainty_note(metrics)
+
+    # Ordered by what a listener in the room would actually have noticed first.
+    badly_paced = wpm is not None and (wpm > 168 or wpm < 105)
+    if badly_paced and pace:
+        return "pace", pace
+    if fillers:
+        return "fillers", fillers
+    if certainty:
+        return "certainty", certainty
+    if pace:
+        return "pace", pace
+    return "", ""
+
+
 CLOSERS = {
     "investor": "Run it again before you're in a room with anyone holding a chequebook.",
     "class": "Run it again before you're standing in front of the class.",
@@ -243,17 +277,13 @@ def build_script(
     lines.append(_line("open", "open", opener))
     lines.append(_line("verdict", "verdict", _verdict(score), score=score))
 
-    pace = _pace_note(_num(m.get("wpm")))
-    if pace:
-        lines.append(_line("pace", "read", pace))
-
-    fillers = _filler_note(raw, m)
-    if fillers:
-        lines.append(_line("fillers", "read", fillers))
-
+    note_id, note = _headline_note(m, raw)
+    if note:
+        lines.append(_line(note_id, "read", note))
+    # Kept for the de-duplication below: if fillers were the thing said out
+    # loud, ranking them again as a finding is the coach saying one thing twice.
+    fillers = note if note_id == "fillers" else ""
     certainty = _certainty_note(m)
-    if certainty:
-        lines.append(_line("certainty", "read", certainty))
 
     # Fillers were just named word by word; repeating them as a ranked finding
     # is the coach saying the same thing twice in different clothes.
@@ -287,7 +317,8 @@ def build_script(
                 _line(f"cause-{idx}", "cause", f"That's not your voice, that's a habit. {_sentence(cause)}")
             )
         if fix:
-            lines.append(_line(f"fix-{idx}", "fix", f"So next take, {fix[0].lower()}{fix[1:]}"))
+            spoken_fix = f"So next take, {fix[0].lower()}{fix[1:]}"
+            lines.append(_line(f"fix-{idx}", "fix", _sentence(spoken_fix)))
 
     if hedged:
         lines.append(
