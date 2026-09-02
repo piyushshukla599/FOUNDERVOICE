@@ -42,7 +42,6 @@ import {
   PURPOSE_QUESTION,
   PURPOSE_REASK,
   purposeFromAside,
-  wantsShort,
   yesNo,
   type Purpose,
 } from "@/lib/coachTalk";
@@ -63,6 +62,7 @@ type Stage =
   | "stalled" /* heard nothing; waiting to be resumed rather than restarted */
   | "arming" /* opening the microphone for the real take */
   | "recording"
+  | "retaking" /* second attempt at the same part, straight after the note */
   | "sending"
   | "analyzing"
   | "feedback"
@@ -97,6 +97,8 @@ export default function TalkPage() {
   const answer = useRef<((text: string) => void) | null>(null);
   /** Set while a question is stalled: pressing Resume re-asks and listens again. */
   const resume = useRef<(() => void) | null>(null);
+  /** Resolved by the Done button during a second attempt. */
+  const retakeDone = useRef<(() => void) | null>(null);
   /** The last thing the coach asked, so Resume can repeat it rather than wait mutely. */
   const lastAsk = useRef("");
   const thread = useRef<HTMLDivElement>(null);
@@ -283,6 +285,75 @@ export default function TalkPage() {
     [hear, say],
   );
 
+  /* --------------------------------------------------------- the retake */
+
+  /**
+   * The second attempt, straight after the correction.
+   *
+   * This is the part that turns a review into practice. It is also the only
+   * moment in the app where the coach can say "yes, that one" about something
+   * you did ten seconds ago, which is worth more than any amount of accurate
+   * description of the take before it.
+   *
+   * The reaction is built on the server from both takes, and never mentions
+   * either measurement. "That's much easier to listen to" is what a person
+   * says; "your pace variation fell by thirteen per cent" is what a dashboard
+   * says, and the dashboard is already on screen.
+   */
+  const retake = useCallback(
+    async (chosen: Purpose, beforeId: string, key: string, mine: number) => {
+      try {
+        setStage("arming");
+        await rec.start();
+        if (run.current !== mine) return;
+
+        setStage("retaking");
+        await new Promise<void>((resolve) => {
+          retakeDone.current = resolve;
+        });
+        retakeDone.current = null;
+        if (run.current !== mine) return;
+
+        setStage("sending");
+        const out = await rec.stop();
+        if (!out || out.blob.size < 1200) {
+          await say("That one didn't record. Let's carry on.", "aside");
+          return;
+        }
+
+        const { session_id } = await api.upload(out.blob, chosen.label, "pitch", {
+          focus_note: `Second attempt: ${key || "delivery"}`,
+        });
+        setStage("analyzing");
+        for (let tries = 0; tries < 160; tries += 1) {
+          const detail = await api.session(session_id);
+          const status = detail.session.status;
+          if (status !== "pending" && status !== "analyzing") break;
+          await wait(2500);
+          if (run.current !== mine) return;
+        }
+
+        const reaction = await api.retryReaction(beforeId, session_id, key);
+        if (run.current !== mine) return;
+        setStage("feedback");
+        for (const line of reaction.lines) {
+          if (run.current !== mine) return;
+          await say(line.text, line.kind);
+        }
+      } catch (e) {
+        // A spent allowance costs the second attempt, not the conversation.
+        if (e instanceof QuotaError) {
+          await say("That's your last take for today, so let's talk instead.", "aside");
+          return;
+        }
+        await say("Something went wrong with that take. Let's keep going.", "aside");
+      } finally {
+        retakeDone.current = null;
+      }
+    },
+    [rec, say],
+  );
+
   /* ------------------------------------------------------- the recording */
 
   const finish = useCallback(
@@ -316,44 +387,52 @@ export default function TalkPage() {
           if (run.current !== mine) return;
         }
 
-        const script = await api.voiceScript(session_id, chosen.key);
+        const convo = await api.voiceConversation(session_id, chosen.key);
         if (run.current !== mine) return;
         setStage("feedback");
 
-        /* The verdict first, then it stops and asks — because a coach that
-           delivers eleven findings without drawing breath is reading a report
-           at you, and you stopped listening around the fourth one. */
-        const lines = script.lines;
-        const cut = lines.findIndex((l) => l.kind === "verdict");
-        const opening = cut >= 0 ? lines.slice(0, cut + 1) : lines.slice(0, 2);
-        for (const line of opening) {
+        /* The round, in the shape a coach actually uses: what I heard, the one
+           thing I noticed, does that match what you felt, the single change,
+           now do it again. No measurement is spoken at any point — the numbers
+           are on the report, where they can be looked at instead of waited
+           through. */
+        for (const line of convo.lines) {
           if (run.current !== mine) return;
           await say(line.text, line.kind);
         }
 
-        if (run.current !== mine) return;
-        await say("Want me to go through what I heard?", "ask");
-        if (run.current !== mine) return;
-        const wants = await hear();
-        if (run.current !== mine) return;
-        setStage("feedback");
-
-        const rest = lines.slice(opening.length);
-        // "No" is not "say nothing" — it's "spare me the tour". They still get
-        // the thing that matters, which is the one they can act on.
-        const brief = yesNo(wants.text) === "no" || wantsShort(wants.text);
-        const chosenLines = brief
-          ? rest.filter((l) => ["issue", "fix", "lab"].includes(l.kind)).slice(0, 3)
-          : rest;
-        for (const line of chosenLines) {
+        /* Asking before telling is most of the difference between a coach and
+           a scorecard: someone who has just noticed their own habit is already
+           half way to changing it, and someone who hasn't gets told anyway. */
+        if (convo.probe) {
           if (run.current !== mine) return;
-          await say(line.text, line.kind);
+          await say(convo.probe.text, "ask");
+          if (run.current !== mine) return;
+          const felt = await hear();
+          if (run.current !== mine) return;
+          setStage("feedback");
+          await say(yesNo(felt.text) === "no" ? convo.probe.no : convo.probe.yes, "read");
+        }
+
+        if (convo.correction) {
+          if (run.current !== mine) return;
+          await say(convo.correction, "fix");
+        }
+
+        // Doing it again immediately is the part that makes it practice rather
+        // than a review. It is also the only moment the coach can say "yes,
+        // that" about something you just did.
+        if (convo.retry) {
+          if (run.current !== mine) return;
+          await say(convo.retry, "ask");
+          if (run.current !== mine) return;
+          await retake(chosen, session_id, convo.key || "", mine);
         }
 
         /* Delivery was only half of it. The meeting is decided by what happens
            when someone pushes back, so offer that rather than assume it. */
         if (run.current !== mine) return;
-        await say("Now the real test. Want me to push back on it, the way they will?", "ask");
+        await say("Now let me push you a little. Ready?", "ask");
         if (run.current !== mine) return;
         const pushBack = await hear();
         if (run.current !== mine) return;
@@ -362,7 +441,6 @@ export default function TalkPage() {
           const spoken = detail?.session.transcript?.text || "";
           await crossExamine(spoken, mine);
         }
-
         if (run.current !== mine) return;
         await say("Do you want to run it again?", "ask");
         if (run.current !== mine) return;
@@ -383,7 +461,7 @@ export default function TalkPage() {
         finishing.current = false;
       }
     },
-    [crossExamine, hear, rec, say, voice],
+    [crossExamine, hear, rec, retake, say, voice],
   );
 
   /* `finish` ends by offering another round, and `start` is declared below it.
@@ -688,6 +766,24 @@ export default function TalkPage() {
                 </p>
               )}
               <Button variant="secondary" size="sm" onClick={() => purpose && void finish(purpose)}>
+                <Square size={14} />
+                I&rsquo;m done
+              </Button>
+            </>
+          )}
+
+          {stage === "retaking" && (
+            <>
+              <p className="fv-num text-[2rem] leading-none">{fmtClock(rec.elapsed)}</p>
+              <p className="max-w-md text-[13px] text-[var(--muted)]">
+                Just that part. Take it again with the change.
+              </p>
+              {rec.liveTranscript && (
+                <p className="max-w-xl text-[13px] italic leading-relaxed text-[var(--muted)]">
+                  “{rec.liveTranscript.slice(-180)}”
+                </p>
+              )}
+              <Button variant="secondary" size="sm" onClick={() => retakeDone.current?.()}>
                 <Square size={14} />
                 I&rsquo;m done
               </Button>

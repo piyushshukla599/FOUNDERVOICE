@@ -245,6 +245,138 @@ def _headline_note(
     return "", ""
 
 
+# ---------------------------------------------------------------- the loop
+#
+# A coach does not read you your own measurements. It says the one thing it
+# noticed, checks whether you felt it too, tells you the single change to make,
+# and then makes you do it again. The numbers are not hidden - they are on the
+# screen, where they can be looked at rather than waited through.
+
+
+def _where(start: Any, duration: Any) -> str:
+    """Where in the take it happened, placed the way a person places it."""
+    begin = _num(start)
+    length = _num(duration)
+    if begin is None or not length or length <= 0:
+        return ""
+    fraction = begin / length
+    if fraction <= 0.28:
+        return "early on"
+    if fraction <= 0.62:
+        return "about halfway through"
+    return "when you got towards the end"
+
+
+class Observation:
+    """One thing worth saying, in the four shapes the conversation needs."""
+
+    def __init__(
+        self,
+        key: str,
+        frame: str,
+        probe: str,
+        confirm_yes: str,
+        confirm_no: str,
+        correction: str,
+        retry: str,
+    ) -> None:
+        self.key = key
+        self.frame = frame
+        self.probe = probe
+        self.confirm_yes = confirm_yes
+        self.confirm_no = confirm_no
+        self.correction = correction
+        self.retry = retry
+
+
+def _observe(
+    metrics: dict[str, Any], events: list[dict[str, Any]], duration: Any
+) -> Observation | None:
+    """The single thing the coach works on this round.
+
+    Chosen from the measurements, phrased without any of them. "You sped up
+    when you got to the numbers" is something you can hear yourself doing;
+    "your pace was a hundred and seventy-eight words a minute" is a fact you
+    have to be told, and being told facts about yourself is not coaching.
+    """
+    wpm = _num(metrics.get("wpm"))
+    fastest = metrics.get("fastest_section") or {}
+    fast_wpm = _num(fastest.get("wpm"))
+    monotone = _num(metrics.get("monotone_score"))
+    confidence = _num(metrics.get("confidence_est"))
+
+    filler_counts: Counter[str] = Counter()
+    for event in events:
+        if str(event.get("kind") or "") == "filler":
+            phrase = str((event.get("meta") or {}).get("phrase") or "").strip()
+            if phrase:
+                filler_counts[phrase] += 1
+    fillers = int(_num(metrics.get("filler_count"), 0) or 0) or sum(filler_counts.values())
+
+    # A burst inside an otherwise steady take is the most useful note there is:
+    # it is specific, it has a place in the recording, and it is fixable in one
+    # attempt. It beats an average, which describes no moment in particular.
+    if wpm and fast_wpm and fast_wpm - wpm >= 22:
+        place = _where(fastest.get("start"), duration)
+        at = f" {place}" if place else ""
+        return Observation(
+            key="surge",
+            frame="You were fairly measured for most of that.",
+            probe=f"Did you feel yourself speeding up{at}?",
+            confirm_yes="Exactly. That's what I heard too.",
+            confirm_no="It's subtle from the inside. But it's there.",
+            correction="Take a breath before the part that matters, and let the number land on its own.",
+            retry="Give me that part again.",
+        )
+
+    if fillers >= 3:
+        word = filler_counts.most_common(1)[0][0] if filler_counts else "um"
+        return Observation(
+            key="filler",
+            frame="The shape of it was fine.",
+            probe=f"Did you catch how often you were saying \"{word}\"?",
+            confirm_yes="Right. And every one of them sits where you weren't sure yet.",
+            confirm_no="They go past you when you're speaking. They don't when you're listening.",
+            correction="When you feel one coming, just stop instead. The silence does the same job and sounds certain.",
+            retry="Try the opening again, and let yourself pause.",
+        )
+
+    if monotone is not None and monotone >= 60:
+        return Observation(
+            key="flat",
+            frame="You were clear the whole way through.",
+            probe="Did that feel a bit flat to you?",
+            confirm_yes="That's it. Every word got the same weight, so nothing stood out.",
+            confirm_no="It reads flatter from out here than it feels in your head.",
+            correction="Pick the one sentence you'd want them to repeat afterwards, and drop your voice on it.",
+            retry="Say me that one sentence.",
+        )
+
+    if confidence is not None and confidence < 52:
+        return Observation(
+            key="trail",
+            frame="The content is there, and it holds up.",
+            probe="Did you notice your sentences trailing off at the end?",
+            confirm_yes="Yes. And that's the bit a room remembers.",
+            confirm_no="It's the last two words each time. They drop away.",
+            correction="Finish the sentence down and stop. Don't let it drift up like a question.",
+            retry="Give me your last line again, and land it.",
+        )
+
+    if wpm is not None and wpm < 105:
+        return Observation(
+            key="slow",
+            frame="Every word of that was clear.",
+            probe="Did it feel a little careful to you?",
+            confirm_yes="That's the one. Careful reads as unsure, even when you're right.",
+            confirm_no="It's measured. A shade more push and it becomes certain instead.",
+            correction="Take the first two sentences a little quicker, like you already know they work.",
+            retry="Run the opening again, with a bit more front foot.",
+        )
+
+    return None
+
+
 CLOSERS = {
     "investor": "Run it again before you're in a room with anyone holding a chequebook.",
     "class": "Run it again before you're standing in front of the class.",
@@ -364,6 +496,126 @@ def build_script(
         )
     )
     return [ln for ln in lines if ln["text"]]
+
+
+def build_conversation(
+    session: dict[str, Any] | None,
+    metrics: dict[str, Any] | None,
+    events: list[dict[str, Any]] | None,
+    *,
+    purpose: str = "",
+) -> dict[str, Any]:
+    """The spoken half of a coaching round, as a conversation rather than a read-out.
+
+    The written report keeps every number. This keeps none of them: it opens,
+    says the one thing it noticed, asks whether you felt it too, gives a single
+    correction and sends you back in. What comes back is not a flat list of
+    lines but the parts of an exchange, because the client has to stop and
+    listen in the middle of it.
+    """
+    from .founder_verdict import founder_voice_score
+
+    m = dict(metrics or {})
+    sess = dict(session or {})
+    raw = list(events or [])
+    duration = _num(sess.get("duration"))
+    observation = _observe(m, raw, duration)
+
+    opening = [
+        _line("open", "open", "Okay. I heard it."),
+        _line("verdict", "verdict", _verdict(founder_voice_score(m))),
+    ]
+
+    if not observation:
+        # Nothing measurable went wrong. Saying so plainly and moving to the
+        # harder part is more use than inventing a fault to have something to
+        # coach, which is what a scorecard does when it has nothing to report.
+        opening.append(
+            _line("clean", "read", "Nothing in the delivery got in the way that time.")
+        )
+        return {
+            "lines": opening,
+            "probe": None,
+            "correction": None,
+            "retry": None,
+            "close": CLOSERS.get(purpose)
+            or "Then run it again. Same script, one thing changed.",
+        }
+
+    opening.append(_line("frame", "read", observation.frame))
+    opening.append(_line("turn", "aside", "But there's something I noticed."))
+
+    return {
+        "lines": opening,
+        "key": observation.key,
+        "probe": {
+            "text": tts.speakable(observation.probe),
+            "yes": tts.speakable(observation.confirm_yes),
+            "no": tts.speakable(observation.confirm_no),
+        },
+        "correction": tts.speakable(observation.correction),
+        "retry": tts.speakable(observation.retry),
+        "close": CLOSERS.get(purpose)
+        or "Then run it again. Same script, one thing changed.",
+    }
+
+
+# What a second attempt gets told. Never a comparison of two numbers: the
+# listener does not need "a hundred and seventy-two down to a hundred and
+# forty-eight", they need to know whether it worked.
+def build_retry_reaction(
+    before: dict[str, Any] | None,
+    after: dict[str, Any] | None,
+    key: str = "",
+) -> list[dict[str, Any]]:
+    """How the coach reacts to the retake, in the words a person would use."""
+    b = dict(before or {})
+    a = dict(after or {})
+
+    def moved(field: str, better_when_lower: bool = True) -> float | None:
+        was, now = _num(b.get(field)), _num(a.get(field))
+        if was is None or now is None:
+            return None
+        delta = was - now
+        return delta if better_when_lower else -delta
+
+    gain: float | None = None
+    if key == "surge":
+        was, now = _num(b.get("pace_variation")), _num(a.get("pace_variation"))
+        gain = (was - now) if was is not None and now is not None else None
+    elif key == "filler":
+        gain = moved("filler_count")
+    elif key == "flat":
+        gain = moved("monotone_score")
+    elif key == "trail":
+        gain = moved("confidence_est", better_when_lower=False)
+    elif key == "slow":
+        was, now = _num(b.get("wpm")), _num(a.get("wpm"))
+        gain = (now - was) if was is not None and now is not None else None
+
+    if gain is None:
+        return [
+            _line("react", "verdict", "Yeah."),
+            _line("react-2", "read", "That sat better. Keep that version."),
+        ]
+    if gain > 0.5:
+        return [
+            _line("react", "verdict", "Yeah."),
+            _line("react-2", "read", "That's much easier to listen to."),
+        ]
+    if gain > -0.5:
+        return [
+            _line("react", "verdict", "Close."),
+            _line("react-2", "read", "Same as before, near enough. It's worth one more go."),
+        ]
+    return [
+        _line("react", "verdict", "Hm."),
+        _line(
+            "react-2",
+            "read",
+            "That one went the other way. Slow the whole thing down and try it once more.",
+        ),
+    ]
 
 
 async def humanize(lines: list[dict[str, Any]]) -> list[dict[str, Any]]:

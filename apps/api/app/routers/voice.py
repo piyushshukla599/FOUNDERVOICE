@@ -136,3 +136,57 @@ async def voice_script(session_id: str, purpose: str = "") -> dict[str, Any]:
     while len(_SCRIPTS) > _SCRIPT_LIMIT:
         _SCRIPTS.popitem(last=False)
     return {"status": "ready", "lines": lines, "voice": tts.status()}
+
+
+@router.get("/conversation/{session_id}")
+async def voice_conversation(session_id: str, purpose: str = "") -> dict[str, Any]:
+    """The spoken review as an exchange, for the page that can listen back.
+
+    Deliberately not the same thing as `/script`. The report page plays a list
+    of lines with nobody on the other end, so it gets the linear version. The
+    talk page can stop in the middle and wait for an answer, so it gets the
+    parts separately: what to say first, what to ask, what to correct, and what
+    to ask for a second time.
+    """
+    from .sessions import get_session
+
+    detail = get_session(session_id)
+    session = detail.get("session") or {}
+    status = str(session.get("status") or "")
+    if status in ("pending", "analyzing"):
+        return {"status": status, "lines": []}
+    if status == "error":
+        return {
+            "status": "error",
+            "lines": [
+                {
+                    "id": "error",
+                    "kind": "close",
+                    "text": "That recording didn't make it through analysis. Try the take again.",
+                }
+            ],
+        }
+
+    out = spoken_coach.build_conversation(
+        session,
+        detail.get("metrics") or {},
+        detail.get("events") or [],
+        purpose=(purpose or "").strip().lower()[:32],
+    )
+    return {"status": "ready", **out}
+
+
+class RetryBody(BaseModel):
+    before_id: str = Field(min_length=1, max_length=64)
+    after_id: str = Field(min_length=1, max_length=64)
+    key: str = Field(default="", max_length=32)
+
+
+@router.post("/retry-reaction")
+async def voice_retry_reaction(body: RetryBody) -> dict[str, Any]:
+    """How the second attempt went, said rather than tabulated."""
+    from .sessions import get_session
+
+    before = get_session(body.before_id).get("metrics") or {}
+    after = get_session(body.after_id).get("metrics") or {}
+    return {"lines": spoken_coach.build_retry_reaction(before, after, body.key)}

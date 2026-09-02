@@ -271,6 +271,25 @@ export const api = {
     request<{ status: string; lines: SpokenLine[]; voice: VoiceStatus }>(
       `/api/voice/script/${id}${purpose ? `?purpose=${encodeURIComponent(purpose)}` : ""}`,
     ),
+  /**
+   * The same review, shaped as an exchange for the page that can listen back.
+   *
+   * Separate from `voiceScript` because the two consumers are different: the
+   * report page plays a list at someone, the talk page stops in the middle and
+   * waits for an answer, and a question read aloud with nobody listening for
+   * the reply is worse than not asking it.
+   */
+  voiceConversation: (id: string, purpose = "") =>
+    request<CoachConversation>(
+      `/api/voice/conversation/${id}${purpose ? `?purpose=${encodeURIComponent(purpose)}` : ""}`,
+    ),
+  /** How the second attempt compared, said rather than tabulated. */
+  retryReaction: (before_id: string, after_id: string, key = "") =>
+    request<{ lines: SpokenLine[] }>("/api/voice/retry-reaction", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ before_id, after_id, key }),
+    }),
   practiceStart: (pitch_context: string) =>
     request<PracticeResult>("/api/practice/start", {
       method: "POST",
@@ -305,6 +324,23 @@ export type SpokenLine = {
   lab_title?: string;
 };
 
+
+/**
+ * A coaching round as parts rather than a script.
+ *
+ * `probe` is a question the coach asks and then shuts up for; `yes` and `no`
+ * are what it says back depending on which way the answer went. Splitting it
+ * this way is what lets the page hold a conversation instead of narrating one.
+ */
+export type CoachConversation = {
+  status: string;
+  lines: SpokenLine[];
+  key?: string;
+  probe?: { text: string; yes: string; no: string } | null;
+  correction?: string | null;
+  retry?: string | null;
+  close?: string;
+};
 export type VoiceStatus = {
   /** False means the browser speaks it — the free path, and the default. */
   tts: boolean;
