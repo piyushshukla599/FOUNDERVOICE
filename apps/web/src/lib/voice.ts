@@ -39,6 +39,17 @@ const RATE_KEY = "fv.voice.rate";
  * thing that most separates a voice you listen to from a voice you switch off.
  */
 export const DEFAULT_RATE = 0.9;
+/**
+ * The coach's register: a man in his early thirties, warm and unhurried.
+ *
+ * Browser speech gives three dials — rate, pitch, volume — so "warm" has to be
+ * built out of those. Everything sits a little under the voice's natural pitch,
+ * because the default register of every stock voice is pitched up to sound
+ * bright, and bright is what makes it sound like an announcement instead of a
+ * person who has done this before. The contours below are relative to this, so
+ * a question still rises; it rises from lower down.
+ */
+const BASE_PITCH = 0.94;
 
 export type Delivery = {
   /** Multiplies the user's base rate. */
@@ -74,10 +85,28 @@ const DELIVERY: Record<string, Delivery> = {
 
 export function deliveryFor(kind: string, text = ""): Delivery {
   const base = DELIVERY[kind] || DELIVERY.read;
+  const line = text.trim();
+  let out: Delivery = { ...base };
+
   // A question is a question whatever the line was tagged as, and a coach who
   // ends one flat sounds like it is not expecting an answer.
-  if (text.trim().endsWith("?")) return { ...base, pitch: (base.pitch ?? 1) + 0.06, pauseAfter: 160 };
-  return base;
+  if (line.endsWith("?")) out = { ...out, pitch: (out.pitch ?? 1) + 0.06, pauseAfter: 160 };
+
+  // "Yeah." "Right." "Got it." A person lands on one of these and then leaves a
+  // gap while they decide what to say next. Said at full pace with no gap it
+  // stops being agreement and becomes the first word of the next sentence.
+  if (/^(yeah|yes|right|okay|ok|got it|sure|mm|hm+)\b[.,…!]*$/i.test(line)) {
+    out = { ...out, rate: (out.rate ?? 1) * 0.92, pauseAfter: Math.max(out.pauseAfter ?? 0, 520) };
+  }
+  // Praise is the one thing a coach must not throw away. Slowing it slightly
+  // and giving it room is what the voice has instead of italics. The phrases
+  // are deliberately multi-word: a bare "good" also opens "Good to have you",
+  // and weighting a greeting like a compliment is how sincerity gets spent.
+  if (/\b(much better|a lot better|far better|way better|much stronger|that's better|thats better|nailed (it|that)|exactly that|that landed)\b/i.test(line)) {
+    out = { ...out, rate: (out.rate ?? 1) * 0.95, pauseAfter: Math.max(out.pauseAfter ?? 0, 600) };
+  }
+
+  return { ...out, pitch: (out.pitch ?? 1) * BASE_PITCH };
 }
 
 /** How fast the coach speaks, as chosen by the listener. */
@@ -275,9 +304,30 @@ export function listVoices(): SpeechSynthesisVoice[] {
   } catch {
     return [];
   }
-  return voices.filter((v) => /^en(-|_|$)/i.test(v.lang)).sort((a, b) => rank(a) - rank(b));
+  // Sex first, then quality within it: the coach is written as one person, and
+  // the best-sounding female voice on the machine is still the wrong person.
+  return voices
+    .filter((v) => /^en(-|_|$)/i.test(v.lang))
+    .sort((a, b) => timbre(a) - timbre(b) || rank(a) - rank(b));
 }
 
+/**
+ * Which voices sound male, judged by name — the only signal the API gives.
+ *
+ * The coach is written as one person, and a coach who changes sex between
+ * machines is not that person. The list is names, not a guess at gender from
+ * pitch: every TTS engine ships a fixed cast and each name is a known voice.
+ */
+const MALE = /\b(david|mark|george|guy|christopher|eric|roger|steffan|brian|daniel|alex|fred|tom|thomas|ryan|rishi|ravi|aaron|liam|william|james|male)\b/i;
+const FEMALE = /\b(zira|hazel|susan|heera|samantha|karen|serena|moira|aria|jenny|michelle|ana|emma|sonia|libby|catherine|natasha|clara|female)\b/i;
+
+
+/** 0 male, 1 can't tell, 2 female. */
+function timbre(voice: SpeechSynthesisVoice): number {
+  if (FEMALE.test(voice.name)) return 2;
+  if (MALE.test(voice.name)) return 0;
+  return 1;
+}
 /**
  * How human a voice is likely to sound, judged by its name.
  *
