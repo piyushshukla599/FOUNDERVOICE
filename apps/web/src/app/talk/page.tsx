@@ -734,6 +734,7 @@ export default function TalkPage() {
                   value={typed}
                   onChange={(e) => setTyped(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && sendTyped()}
+                  autoFocus
                   placeholder={reply.supported ? "…or type your answer" : "Type your answer"}
                   className="flex-1 rounded-[var(--r-full)] border border-[var(--line)] bg-[var(--bg)] px-4 py-2 text-[16px] text-[var(--ink)] outline-none focus:border-[var(--accent-line)] sm:text-[13px]"
                 />

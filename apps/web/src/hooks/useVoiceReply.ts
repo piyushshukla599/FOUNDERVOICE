@@ -85,7 +85,10 @@ export function useVoiceReply() {
 
   const listen = useCallback(
     (opts?: { silenceMs?: number; maxMs?: number }): Promise<Reply> => {
-      const silenceMs = opts?.silenceMs ?? 1600;
+      // How long a gap ends the answer. Short enough to feel responsive, long
+      // enough to survive someone thinking mid-sentence - at 1.6s it cut people
+      // off between clauses and the half-finished answer was read as the whole.
+      const silenceMs = opts?.silenceMs ?? 2200;
       const maxMs = opts?.maxMs ?? 22000;
 
       const Recognition =
@@ -100,6 +103,12 @@ export function useVoiceReply() {
       return new Promise<Reply>((resolve) => {
         settle.current = resolve;
         let said = "";
+        // What the recogniser has guessed but not committed to. Chrome ends a
+        // session without finalising the last utterance often enough that
+        // ignoring this throws away the answer the speaker just watched
+        // appear on screen.
+        let interim = "";
+        let restarts = 0;
         let quiet = 0;
         let cap = 0;
         const asked = Date.now();
@@ -119,7 +128,7 @@ export function useVoiceReply() {
               /* stopping an already-stopped recogniser throws on Safari */
             }
           }
-          const text = said.trim();
+          const text = said.trim() || interim.trim();
           finish({
             text,
             reason: text ? "spoken" : reason,
@@ -142,7 +151,8 @@ export function useVoiceReply() {
           }
           if (!firstWordAt && (complete || partial)) firstWordAt = Date.now();
           said = complete;
-          setHeard((complete + " " + partial).trim());
+          interim = (complete + " " + partial).trim();
+          setHeard(interim);
           window.clearTimeout(quiet);
           quiet = window.setTimeout(() => done("silent"), silenceMs);
         };
@@ -158,9 +168,22 @@ export function useVoiceReply() {
         };
 
         recognition.onend = () => {
-          // Chrome ends the session on its own after a long pause. Whatever was
-          // said by then is the answer.
-          if (settle.current) done("silent");
+          if (!settle.current) return;
+          // Chrome ends the session on its own a few seconds in, whether or not
+          // the speaker has started. Treating that as "they said nothing" is
+          // what made the coach stop dead and offer to resume, over and over,
+          // while the person was still deciding how to answer. Start it again
+          // and let the overall cap be the thing that decides we are done.
+          if (!said.trim() && !interim.trim() && restarts < 6 && Date.now() - asked < maxMs) {
+            restarts += 1;
+            try {
+              recognition.start();
+              return;
+            } catch {
+              /* already running, or the engine will not restart: fall through */
+            }
+          }
+          done("silent");
         };
 
         active.current = recognition;
