@@ -392,7 +392,23 @@ export default function TalkPage() {
           if (run.current !== mine) return;
         }
 
-        const convo = await api.voiceConversation(session_id, chosen.key);
+        /* The conversational review is a newer endpoint than the deployed API
+           may have. A web deploy reaches people the moment it builds; the API
+           is a separate deploy, and for the window between the two every
+           finished pitch was ending here on a 404 - upload fine, analysis
+           fine, and then silence with no way on but starting again. Fall back
+           to the linear script, which every version of the API can produce. */
+        let convo = await api.voiceConversation(session_id, chosen.key).catch(() => null);
+        if (!convo || convo.status !== "ready" || !convo.lines?.length) {
+          const script = await api.voiceScript(session_id, chosen.key);
+          convo = {
+            status: "ready",
+            lines: script.lines,
+            probe: null,
+            correction: null,
+            retry: null,
+          };
+        }
         if (run.current !== mine) return;
         setStage("feedback");
 
