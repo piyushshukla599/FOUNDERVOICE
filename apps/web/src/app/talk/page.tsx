@@ -188,7 +188,12 @@ export default function TalkPage() {
         // to the next question is the coach talking over you, and the whole
         // conversation is then spent in the wrong place with no way back to
         // this question except starting the session again.
-        if (allowSilence || !reply.supported) return { text: "", pauseMs };
+        // Only the callers that treat silence as an answer get one. A browser
+        // that cannot listen is NOT such a caller: returning empty there made
+        // every question resolve instantly, so on an iPhone the whole
+        // conversation played out in a few seconds with no way to answer any
+        // of it. It waits for typing instead, which is the path that works.
+        if (allowSilence) return { text: "", pauseMs };
 
         setStage("stalled");
         const second = await new Promise<string>((resolve) => {
@@ -699,8 +704,8 @@ export default function TalkPage() {
                   value={typed}
                   onChange={(e) => setTyped(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && sendTyped()}
-                  placeholder="…or type your answer"
-                  className="flex-1 rounded-[var(--r-full)] border border-[var(--line)] bg-[var(--bg)] px-4 py-2 text-[13px] text-[var(--ink)] outline-none focus:border-[var(--accent-line)]"
+                  placeholder={reply.supported ? "…or type your answer" : "Type your answer"}
+                  className="flex-1 rounded-[var(--r-full)] border border-[var(--line)] bg-[var(--bg)] px-4 py-2 text-[16px] text-[var(--ink)] outline-none focus:border-[var(--accent-line)] sm:text-[13px]"
                 />
                 <Button variant="secondary" size="sm" onClick={sendTyped}>
                   <Send size={14} />
@@ -712,21 +717,25 @@ export default function TalkPage() {
           {stage === "stalled" && (
             <>
               <p className="max-w-md text-[14px] leading-relaxed text-[var(--muted)]">
-                I didn&rsquo;t catch that. Pick it up where we left off — I&rsquo;ll ask again.
+                {reply.supported
+                  ? "I didn’t catch that. Pick it up where we left off — I’ll ask again."
+                  : "This browser can’t hear short answers, so type yours and we’ll carry on. Your pitch is still recorded with the microphone."}
               </p>
               <div className="flex flex-wrap items-center justify-center gap-2">
-                <Button size="lg" onClick={() => resume.current?.()}>
-                  <RotateCcw size={17} />
-                  Resume
-                </Button>
+                {reply.supported && (
+                  <Button size="lg" onClick={() => resume.current?.()}>
+                    <RotateCcw size={17} />
+                    Resume
+                  </Button>
+                )}
               </div>
               <div className="flex w-full max-w-md items-center gap-2">
                 <input
                   value={typed}
                   onChange={(e) => setTyped(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && sendTyped()}
-                  placeholder="…or type your answer"
-                  className="flex-1 rounded-[var(--r-full)] border border-[var(--line)] bg-[var(--bg)] px-4 py-2 text-[13px] text-[var(--ink)] outline-none focus:border-[var(--accent-line)]"
+                  placeholder={reply.supported ? "…or type your answer" : "Type your answer"}
+                  className="flex-1 rounded-[var(--r-full)] border border-[var(--line)] bg-[var(--bg)] px-4 py-2 text-[16px] text-[var(--ink)] outline-none focus:border-[var(--accent-line)] sm:text-[13px]"
                 />
                 <Button variant="secondary" size="sm" onClick={sendTyped}>
                   <Send size={15} />
