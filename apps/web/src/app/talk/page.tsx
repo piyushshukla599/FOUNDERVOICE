@@ -31,6 +31,7 @@ import { QuotaMeter, UpgradeGate } from "@/components/UpgradeGate";
 import { useCoachVoice } from "@/hooks/useCoachVoice";
 import { usePracticeRecorder } from "@/hooks/usePracticeRecorder";
 import { useVoiceReply } from "@/hooks/useVoiceReply";
+import { localRetryReaction, localReview } from "@/lib/localReview";
 import { api, QuotaError, type QuotaState, type SessionDetail } from "@/lib/api";
 import { answerVerdict, readAnswer, type AnswerSignal } from "@/lib/answerRead";
 import {
@@ -338,7 +339,15 @@ export default function TalkPage() {
           if (run.current !== mine) return;
         }
 
-        const reaction = await api.retryReaction(beforeId, session_id, key);
+        const reaction = await api
+          .retryReaction(beforeId, session_id, key)
+          .catch(async () => ({
+            lines: localRetryReaction(
+              await api.session(beforeId).catch(() => null),
+              await api.session(session_id).catch(() => null),
+              key,
+            ),
+          }));
         if (run.current !== mine) return;
         setStage("feedback");
         for (const line of reaction.lines) {
@@ -400,14 +409,13 @@ export default function TalkPage() {
            to the linear script, which every version of the API can produce. */
         let convo = await api.voiceConversation(session_id, chosen.key).catch(() => null);
         if (!convo || convo.status !== "ready" || !convo.lines?.length) {
-          const script = await api.voiceScript(session_id, chosen.key);
-          convo = {
-            status: "ready",
-            lines: script.lines,
-            probe: null,
-            correction: null,
-            retry: null,
-          };
+          const script = await api.voiceScript(session_id, chosen.key).catch(() => null);
+          convo = script?.lines?.length
+            ? { status: "ready", lines: script.lines, probe: null, correction: null, retry: null }
+            : // Neither endpoint is there. Everything the review is made from is
+              // already in the session detail, so build it here rather than end
+              // a recorded, uploaded, analysed pitch in silence.
+              localReview(detail);
         }
         if (run.current !== mine) return;
         setStage("feedback");
